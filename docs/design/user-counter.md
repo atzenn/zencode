@@ -47,7 +47,6 @@ On startup, `zen` checks `~/.config/zencode/config.toml`:
 - Phase 1: implement client ping + Workers/D1 backend + public stats API (target: v0.1.0 internal).
 - Phase 2 (public, v1.0.0): website badge + launch press numbers.
 
-## 7. Open decision (owner)
+## 7. Decision (owner-approved, 2026-10-20)
 
-- **Opt-out (recommended):** anonymous counter on by default, clear notice + easy opt-out. Industry standard for anonymous install counts (Homebrew, VS Code telemetry levels); numbers are credible for communication.
-- **Opt-in:** maximum trust posture, but counts will under-report heavily and be less useful for research/marketing.
+**OPT-OUT.** Anonymous counter on by default, clear first-run notice + easy opt-out (`DO_NOT_TRACK=1`, `ZENCODE_TELEMETRY=0`, or `zen config set telemetry off`). Industry standard for anonymous install counts (Homebrew, VS Code telemetry levels); numbers stay credible for research and communication. Opt-in was rejected: it under-reports heavily, defeating the counter's purpose.
