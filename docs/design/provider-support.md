@@ -51,3 +51,17 @@ Any OpenAI-compatible base URL can be added without a preset (`zen provider add 
 ## 3. Recommendation flow for new users
 
 `zen` first run suggests, in order: **Ollama** (offline, $0) → **Google AI Studio free tier** (cloud, $0, data warning) → **OpenRouter** (one key, everything) → direct **Anthropic/OpenAI/DeepSeek** keys for best price/quality per model. Each step is skippable; nothing is pre-enabled.
+
+## 4. ZC↔ZD unified contract (agreed 2026-10-20, relay)
+
+**Canonical preset list** (ZD Leader's 3 tiers adopted as the shared standard; ids in backticks):
+- Recommended: `openrouter`, `deepseek`, `anthropic`, `openai`, `gemini`
+- Advanced: `together`, `fireworks`, `groq`, `cerebras`, `xai`, `mistral`, `moonshot`, `zhipu`, `dashscope`, `custom`
+- Local: `ollama`, `lm-studio`
+- Next list revision candidates: `litellm`, `requesty`, `novita`, `siliconflow`, `llama.cpp`, `vllm`.
+
+**Key passing:** Desktop stores user keys in the OS secret store and passes them to the `zen` child process via environment variables. CLI reads, in precedence order: environment → OS keyring → config reference. Canonical env names: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY` (alias `GOOGLE_API_KEY`), `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `TOGETHER_API_KEY`, `FIREWORKS_API_KEY`, `XAI_API_KEY`, `MISTRAL_API_KEY`, `MOONSHOT_API_KEY`, `ZHIPU_API_KEY`, `DASHSCOPE_API_KEY`; generic override `ZEN_BASE_URL` + `ZEN_API_KEY`. Keys are never written to files or logs.
+
+**Model registry:** `~/.zencode/models.json`, schema v1: `{version, providers: {id: {base_url, env_key, format ∈ openai|anthropic}}, models: [{id, provider, name, context, free}], explicit_free: [ids]}`. Maintained by the CLI side (agreement D7). Schema changes require a version bump and advance notice to the other team.
+
+**Shared privacy labels** (verbatim in CLI list output and Desktop Settings): "Does not train on API data" · "Free tier may use your data" · "Subject to China data law" · "Zero-retention routing available" · "Runs locally — nothing leaves your machine". Account-risk warnings shared verbatim for: deepseek, anthropic, gemini (free tier), xai.
