@@ -24,6 +24,8 @@
 | `cerebras` | Free 1M tokens/day, highest throughput | Narrow catalog |
 | `ollama` | Local default — fully offline, no key at all | OpenAI-compatible at `localhost:11434/v1` |
 | `litellm` | Self-hosted gateway preset for power users (keys never leave user infra) | User operates it (Postgres/Redis) |
+| `9router` | Local router (MIT, decolua/9router): one endpoint → 40+ providers, 3-tier auto-fallback, token compression | Local key from its dashboard; **subscription-routing ban-risk warning required** |
+| `omniroute` | Local-first gateway (MIT, diegosouzapw/OmniRoute): one OpenAI-compatible endpoint → 230+ providers, 17 routing strategies, built-in MCP | Same warning class as `9router` |
 
 ### Tier 2 — nice-to-have (post-v1.0.0 or if capacity allows)
 
@@ -59,6 +61,7 @@ Any OpenAI-compatible base URL can be added without a preset (`zen provider add 
 - Advanced: `together`, `fireworks`, `groq`, `cerebras`, `xai`, `mistral`, `moonshot`, `zhipu`, `dashscope`, `custom`
 - Local: `ollama`, `lm-studio`
 - Next list revision candidates: `litellm`, `requesty`, `novita`, `siliconflow`, `llama.cpp`, `vllm`.
+- Added by owner instruction (2026-10-20, ZD sync pending): local router presets `9router` (base URL `http://localhost:20128/v1`, adjustable) and `omniroute` (base URL `http://localhost:20128/v1`, adjustable). Both are user-operated local gateways — ZenCode stores only the local key in the keyring (BYOK holds). Because both can route subscription/OAuth accounts, their presets carry the account-risk warning: routing subscription accounts through third-party routers may violate provider terms and risks account suspension.
 
 **Key passing:** Desktop stores user keys in the OS secret store and passes them to the `zen` child process via environment variables. CLI reads, in precedence order: environment → OS keyring → config reference. Canonical env names: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY` (alias `GOOGLE_API_KEY`), `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `TOGETHER_API_KEY`, `FIREWORKS_API_KEY`, `XAI_API_KEY`, `MISTRAL_API_KEY`, `MOONSHOT_API_KEY`, `ZHIPU_API_KEY`, `DASHSCOPE_API_KEY`; generic override `ZEN_BASE_URL` + `ZEN_API_KEY`. Keys are never written to files or logs.
 
