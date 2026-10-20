@@ -72,3 +72,12 @@ Any OpenAI-compatible base URL can be added without a preset (`zen provider add 
 **Shared privacy labels** (verbatim in CLI list output and Desktop Settings): "Does not train on API data" · "Free tier may use your data" · "Subject to China data law" · "Zero-retention routing available" · "Runs locally — nothing leaves your machine". Account-risk warnings shared verbatim for: deepseek, anthropic, gemini (free tier), xai.
 
 **Amendment (2026-10-20, evening — ZC Leader, from gateway research `study-gateways-2026-10-20.md`):** credential-type risk rule (2a) and risk-catalog rule (7) added; Advanced gateway preference order set to OmniRoute before 9Router with a stronger 9Router caveat; OmniRoute default port flagged as unverified; LiteLLM positioned for teams with Docker-only, version-pinned install discipline (2026-03 PyPI supply-chain incident).
+
+## 5. Addendum 2026-10-20 — DeepSeek adapter notes (from DeepSeek harness/TUI research)
+
+Source: `study-deepseek-harness-2026-10-20.md` + `study-deepseek-tui-2026-10-20.md` (verified against DeepSeek's official docs and repos on 2026-10-20). DeepSeek stays in Tier 1 as the bulk-work default; its adapter is NOT a plain OpenAI-compatible passthrough:
+
+1. **Preserve `reasoning_content` round-trip.** In thinking mode with tools enabled, the API requires the `reasoning_content` of every previous assistant turn to be sent back in full; omitting it returns HTTP 400 mid-session. The message serializer must carry provider-specific fields through instead of stripping unknown fields.
+2. **Prefix-stable history for the disk cache.** DeepSeek's context cache matches whole prefix units: append-only history earns cache hits (~50x cheaper than misses; cache-hit input is $0.003/1M). Any compaction that rewrites history destroys the cache — compaction strategy is provider-specific, and for DeepSeek it must preserve the longest stable prefix (cross-ref: compaction funnel review).
+3. **Peak-hour pricing.** Published prices double during peak windows that land on 08:00–11:00 and 13:00–17:00 Vietnam time on weekdays (flash: $0.15/$0.60 per 1M input/output off-peak). Cost estimates shown to users must state which window applies; batch-heavy work should prefer off-peak.
+4. **Strict tool mode is a separate surface.** Strict function calling requires schema transformation and the `/beta` base URL; temperature/penalty parameters are silently ignored in thinking mode — the adapter must not present them as effective settings.
