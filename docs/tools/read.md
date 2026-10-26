@@ -12,7 +12,7 @@ Read a text file from disk and return its lines with 1-based line numbers.
 ## Behavior
 
 - Use `offset`/`limit` to page through large files instead of reading them
-  whole — a full 10k-line dump costs ~10k tokens on every later turn.
+  whole - a full 10k-line dump costs ~10k tokens on every later turn.
 - Binary files are refused; the result tells you the file is not text.
 - Reading a file records it as *read* for this session. `Write` and `Edit`
   require the target to have been read first (stale-content protection: if the

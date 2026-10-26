@@ -1,8 +1,8 @@
-//! zen-tools — OWNER: worker B. Built-in tools (SPEC §4) + permission rules/modes (SPEC §5).
+//! zen-tools - OWNER: worker B. Built-in tools (SPEC §4) + permission rules/modes (SPEC §5).
 //!
 //! This crate provides the eight built-in tools and the permission engine that enforces
 //! the allow/ask/deny rules and five permission modes. It is a pure library with no
-//! LLM dependencies — summarization, prompting, and the agent loop live in zen-agent.
+//! LLM dependencies - summarization, prompting, and the agent loop live in zen-agent.
 //!
 //! Architecture:
 //! - `builtin.rs` implements the eight SPEC §4 tools (Read, Write, Edit, Bash, Glob,

@@ -1,4 +1,4 @@
-# Terminal-Bench — ZenCode Benchmark
+# Terminal-Bench - ZenCode Benchmark
 
 **Status:** Infrastructure complete and pipeline-validated; live model runs
 blocked by worker resource constraints (see §Results).
@@ -6,7 +6,7 @@ blocked by worker resource constraints (see §Results).
 ## Why this benchmark
 
 ZenCode's core differentiator (D2) is a **harness engineered to make weak
-models succeed** — verify loop, prompt budget, RateGate, repair of malformed
+models succeed** - verify loop, prompt budget, RateGate, repair of malformed
 tool calls, and (in progress) advisor pattern, result pruning, and eco mode.
 The claim "free models can do real work with ZenCode" needs public,
 reproducible evidence. Terminal-Bench 2.0 is the standard benchmark for
@@ -14,7 +14,7 @@ terminal agents (89 tasks, Docker-isolated, outcome-verified), used by
 virtually all frontier labs.
 
 The roadmap target: *"Nobody publishes TB scores for free models. Even 40–50%
-at $0 is a story."* This page documents our methodology and results honestly —
+at $0 is a story."* This page documents our methodology and results honestly -
 including the limitations.
 
 ## Methodology
@@ -43,7 +43,7 @@ generation. Container→host model connectivity was verified (`PORT-OK`).
 agent builds) had ~139 MB free RAM; the local Ollama model server was
 OOM-killed mid-run, so agent calls failed with network errors and the tasks
 scored 0/3 before the run was stopped to protect the shared machine.
-This is an **infrastructure constraint, not a model result** — no score is
+This is an **infrastructure constraint, not a model result** - no score is
 claimed.
 
 | Task | Difficulty | Result | Notes |

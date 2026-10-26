@@ -3,7 +3,7 @@
 **Bottom line.** On gpt-oss-20b the bench went from 8/10 (B0) and 6–7/10 (C1) to 10/10 on 2 of 2 runs (C5, C7). Almost all of that came from the gateway, not from the model's coding. vLLM returns gpt-oss Harmony parse failures as HTTP 200 + `error` / empty messages, and the model leaks `<|channel|>` tokens into tool names. C3+C4+C5 make zen resample and repair these. nemotron-3-super was already at 10/10 and stayed there, apart from wall-clock timeouts under load and one model miss. am/free went from 2/10 (B0) to the F7 number below.
 
 ## Setup
-- Bench: `tools/bench.sh` — 10 tasks (r7: fix_failing_test, rename_function, add_cli_flag, tabs_edit, implement_from_test; r8: paginate_bug, dotenv_parser, js_async_fix, big_file_edit, report_json). Each task runs in a fresh git repo, and a hidden grader checks more than the visible tests (`BENCH_SELFTEST=1` proves every grader fails before the fix and passes after the reference fix).
+- Bench: `tools/bench.sh` - 10 tasks (r7: fix_failing_test, rename_function, add_cli_flag, tabs_edit, implement_from_test; r8: paginate_bug, dotenv_parser, js_async_fix, big_file_edit, report_json). Each task runs in a fresh git repo, and a hidden grader checks more than the visible tests (`BENCH_SELFTEST=1` proves every grader fails before the fix and passes after the reference fix).
 - `zen -p --output-format json --permission-mode bypassPermissions --max-turns 25`, `BENCH_TIMEOUT=420` s per task, `.zen/settings.json` `{"verify":{"enabled":true}}`.
 - Models (free only, AnyModel coefficient 0): `am/nemotron-3-super-120b-a12b`, `am/gpt-oss-20b`, `am/free`. Calls went through a local logging proxy (`/workspace/work/zen-r7-bench/proxy/proxy.py`) so failures could be read from the raw request/response bodies.
 - Binaries per change: `/workspace/work/zen-r7-bench/bin/zen-{B0,C1..C7,C3noC2}`. Logs and JSON: `/workspace/work/zen-r7-bench/runs/`. Summary: `summary.json`.
@@ -12,14 +12,14 @@
 
 | Change | What | Source | nemotron-3-super | gpt-oss-20b (run 1 · run 2 · …) | am/free | Decision |
 |---|---|---|---|---|---|---|
-| B0 | r7 items 1–5 (before C1) | — | 10/10 | 8/10 | 2/10 | baseline |
-| C1 | Syntax-guarded edits (`syntax_guard.rs`) | SWE-agent ACI, arXiv:2405.15793 §3 | 10/10 | 6/10 · 7/10 | — | kept |
-| C2 | Workflow prompt: explore → reproduce → fix → rerun → edge cases, don't edit tests | anthropic.com/engineering/swe-bench-sonnet | 9/10 | 7/10 | — | kept (neutral) |
-| C3 | Resample 200 responses carrying an error / no choices / empty message | vllm-project/vllm#23567 | 10/10 | 9/10 · 8/10 | — | kept |
-| C3−C2 | ablation: C3 without C2 | — | — | 8/10 · 10/10 | — | (ablation) |
-| C4 | Cut leaked chat-template tokens from tool names | vllm-project/vllm#32587 | 10/10 | 9/10 | — | kept |
-| C5 | Requery after an empty reply (max 2/turn) | swe-agent.com/latest/config/templates (format-error requery) | 8/10 | 10/10 · 10/10 | — | kept |
-| C6 | Requirements review before finishing | code.claude.com/docs/en/best-practices | 6/6 | 9/10 · 10/10 | — | reverted |
+| B0 | r7 items 1–5 (before C1) | - | 10/10 | 8/10 | 2/10 | baseline |
+| C1 | Syntax-guarded edits (`syntax_guard.rs`) | SWE-agent ACI, arXiv:2405.15793 §3 | 10/10 | 6/10 · 7/10 | - | kept |
+| C2 | Workflow prompt: explore → reproduce → fix → rerun → edge cases, don't edit tests | anthropic.com/engineering/swe-bench-sonnet | 9/10 | 7/10 | - | kept (neutral) |
+| C3 | Resample 200 responses carrying an error / no choices / empty message | vllm-project/vllm#23567 | 10/10 | 9/10 · 8/10 | - | kept |
+| C3−C2 | ablation: C3 without C2 | - | - | 8/10 · 10/10 | - | (ablation) |
+| C4 | Cut leaked chat-template tokens from tool names | vllm-project/vllm#32587 | 10/10 | 9/10 | - | kept |
+| C5 | Requery after an empty reply (max 2/turn) | swe-agent.com/latest/config/templates (format-error requery) | 8/10 | 10/10 · 10/10 | - | kept |
+| C6 | Requirements review before finishing | code.claude.com/docs/en/best-practices | 6/6 | 9/10 · 10/10 | - | reverted |
 | C7 | Requery when every retry came back unparsed | same as C3/C5 | 10/10 · 5/5 (partial) | 10/10 · 10/10 · 3/10 (RW) (partial) | 3/10 · 0/10 (RW) (partial) | kept (final) |
 
 How to read it: `a/b` = passed / tasks run. Fewer than 10 tasks means the run was cut short (sandbox resets killed in-flight runs twice; a resumed run counts each task once). Free models are noisy: ±1 task between identical runs is normal (compare the two oss runs of C3, or the C3−C2 ablation runs).

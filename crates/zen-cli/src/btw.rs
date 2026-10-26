@@ -1,4 +1,4 @@
-//! `/btw` — ask a quick side question without disturbing the main conversation (parity G10).
+//! `/btw` - ask a quick side question without disturbing the main conversation (parity G10).
 //!
 //! The question goes to the model with minimal context: a short system prompt plus the
 //! question itself. The full conversation history is never included, no tools are offered,
@@ -28,7 +28,7 @@ pub fn settings_btw_model(extra: &HashMap<String, serde_json::Value>) -> Option<
 
 /// Run a side question through the model with minimal context.
 ///
-/// Only the system prompt and the question are sent — never the main conversation history —
+/// Only the system prompt and the question are sent - never the main conversation history -
 /// and no tools are offered, so a single model call produces the answer. Returns the answer
 /// text. The caller's agent is never touched: no history is appended, so nothing reaches the
 /// session transcript either.
@@ -90,7 +90,7 @@ mod tests {
         let reqs = rec.requests.lock().unwrap();
         assert_eq!(reqs.len(), 1, "side question is a single model call");
         let req = &reqs[0];
-        // Minimal context: short system prompt + question only — never the main history.
+        // Minimal context: short system prompt + question only - never the main history.
         assert_eq!(req.messages.len(), 2);
         assert_eq!(req.messages[0].role, "system");
         assert_eq!(

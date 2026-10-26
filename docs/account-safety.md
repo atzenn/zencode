@@ -3,7 +3,7 @@
 ZenCode is designed to be a **good API citizen** so your paid accounts
 (OpenAI, Anthropic, Google) stay in good standing.
 
-> **Honest disclaimer:** No tool can guarantee your account won't be flagged —
+> **Honest disclaimer:** No tool can guarantee your account won't be flagged -
 > providers use automated systems with false positives. ZenCode minimizes the
 > risk factors within its control and warns you about the rest.
 
@@ -13,7 +13,7 @@ ZenCode is designed to be a **good API citizen** so your paid accounts
   jitter, capped at 60s), max 5 retries per request. It never hammers through 429s.
 - **Always respects `Retry-After`** headers when the server sends one.
 - **Never retries billing/quota errors.** `insufficient_quota` (and similar) is a
-  hard stop with a clear message — retrying a billing error only creates
+  hard stop with a clear message - retrying a billing error only creates
   failed-request noise on your account.
 - **Classifies errors before retrying:** 429 rate-limit → backoff + retry;
   529 (Anthropic overloaded) → backoff + suggest a fallback provider;
@@ -30,7 +30,7 @@ ZenCode is designed to be a **good API citizen** so your paid accounts
 
 ## What you should do
 
-- **One API key per machine.** Never share keys across computers or people —
+- **One API key per machine.** Never share keys across computers or people -
   the same key from multiple IPs/geographies looks like account sharing/resale
   to automated abuse detection.
 - **Don't run many parallel sessions on a single key.** Agentic loops fire many
@@ -40,7 +40,7 @@ ZenCode is designed to be a **good API citizen** so your paid accounts
 - **If a key may be compromised** (committed to a repo, pasted somewhere),
   revoke it at the provider immediately and run `zen auth logout`. Billing can
   continue after a ban if revocation lags.
-- **Slow down on repeated rate limits** instead of pushing through — pushing
+- **Slow down on repeated rate limits** instead of pushing through - pushing
   through is the fastest way to get flagged.
 
 ## What gets accounts banned (so you can avoid it)
@@ -72,7 +72,7 @@ high-volume legitimate usage.
 ### `--i-understand-the-risks`
 
 Some safeguards (concurrency caps, parallel-session warnings) can be overridden
-with `--i-understand-the-risks`. This is deliberately verbose — it forces a
+with `--i-understand-the-risks`. This is deliberately verbose - it forces a
 conscious decision. The acknowledgement is logged with a timestamp.
 
 It **never** disables backoff, never enables retry of quota errors, and never
@@ -80,15 +80,15 @@ bypasses the User-Agent. It only acknowledges *volume* risk you choose to take.
 
 ## Provider-specific notes
 
-- **OpenAI:** 429s come in two flavors — `rate_limit_exceeded` (slow down, retry)
-  vs `insufficient_quota` (out of money — ZenCode stops immediately). Keep
+- **OpenAI:** 429s come in two flavors - `rate_limit_exceeded` (slow down, retry)
+  vs `insufficient_quota` (out of money - ZenCode stops immediately). Keep
   `max_tokens` tight: the token limit counts what you *request*, not just what
   is used.
 - **Anthropic:** 429 means *you* hit a limit (respect `retry-after`); 529 means
   *Anthropic* is overloaded (back off and consider another provider). Prompt
   caching reduces per-minute token pressure.
 - **Google (AI Studio):** Quotas are per-project and checked in AI Studio.
-  Free-tier content may be used by Google to improve their products — a privacy
+  Free-tier content may be used by Google to improve their products - a privacy
   consideration for code, not a ban trigger.
 
 ## FAQ
@@ -108,4 +108,4 @@ override is logged.
 **Does the free tier need any of this?**
 Free tiers are the most abuse-sensitive (they're where bot traffic concentrates),
 so pacing and backoff matter *more* there, not less. Local models (Ollama)
-skip pacing entirely — there's no provider to anger.
+skip pacing entirely - there's no provider to anger.

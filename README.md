@@ -17,14 +17,14 @@ using any of their code, prompts or tool descriptions. It talks to any OpenAI-co
 **Free is structural, not promotional.** In 2026, every major "free" AI coding tier got
 narrowed or killed: Gemini CLI shut down overnight (June 18), OpenCode locked free models
 to its app (September), Qwen Code ended its 2,000 req/day free tier (April 15). ZenCode
-can't rug-pull you — there is no central API to shut off. You bring your own endpoint:
+can't rug-pull you - there is no central API to shut off. You bring your own endpoint:
 free cloud models, your paid keys, or Ollama running fully offline on your machine.
 
 **The Four Questions** (after the [Gemini CLI postmortem](https://www.jenariusganlary.com/blog/gemini-cli-shut-down-choosing-ai-coding-tools)):
 
 | Question | ZenCode's answer |
 |---|---|
-| Is the backend as open as the code? | Yes — no backend. Any OpenAI-compatible endpoint, or local models. |
+| Is the backend as open as the code? | Yes - no backend. Any OpenAI-compatible endpoint, or local models. |
 | Am I the customer, or am I the churn? | The customer: your keys, your models, your machine. |
 | What breaks the day it dies? | Nothing. The repo and your models keep working. |
 | What's my exit cost? | Near zero. Open formats, portable sessions. |
@@ -69,7 +69,7 @@ ZEN_MAX_BUDGET_USD=5 ./target/release/zen        # same via env
 
 ### Ollama (local models, $0)
 
-Run fully offline with [Ollama](https://ollama.com) — no API key, no rate
+Run fully offline with [Ollama](https://ollama.com) - no API key, no rate
 limits, no data leaving your machine:
 
 ```bash
@@ -103,14 +103,14 @@ DEEPSEEK_API_KEY=<key> ./target/release/zen -p "hi" --model deepseek/deepseek-v4
 
 | Provider | Key env var | Models (examples) | Pricing/1M in/out |
 |---|---|---|---|
-| `zai` — Z.ai (Zhipu) | `ZAI_API_KEY` | `glm-5.2`, `glm-4.6` | $1.40 / $4.40 (glm-5.2) |
-| `moonshot` — Moonshot AI | `MOONSHOT_API_KEY` | `kimi-k2.7`, `kimi-k3` | $0.95 / $4.00 (k2.7) |
-| `deepseek` — DeepSeek | `DEEPSEEK_API_KEY` | `deepseek-v4-flash`, `deepseek-reasoner` | **$0.14 / $0.28** (v4-flash) |
+| `zai` - Z.ai (Zhipu) | `ZAI_API_KEY` | `glm-5.2`, `glm-4.6` | $1.40 / $4.40 (glm-5.2) |
+| `moonshot` - Moonshot AI | `MOONSHOT_API_KEY` | `kimi-k2.7`, `kimi-k3` | $0.95 / $4.00 (k2.7) |
+| `deepseek` - DeepSeek | `DEEPSEEK_API_KEY` | `deepseek-v4-flash`, `deepseek-reasoner` | **$0.14 / $0.28** (v4-flash) |
 | `openrouter` | `OPENROUTER_API_KEY` | any | varies |
 | `groq` | `GROQ_API_KEY` | any | varies |
 | `anthropic` | `ANTHROPIC_API_KEY` | `claude-opus-4-6`, ... | varies |
 | `openai` | `OPENAI_API_KEY` | any | varies |
-| `ollama` | _(none — local)_ | any local model | $0.00 |
+| `ollama` | _(none - local)_ | any local model | $0.00 |
 | `together` / `mistral` / `cerebras` / `fireworks` / `google` | `<PROVIDER>_API_KEY` | any | varies |
 
 All three Chinese providers document Anthropic-compatible endpoints
@@ -125,10 +125,10 @@ Anthropic client is available. Pricing feeds the `zen cost` ledger; see
 In the interactive REPL, `/diff` shows uncommitted changes as `git diff HEAD`, plus a list of
 untracked files (parity with Claude Code and Codex CLI, which both ship `/diff`):
 
-- `/diff` — working tree vs HEAD (staged + unstaged), then untracked files
-- `/diff --staged` — staged changes only (`git diff --cached`)
-- `/diff --stat` — one-line summary per file instead of the full diff
-- `/diff --turn` — what the last file-changing turn did (from its checkpoint; no git needed)
+- `/diff` - working tree vs HEAD (staged + unstaged), then untracked files
+- `/diff --staged` - staged changes only (`git diff --cached`)
+- `/diff --stat` - one-line summary per file instead of the full diff
+- `/diff --turn` - what the last file-changing turn did (from its checkpoint; no git needed)
 
 Output is colored when stdout is a terminal and `NO_COLOR` is unset. Outside a git repo it
 prints a hint instead of failing (except `--turn`).
@@ -149,7 +149,7 @@ history), no tools are offered, and nothing is written to the transcript.
 
 ```text
 > /btw what does exit code 137 mean?
-Out of memory — the process was killed (OOM).
+Out of memory - the process was killed (OOM).
 ```
 
 Keep it cheap with a small model: `--btw-model <name>` or the `btw.model` setting
@@ -173,8 +173,8 @@ the original) and `/context` shows the system-prompt token cost per session.
 ### Ephemeral mode (`--ephemeral`)
 
 For sensitive work: nothing session-related is written to disk. No transcript, no session
-directory, nothing under `~/.zen` — everything stays in memory and is discarded on exit.
-A startup banner (`EPHEMERAL MODE — nothing will be saved`) confirms the mode is active.
+directory, nothing under `~/.zen` - everything stays in memory and is discarded on exit.
+A startup banner (`EPHEMERAL MODE - nothing will be saved`) confirms the mode is active.
 
 ```bash
 ./target/release/zen --ephemeral                      # interactive REPL, zero trace
@@ -207,7 +207,7 @@ project commands/skills. Everything from `~/.zen/` always loads; project deny ru
 - CI/scripts that rely on a repo's own hooks or MCP servers: add `--trust-folder` (or set
   `ZEN_TRUST_FOLDER=1`).
 
-## `zen models` — free-model auto-discovery
+## `zen models` - free-model auto-discovery
 
 Free-model catalogs rotate constantly, so `zen models` probes the configured
 provider and tells you which free model actually works *right now*:
@@ -219,7 +219,7 @@ provider and tells you which free model actually works *right now*:
 ```
 
 Probing runs 3 tiny micro-tasks per model (instruction following, arithmetic,
-code completion), sequentially with short timeouts — a few hundred tokens per
+code completion), sequentially with short timeouts - a few hundred tokens per
 model, respectful of free-tier rate limits. Results are cached in
 `~/.zen/models-cache.json` (re-probed when the cache is older than 24h or the
 provider changes). A model is only recommended when *every* probe succeeded.
@@ -230,7 +230,7 @@ provider changes). A model is only recommended when *every* probe succeeded.
 ```
 ### Context debugger
 
-`zen context` shows where your tokens actually went — an observable, attributable
+`zen context` shows where your tokens actually went - an observable, attributable
 view of what the model saw. Token totals come from the API's reported usage when
 available, otherwise from a `chars/4` estimate (the output says which).
 
@@ -243,7 +243,7 @@ available, otherwise from a `chars/4` estimate (the output says which).
 Example output:
 
 ```
-Context: 42,310 tokens (reported by API) — session 9f3a…
+Context: 42,310 tokens (reported by API) - session 9f3a…
 ├── system prompt: 1,180 (2.8%)
 ├── tool schemas (12): 8,400 (19.9%)
 │   ├── bash: 325
@@ -254,11 +254,11 @@ Context: 42,310 tokens (reported by API) — session 9f3a…
     └── …
 
 Compactions (1):
-  1. 2026-10-17T10:02:00Z — 38,200 tokens → 100 summary tokens (38,100 dropped)
+  1. 2026-10-17T10:02:00Z - 38,200 tokens → 100 summary tokens (38,100 dropped)
 
-Top token consumers — where did your tokens go?
-  1. tool_result (read src/main.rs) — 5,120 tokens
-     → Large result no longer referenced — a future prune pass could summarize or drop it.
+Top token consumers - where did your tokens go?
+  1. tool_result (read src/main.rs) - 5,120 tokens
+     → Large result no longer referenced - a future prune pass could summarize or drop it.
 ```
 
 Large tool results that no later message references are flagged `[PRUNABLE?]`
@@ -267,7 +267,7 @@ Large tool results that no later message references are flagged `[PRUNABLE?]`
 
 Two Claude Code-style shortcuts keep you in flow without spending a model round-trip:
 
-**`@<glob>` — attach file contents to your prompt.** Mentions are expanded before the
+**`@<glob>` - attach file contents to your prompt.** Mentions are expanded before the
 prompt is sent; each file is wrapped in a `<file path="..." tokens="~N">` block with a
 path header and token count.
 
@@ -283,13 +283,13 @@ path header and token count.
 - Multiple `@` mentions per prompt; globs (`*`, `**`, `?`, `[...]`) supported.
 - `.gitignore` is respected (ignored files never match).
 - A pattern that matches nothing is an error naming the pattern (`@nope/*.rs matched
-  no files`) — the turn is not sent.
-- Binary files become a `[binary file — contents not included]` placeholder; files over
+  no files`) - the turn is not sent.
+- Binary files become a `[binary file - contents not included]` placeholder; files over
   512 KiB are truncated.
 - Token budget: expansions over the budget only warn. Configure with
   `{"mentions": {"tokenBudget": 20000}}` in settings (default 10 000).
 
-**`!cmd` — run a shell command immediately.** No model round-trip: the command runs at
+**`!cmd` - run a shell command immediately.** No model round-trip: the command runs at
 once, output prints, and stdout/stderr is appended to the conversation as a
 `shell_passthrough` record so the *next* turn sees it.
 
@@ -306,7 +306,7 @@ once, output prints, and stdout/stderr is appended to the conversation as a
   itself.
 ### Plan mode
 
-Plan mode is **mechanically** enforced read-only — the harness withholds `Write`/`Edit`/state-changing
+Plan mode is **mechanically** enforced read-only - the harness withholds `Write`/`Edit`/state-changing
 `Bash`/… from the model, and rejects any mutating call that slips through with a tool error
 (the tool never executes). It is not model politeness.
 
@@ -316,7 +316,7 @@ Plan mode is **mechanically** enforced read-only — the harness withholds `Writ
 - Start the REPL in plan mode: `"permissions": { "defaultMode": "plan" }` in `.zen/settings.json`.
 ### Memory (ZEN.md)
 
-Project memory loads hierarchically — later files override/extend earlier ones:
+Project memory loads hierarchically - later files override/extend earlier ones:
 
 1. `/etc/zen/ZEN.md` (managed, organisation-wide)
 2. `~/.zen/ZEN.md` (user), then `~/.zen/rules/**/*.md`
@@ -327,15 +327,15 @@ A directory with no ZEN.md-family file falls back to `AGENTS.md` (then `.zen/AGE
 so repositories written for other agents work unchanged; `~/.zen/AGENTS.md` stands in for a
 missing `~/.zen/ZEN.md`. Files support `@path` imports (max 4 hops, cycles safe).
 
-- `/memories` — list every loaded memory file with its token count and the total,
+- `/memories` - list every loaded memory file with its token count and the total,
   so you can see exactly what the model sees.
-- `/memory` — list the loaded memory file paths.
-- `/init` — scaffold (or improve) the project `ZEN.md`. If `CLAUDE.md`/`AGENTS.md` files
+- `/memory` - list the loaded memory file paths.
+- `/init` - scaffold (or improve) the project `ZEN.md`. If `CLAUDE.md`/`AGENTS.md` files
   written for other agents are found, zen offers to import their content into the new
   `ZEN.md` (migration path for Claude Code/Codex switchers).
 ## Prompt caching (paid models)
 
-In a long agent loop the cost driver is rarely the model's answers — it is the
+In a long agent loop the cost driver is rarely the model's answers - it is the
 ever-growing input prefix (system prompt + tool schemas) replayed on every turn.
 Zen ships prompt caching for paid models, on by default, with zero configuration:
 
@@ -344,7 +344,7 @@ Zen ships prompt caching for paid models, on by default, with zero configuration
   and after the stable system block. Cache reads are billed at **10% of the
   input price** (90% off); the 5-minute TTL refreshes on every read, so an active
   session stays warm.
-- **OpenAI**: automatic — any stable prompt prefix >= 1,024 tokens is served from
+- **OpenAI**: automatic - any stable prompt prefix >= 1,024 tokens is served from
   cache at 90% off, no code changes. Zen keeps the prefix stable so hits happen.
 - **Gemini / DeepSeek**: implicit/best-effort caching benefits from the same
   stable-prefix discipline, free.
@@ -354,23 +354,23 @@ Measured savings on real agent trajectories: **-49% to -80% token cost**
 
 How zen keeps the cache hot:
 
-1. **Cache-aware prompt ordering** — the system prompt is assembled
+1. **Cache-aware prompt ordering** - the system prompt is assembled
    stable-first: role, project snapshot, memory, skills. The volatile
    environment block (date, git branch/status) goes *last*, after an internal
    marker, so it never poisons the cached prefix.
-2. **Stable tool bundles** — tool definitions are sent in the same order every
+2. **Stable tool bundles** - tool definitions are sent in the same order every
    turn. Recomposing the tool list per request would silently invalidate the
    cache (Anthropic caches tools before everything else).
-3. **No volatile values in the prefix** — a CI test fails the build if today's
+3. **No volatile values in the prefix** - a CI test fails the build if today's
    date or a request id ever leaks into the cacheable prefix.
 
 Verify it is working: `/cost` (or `zen cost`) shows the session's cache hit
 rate, e.g. `Prompt cache: 800 tokens served from cache (80% of input)`. If the
 hit rate is unexpectedly 0 on a paid model, something broke the prefix
-stability — that is the first thing to check.
+stability - that is the first thing to check.
 ### Tool-result pruning
 
-In a long agent loop the cost driver is rarely the model's answers — it is the
+In a long agent loop the cost driver is rarely the model's answers - it is the
 ever-growing input prefix replayed on every step. A 5,000-token tool result added
 on step 2 of a 15-step run is re-billed ~13 more times. Zen prunes it:
 
@@ -378,7 +378,7 @@ on step 2 of a 15-step run is re-billed ~13 more times. Zen prunes it:
   (default 5; never the last 2 turns) that are large (>=2k tokens) and whose
   identifier (file path, command, ...) is not referenced by any later message are
   replaced with an extractive summary: first line + token count + a
-  `[zen: pruned ...]` marker. Summaries are extractive, never rewritten — exact
+  `[zen: pruned ...]` marker. Summaries are extractive, never rewritten - exact
   identifiers survive byte-identical. Results whose identifier appears in the
   current plan or recent tool calls are never pruned.
 - **Capping**: new tool results over `--max-result-tokens` tokens (default 8000)
@@ -394,7 +394,7 @@ Pruning emits a `system`/`prune` stream-json event (`pruned`, `tokens_saved`) an
 `zen context` tells pruned summaries apart from live results by their marker.
 ### Tool bundles (token-saving)
 
-Every tool's JSON schema is re-sent on every model request — a hidden per-turn
+Every tool's JSON schema is re-sent on every model request - a hidden per-turn
 tax (~1.7k tokens for the full builtin set). A *tool bundle* sends only one
 task phase's tools with full schemas; tools outside the phase are name-only
 stubs (the model knows they exist, at ~50 tokens instead of ~150-300).
@@ -411,7 +411,7 @@ stubs (the model knows they exist, at ~50 tokens instead of ~150-300).
 bundle. If the model calls a stubbed tool, the call is refused with guidance
 instead of executing with hallucinated arguments.
 
-The bundle is fixed for the whole session — it is never recomposed per
+The bundle is fixed for the whole session - it is never recomposed per
 request, because changing the tool list between requests silently invalidates
 provider prompt caches (which would cost more than the schemas save).
 
@@ -433,7 +433,7 @@ bundle over budget fails the build. Bump a budget only with a measured
 justification.
 ## Session export / import
 
-No major coding agent ships session portability — transcripts are locked into
+No major coding agent ships session portability - transcripts are locked into
 one tool's format. ZenCode exports any session to a documented, versioned
 format (`format_version`) that other tools can read, and imports it back:
 
@@ -460,7 +460,7 @@ See [docs/session-format.md](docs/session-format.md) for the format spec.
 ```
 
 `zen review` runs the model with a **mechanically enforced read-only tool set**
-(only `Read`, `Glob`, `Grep` are registered — write tools do not exist in the
+(only `Read`, `Glob`, `Grep` are registered - write tools do not exist in the
 session, and a permission checker denies anything not flagged read-only). Findings
 are grouped by severity (`critical` / `high` / `medium` / `low` / `nit`) with
 `file:line`, category (`bugs`, `security`, `perf`, `style`, `tests-missing`) and a
@@ -492,13 +492,13 @@ Fan out parallel research sub-agents over a topic, then synthesize a cited markd
 The agent should not declare work complete without evidence, and should not silently
 grow scope. The done-guard gives you three tools:
 
-- `/done` — runs the definition-of-done checklist in the working directory: the
+- `/done` - runs the definition-of-done checklist in the working directory: the
   project's tests and linter (auto-detected: `cargo test`/`clippy`, `npm test`/`eslint`,
   `pytest`, `go test`), the session todo list (every item must be `completed`), plus a
   report of changed files, scope violations, and speculative new public APIs with no
   callers (YAGNI). Exits non-zero in `-p` mode when a check fails, so it works in CI:
   `zen -p "/done"`.
-- `/scope <glob>...` — declares the task scope (e.g. `/scope src/**`), seeded
+- `/scope <glob>...` - declares the task scope (e.g. `/scope src/**`), seeded
   automatically from file mentions in your first prompt. The turn guard nudges the model
   to confirm with you before mutating files outside it, and the REPL warns you after
   each turn that changed out-of-scope files. `/scope` with no args shows the current
@@ -510,8 +510,8 @@ grow scope. The done-guard gives you three tools:
 ### Curated plugin registry
 
 The skill registry has two tiers: `curated` (maintainer-reviewed, badge `[curated ✓]`)
-and `community` (unreviewed). Every curated entry carries public review metadata —
-reviewer, date, and notes covering security, quality, documentation, and maintenance —
+and `community` (unreviewed). Every curated entry carries public review metadata -
+reviewer, date, and notes covering security, quality, documentation, and maintenance -
 and the badge is version-scoped. See `docs/plugin-curation.md` for the full process.
 
 ```sh
@@ -544,13 +544,13 @@ ZenCode is designed to be a good API citizen so your accounts stay in good stand
 **What you should do:**
 - One API key per machine; never share keys
 - Don't run many parallel sessions on a single key
-- Keep payment methods current — chargebacks trigger automatic suspensions
+- Keep payment methods current - chargebacks trigger automatic suspensions
 - If a key may be leaked, revoke it at the provider immediately
 
 **What gets accounts banned (so you can avoid it):**
-Providers suspend accounts for payment disputes, shared/resold keys, bot-like traffic, and ToS violations (e.g., model distillation, subscription-token relay) — not for normal coding-agent usage within rate limits. [Full details →](docs/account-safety.md)
+Providers suspend accounts for payment disputes, shared/resold keys, bot-like traffic, and ToS violations (e.g., model distillation, subscription-token relay) - not for normal coding-agent usage within rate limits. [Full details →](docs/account-safety.md)
 
-> No tool can guarantee your account won't be flagged — providers use automated systems with false positives. ZenCode minimizes the risk factors within its control and warns you about the rest.
+> No tool can guarantee your account won't be flagged - providers use automated systems with false positives. ZenCode minimizes the risk factors within its control and warns you about the rest.
 ## REPL polish commands
 
 Small quality-of-life slash commands for the interactive REPL:
@@ -560,7 +560,7 @@ Small quality-of-life slash commands for the interactive REPL:
 | `/loop <n> <prompt>` | Run a prompt `n` times in a row (batch operations). Shows `[loop i/n]` per iteration, stops on the first failed turn, capped at 100 iterations. |
 | `/goal <text>` | Set a session goal, shown on a dimmed line above the prompt and in `/status`. `/goal` shows it, `/goal clear` unsets it. Reset by `/clear`. |
 | `/personality <name>` | Switch response style: `concise`, `normal` (default), `detailed`. Adjusts the system prompt; `normal` leaves it byte-identical. |
-| `/vim` | Toggle the vim-keybinding preference. The REPL currently reads plain stdin lines, so vi editing motions are not available yet — the command records the preference and says so honestly. |
+| `/vim` | Toggle the vim-keybinding preference. The REPL currently reads plain stdin lines, so vi editing motions are not available yet - the command records the preference and says so honestly. |
 | `/theme <name>` | Switch color theme: `dark` (default), `light`, `none`. `NO_COLOR` (any value) always disables colors regardless of theme. |
 
 ```bash
@@ -581,7 +581,7 @@ zen sessions restore <id>       # bring an archived session back
 zen sessions delete <id>        # permanently delete (asks for confirmation; --yes to skip)
 ```
 
-Archived sessions live in `<project>/archive/` — they stay out of `zen sessions list`
+Archived sessions live in `<project>/archive/` - they stay out of `zen sessions list`
 and `--continue`, but `--resume <id>` and `restore` still work. Deleting removes the
 transcript and its scratch files; there is no undo.
 
@@ -593,8 +593,8 @@ Auto-archive stale sessions with `sessions.autoArchiveDays` in `~/.zen/settings.
 ```
 ## LSP code intelligence
 
-`zen` reads code like a compiler: three read-only tools — `goto_definition`, `hover` and
-`find_references` — backed by real language servers spoken to over LSP (JSON-RPC 2.0 on
+`zen` reads code like a compiler: three read-only tools - `goto_definition`, `hover` and
+`find_references` - backed by real language servers spoken to over LSP (JSON-RPC 2.0 on
 stdio with `Content-Length` framing). Servers start lazily per language the first time a
 tool needs them and stay alive for the whole session, so repeated queries are fast.
 
@@ -620,16 +620,16 @@ How it works:
 
 Tool reference:
 
-- `goto_definition(file, line, col)` — definition location(s) of the symbol. Parses all
+- `goto_definition(file, line, col)` - definition location(s) of the symbol. Parses all
   three LSP shapes: a single `Location`, `Location[]`, and `LocationLink[]`.
-- `hover(file, line, col)` — type signature and documentation, rendered as markdown.
-- `find_references(file, line, col, include_declaration=true)` — every use of the symbol.
+- `hover(file, line, col)` - type signature and documentation, rendered as markdown.
+- `find_references(file, line, col, include_declaration=true)` - every use of the symbol.
 
 Each result prints human-readable `path:line:col` lines followed by a fenced `json` block, so
 both the model and scripts can consume it.
 
 Graceful degradation: if a server binary is missing from `PATH`, the tool fails with a
-clear error naming the server and the exact install command — the agent never hangs.
+clear error naming the server and the exact install command - the agent never hangs.
 The tools honor `--tools` (allowlist and `+`/`-` delta forms) and `--disallowedTools`
 like built-in tools, and they are skipped by `--tools ""`.
 ## Skills
@@ -650,10 +650,10 @@ zen skill install registry:tdd --yes  # install from the registry
 
 Discoverability: the community skill registry ([`docs/skill-registry.md`](docs/skill-registry.md))
 ships curated with the binary (`zen skill search` works offline). The registry
-is advisory — install re-verifies trust from the skill's own signature, so a
+is advisory - install re-verifies trust from the skill's own signature, so a
 registry can never upgrade a skill's tier.
 
-Trust tiers: `[✓ verified]` (ed25519-signed by ZenCode — nobody else in the
+Trust tiers: `[✓ verified]` (ed25519-signed by ZenCode - nobody else in the
 industry ships a real verified tier), `[community]` (you approved the install,
 hash-pinned, never auto-updates), `[⚠ unverified]` (sandboxed: read-only, no
 network). Install always shows the permission diff first and requires `--yes`;

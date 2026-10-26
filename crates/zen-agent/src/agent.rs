@@ -439,7 +439,7 @@ impl Agent {
             num_turns,
             result,
             session_id: self.ctx.session_id.clone(),
-            // Priced from the accumulated usage with the shared budget table — the
+            // Priced from the accumulated usage with the shared budget table - the
             // same table the `zen cost` ledger prices with, so the record and the
             // ledger agree. Unknown pricing contributes 0 rather than a guessed
             // figure; free/local models price to a genuine 0.0.
@@ -1436,7 +1436,7 @@ impl Agent {
         let current_turn = self.prune_turn_starts.len().saturating_sub(1);
         let min_age = self.config.prune.min_age();
         // Protected identifiers: the current plan plus identifiers from tool calls
-        // in recent turns (age < min_age) — the agent is actively working with
+        // in recent turns (age < min_age) - the agent is actively working with
         // those files, so older results for the same identifier must survive.
         let mut protected = self.plan_text().unwrap_or_default();
         protected.push('\n');
@@ -1491,7 +1491,7 @@ impl Agent {
 /// side-effect free: read-only (`Tool::is_read_only`) AND one of these tools, whose outputs
 /// never depend on another call's side effects and never mutate shared state.
 /// Everything else (Bash, Write/Edit/MultiEdit, Task, MCP tools, TodoWrite, WebFetch, …)
-/// flushes the current batch and runs alone, in order — sequential when uncertain, so a call
+/// flushes the current batch and runs alone, in order - sequential when uncertain, so a call
 /// whose input feeds on another call's output can never race it.
 pub(crate) fn is_parallel_safe(tool_name: &str) -> bool {
     matches!(tool_name, "Read" | "Glob" | "Grep" | "LS")

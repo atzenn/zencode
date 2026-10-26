@@ -1,4 +1,4 @@
-# PLAN p0b — spill, background jobs + tool timeouts, session event log
+# PLAN p0b - spill, background jobs + tool timeouts, session event log
 
 Branch `feat/p0b` from `origin/main` (ef3bca5). One commit + push per item, in order.
 Design reference: dsh `packages/spill`, `ctx.jobs` + `timeout-policy`, "model-visible means logged"
@@ -27,7 +27,7 @@ Gate after every item: `cargo test --workspace --no-fail-fast` and
 - Settings `toolTimeouts` (ms per tool name, `"default"` for the rest, 0 = none). Defaults:
   Bash 120000 (its default when the call gives no `timeout_ms`), other tools 300000, Task/JobOutput
   exempt. The agent wraps non-Bash calls in the timeout and returns a clear error.
-- Proof: tests — job id returned, incremental reads see only new output, exit status reported,
+- Proof: tests - job id returned, incremental reads see only new output, exit status reported,
   kill stops a `sleep` job (and its child on Unix), unknown id errors; agent test where a slow tool
   hits a 50 ms timeout; settings parse test. Windows: CI build job.
 

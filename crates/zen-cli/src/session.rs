@@ -218,7 +218,7 @@ pub fn load_history(path: &Path) -> Result<Vec<zen_core::ChatMessage>> {
 ///
 /// The writer compares the agent history *before* and *after* a turn:
 /// - if `after` extends `before`, only the new messages are appended (user prompt, assistant
-///   tool calls, tool results, final answer — the whole exchange, so a resume sees tool use too);
+///   tool calls, tool results, final answer - the whole exchange, so a resume sees tool use too);
 /// - otherwise the turn compacted the history, so a `summary` record (the summary message's
 ///   text) is written first, followed by every message after it. [`load_messages`] then resumes
 ///   from that boundary.

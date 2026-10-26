@@ -7,16 +7,16 @@
 //! endpoint otherwise (the only client on `main` today).
 //!
 //! Chinese providers (per `zencode-chinese-competitors.md` research):
-//! - [`zai`](https://docs.z.ai/) — Z.ai / Zhipu, GLM models, Anthropic-compatible
+//! - [`zai`](https://docs.z.ai/) - Z.ai / Zhipu, GLM models, Anthropic-compatible
 //!   endpoint at `https://api.z.ai/api/anthropic`.
-//! - [`moonshot`](https://platform.moonshot.ai/docs) — Moonshot AI, Kimi models,
+//! - [`moonshot`](https://platform.moonshot.ai/docs) - Moonshot AI, Kimi models,
 //!   Anthropic-compatible endpoint at `https://api.moonshot.ai/anthropic`.
-//! - [`deepseek`](https://api-docs.deepseek.com/) — DeepSeek, Anthropic-format
+//! - [`deepseek`](https://api-docs.deepseek.com/) - DeepSeek, Anthropic-format
 //!   endpoint at `https://api.deepseek.com/anthropic`; the $0.14/1M price floor.
-//! - `cloudflare` — Cloudflare Workers AI, OpenAI-compatible endpoint at
+//! - `cloudflare` - Cloudflare Workers AI, OpenAI-compatible endpoint at
 //!   `https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1` with
 //!   a genuine free tier (10,000 Neurons/day). The `{ACCOUNT_ID}` placeholder
-//!   is interpolated from `CLOUDFLARE_ACCOUNT_ID` — see
+//!   is interpolated from `CLOUDFLARE_ACCOUNT_ID` - see
 //!   [`ProviderInfo::endpoint_resolved`].
 //!
 //! Integration points for in-flight PRs:
@@ -70,7 +70,7 @@ pub struct ProviderInfo {
     pub model_ids: &'static [&'static str],
     /// Verified per-model pricing in USD per 1M tokens: (model, input, output).
     /// Sources: `zencode-chinese-competitors.md`. Models without verified
-    /// pricing are absent here — [`model_pricing`] returns `None` for them.
+    /// pricing are absent here - [`model_pricing`] returns `None` for them.
     pub pricing: &'static [(&'static str, f64, f64)],
     /// Models to feature in `zen models` discovery (cheap and/or permissively
     /// licensed). Entries are `(provider_key, model_id)`.
@@ -109,7 +109,7 @@ impl ProviderInfo {
     ///
     /// Returns `None` when the provider offers no usable endpoint, or when a
     /// template placeholder cannot be resolved (e.g. Cloudflare without
-    /// `CLOUDFLARE_ACCOUNT_ID` set) — callers then fall back to the default
+    /// `CLOUDFLARE_ACCOUNT_ID` set) - callers then fall back to the default
     /// endpoint, mirroring the Anthropic-only-provider path.
     pub fn endpoint_resolved(
         &self,
@@ -203,7 +203,7 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             model_ids: &[],
             pricing: &[],
             featured: &["qwen3-coder", "qwen3-coder:30b"],
-            rate_limit_notes: "Local — no rate limits, no pacing needed.",
+            rate_limit_notes: "Local - no rate limits, no pacing needed.",
         },
         // --- Chinese providers (new in this PR) ---
         ProviderInfo {
@@ -243,7 +243,7 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             // V4 Flash is the credible price floor, per zencode-chinese-competitors.md.
             pricing: &[("deepseek-v4-flash", 0.14, 0.28)],
             featured: &["deepseek-v4-flash"],
-            rate_limit_notes: "Aggressive rate limits on lower tiers; 429s are common — \
+            rate_limit_notes: "Aggressive rate limits on lower tiers; 429s are common - \
                 back off with jitter, never hammer (account-safety PR #47 applies).",
         },
         // --- Cloudflare Workers AI (free-tier inference) ---
@@ -251,7 +251,7 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             key: "cloudflare",
             display_name: "Cloudflare Workers AI",
             // `{ACCOUNT_ID}` is interpolated from CLOUDFLARE_ACCOUNT_ID by
-            // `endpoint_resolved` — Workers AI embeds the account id in the path.
+            // `endpoint_resolved` - Workers AI embeds the account id in the path.
             openai_base_url: Some(
                 "https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1",
             ),
@@ -262,14 +262,14 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             // Verified paid pricing per zencode-cloudflare-research-2026-10-17.md
             // (08/2026). clef-flash output is genuinely free ($0). The free
             // tier (10,000 Neurons/day, resets 00:00 UTC) makes usage $0
-            // regardless of the table below — see rate_limit_notes.
+            // regardless of the table below - see rate_limit_notes.
             pricing: &[("@cf/cloudflare/clef-flash", 0.09, 0.0)],
             // clef-flash first: free output = the most free-first option in
             // the registry. Feeds `zen models` discovery (PR #41).
             featured: &["@cf/cloudflare/clef-flash", "@cf/meta/llama-3.1-8b-instruct"],
             rate_limit_notes: "Free tier: 10,000 Neurons/day (resets 00:00 UTC), \
                 then $0.011/1K Neurons. Best for small tasks (classification, \
-                routing, summarisation) — not a coding-model replacement.",
+                routing, summarisation) - not a coding-model replacement.",
         },
         // --- remainder of PR #44's registry ---
         ProviderInfo {
@@ -676,7 +676,7 @@ mod tests {
         // clef-flash at $0.09/1M in undercuts the old $0.14 floor; its output
         // is genuinely free, and the 10K Neurons/day free tier is $0 anyway.
         assert_eq!(order[0], "cloudflare");
-        assert_eq!(order[1], "deepseek"); // $0.14/1M — the old price floor
+        assert_eq!(order[1], "deepseek"); // $0.14/1M - the old price floor
         // moonshot's cheapest ($0.95) sorts before zai's ($1.40).
         let zi = order.iter().position(|k| k == "zai").unwrap();
         let mi = order.iter().position(|k| k == "moonshot").unwrap();

@@ -9,8 +9,8 @@ are removed.
 | | `curated` | `community` |
 |---|---|---|
 | Reviewed by maintainers | ✅ yes | ❌ no |
-| Review notes public | ✅ in `registry-curated.json` | — |
-| Badge version-scoped | ✅ (`reviewed_version`) | — |
+| Review notes public | ✅ in `registry-curated.json` | - |
+| Badge version-scoped | ✅ (`reviewed_version`) | - |
 | Install warning | standard permission diff | stronger unreviewed warning |
 | Search | `zen skill search` (badge `[curated ✓]`) | `zen skill search` (badge `[community]`) |
 
@@ -27,7 +27,7 @@ each in the entry's `review_notes`:
   didn't name. Network access is allowed only if declared in `zen-plugin.json`
   and justified in the review notes.
 - No credential access beyond declared permissions.
-- Declared permissions match actual tool use — no `bash` in the manifest while
+- Declared permissions match actual tool use - no `bash` in the manifest while
   the SKILL.md only reads files (over-broad), and no undeclared tools in use
   (under-declared).
 - No obfuscated payloads, no base64-encoded blobs without a clear reason.
@@ -37,7 +37,7 @@ each in the entry's `review_notes`:
 ### 2. Quality
 
 - Ships a deterministic eval (`test.md` with CHECK lines) that passes.
-- Instructions are concrete and falsifiable — a reader can tell whether the
+- Instructions are concrete and falsifiable - a reader can tell whether the
   agent followed them.
 - No conflicts with built-in skills; idempotent where it matters.
 
@@ -120,7 +120,7 @@ Rules enforced by `zen`:
 
 - `trust_tier` must be `"curated"` inside this file.
 - `reviewer` must be non-empty; `review_date` must be a valid `YYYY-MM-DD`.
-- `review_notes` must cover all four criteria and be at least 100 characters —
+- `review_notes` must cover all four criteria and be at least 100 characters -
   a real review, not a rubber stamp.
 
 Users can extend the registry at `~/.zen/registry-curated.json` (same format;

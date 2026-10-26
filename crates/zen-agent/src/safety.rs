@@ -16,7 +16,7 @@
 //! What this module will NOT do (by design):
 //! - Never retry `insufficient_quota` / billing errors.
 //! - Never spoof or omit the User-Agent.
-//! - Never promise "you won't get banned" — see [`SAFETY_DISCLAIMER`].
+//! - Never promise "you won't get banned" - see [`SAFETY_DISCLAIMER`].
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,7 +34,7 @@ pub fn user_agent() -> String {
 }
 
 /// Honest disclaimer: no tool can guarantee an account won't be flagged.
-pub const SAFETY_DISCLAIMER: &str = "No tool can guarantee your account won't be flagged — \
+pub const SAFETY_DISCLAIMER: &str = "No tool can guarantee your account won't be flagged - \
     providers use automated systems with false positives. ZenCode minimizes the risk factors \
     within its control and warns you about the rest.";
 
@@ -84,7 +84,7 @@ impl ErrorClass {
 /// to distinguish `rate_limit_exceeded` (retry) from `insufficient_quota`
 /// (never retry). Anthropic's 529 (`overloaded_error`) is its own class.
 pub fn classify_error(status: Option<u16>, body: &str) -> ErrorClass {
-    // Quota/billing signals in the body — check first, they override status.
+    // Quota/billing signals in the body - check first, they override status.
     let lower = body.to_ascii_lowercase();
     if lower.contains("insufficient_quota")
         || lower.contains("insufficient quota")
@@ -146,7 +146,7 @@ pub fn jitter_now_nanos() -> u64 {
 
 /// Conservative per-provider RPM ceilings used when rate-limit headers are
 /// absent. These are ZenCode's own conservative defaults, NOT provider
-/// documentation — live headers always override them upward.
+/// documentation - live headers always override them upward.
 pub fn default_rpm_ceiling(provider: &str) -> Option<u64> {
     match provider.to_ascii_lowercase().as_str() {
         p if p.contains("openai") => Some(400),
@@ -253,7 +253,7 @@ impl RateLimiter {
 /// Registry of active ZenCode sessions per provider+key (local machine only).
 ///
 /// Stored at `~/.zen/session-registry.json` (via the `dirs` crate, so it works
-/// on Linux/macOS/Windows). Used to warn when many sessions share one key —
+/// on Linux/macOS/Windows). Used to warn when many sessions share one key -
 /// the pattern that trips RPM limits and looks like automated abuse.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SessionRegistry {
@@ -373,7 +373,7 @@ pub fn auth_login_warning(provider: &str) -> String {
         "API key saved for {provider}.\n\
         \n\
         Account safety: ZenCode paces requests and backs off automatically, but your account is your responsibility. To stay safe:\n\
-        - Use one key per machine — don't share keys across computers or people.\n\
+        - Use one key per machine - don't share keys across computers or people.\n\
         - Avoid running many parallel ZenCode sessions on the same key.\n\
         - If you see repeated rate-limit warnings, slow down rather than pushing through.\n\
         \n\
@@ -411,7 +411,7 @@ pub fn repeated_429_warning(hits: u32, provider: &str) -> String {
 pub fn quota_exhausted_error(provider: &str, detail: &str) -> String {
     format!(
         "Out of quota / billing issue ({provider}: {detail}).\n\
-        ZenCode will NOT retry — retrying a billing error only creates failed-request noise on your account.\n\
+        ZenCode will NOT retry - retrying a billing error only creates failed-request noise on your account.\n\
         Check your billing dashboard, then re-run. Your work is saved; nothing was lost."
     )
 }
@@ -419,7 +419,7 @@ pub fn quota_exhausted_error(provider: &str, detail: &str) -> String {
 /// Shown once per session on the first 429 (info, not alarming).
 pub fn first_429_notice(provider: &str) -> String {
     format!(
-        "Rate limited by {provider} — backing off automatically. This is normal under load; your request will be retried."
+        "Rate limited by {provider} - backing off automatically. This is normal under load; your request will be retried."
     )
 }
 

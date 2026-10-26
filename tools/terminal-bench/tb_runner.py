@@ -167,7 +167,7 @@ def write_report(path: Path, results: list[TaskResult], model: str,
     errored = sum(1 for r in results if r.passed is None)
     score = f"{passed}/{len(results)}"
     lines = [
-        "# Terminal-Bench subset — ZenCode results",
+        "# Terminal-Bench subset - ZenCode results",
         "",
         f"- Model: `{model}` (free, $0) via `{base_url}`",
         f"- ZenCode: `{zen_version}`",

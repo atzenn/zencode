@@ -2,7 +2,7 @@
 
 Skills are reusable bundles of instructions (methodology, checklists, habits)
 that the agent loads on demand. ZenCode adopts the **open SKILL.md standard**
-(Anthropic, Oct 2025 — same format as Claude Code / Codex / Cursor, so the
+(Anthropic, Oct 2025 - same format as Claude Code / Codex / Cursor, so the
 existing skill corpus works here) and adds three things nobody else ships
 together: **declared permissions**, **trust tiers with signatures**, and
 **built-in evals**.
@@ -13,9 +13,9 @@ A skill is a directory containing:
 
 ```
 my-skill/
-  SKILL.md          # required — instructions + YAML frontmatter
-  zen-plugin.json   # required for install — identity + permissions + signature
-  test.md           # recommended — CHECK-line evals run by `zen skill test`
+  SKILL.md          # required - instructions + YAML frontmatter
+  zen-plugin.json   # required for install - identity + permissions + signature
+  test.md           # recommended - CHECK-line evals run by `zen skill test`
 ```
 
 ### SKILL.md
@@ -69,7 +69,7 @@ Permission fields are **declarative and enforced** (Codex-style), not advisory:
 Validation rules: `exec: true` requires `bash` in `allowed_tools`;
 `file_write: true` requires a write tool (`write`/`edit`/`multiedit`).
 
-### test.md — skill evals
+### test.md - skill evals
 
 Deterministic checks, no model calls (free and reproducible):
 
@@ -96,7 +96,7 @@ Grammar: `CHECK <target> <op> <value>` where op is `==`, `!=`, `contains`,
 | `unverified` | `[⚠ unverified]` | No manifest | Never; sandboxed |
 
 **Sandbox for unverified:** read-only tools (`read`, `glob`, `grep`), no
-network, project scope — regardless of what the skill claims.
+network, project scope - regardless of what the skill claims.
 
 **The Plugin4Shell lesson:** there are no silent auto-updates in ZenCode.
 `zen skill update` (planned) will show a diff before applying anything.
@@ -106,7 +106,7 @@ diffs are the control that matters.
 ## Signing (verified tier)
 
 The signature covers the **canonical manifest**: JSON with sorted keys,
-sorted/deduped tool lists, compact separators, UTF-8 — the `signature` field
+sorted/deduped tool lists, compact separators, UTF-8 - the `signature` field
 itself excluded. Verification uses the ed25519 public key baked into the
 binary (`ZENCODE_SIGNING_PUBKEY_HEX` in `crates/zen-cli/src/skills.rs`).
 
@@ -149,7 +149,7 @@ All three are signed and ship `[✓ verified]`.
   `SkillPermissionGate` wraps the session permission checker. Every time the
   model loads a registry-installed skill through the Skill tool, the skill is
   recorded and its declared `allowed_tools` are enforced on all subsequent
-  tool calls — deny-by-default for undeclared tools (e.g. a skill declaring
+  tool calls - deny-by-default for undeclared tools (e.g. a skill declaring
   only `read` cannot drive `Bash`). Multiple loaded skills combine by
   **union**; advisory skills (empty `allowed_tools`) add no filtering.
   Sub-agents spawned from the session share the same gate state.
@@ -157,4 +157,4 @@ All three are signed and ship `[✓ verified]`.
   allowlist wrapper; `SkillPermissionGate` applies it session-wide.
 - Boundary: enforcement covers **registry-installed** skills (permissions the
   user approved at install time). Plain `.zen/skills/` directories without a
-  registry entry are advisory — loading them adds no filtering.
+  registry entry are advisory - loading them adds no filtering.

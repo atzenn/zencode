@@ -215,7 +215,7 @@ mod tests {
         assert!(!volatile.is_empty(), "environment block must be present after the marker");
         // Today's date lives in the volatile tail, never in the stable prefix.
         let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-        assert!(!stable.contains(&today), "stable prefix leaks today's date — cache killer");
+        assert!(!stable.contains(&today), "stable prefix leaks today's date - cache killer");
         assert!(volatile.contains(&today), "volatile tail should carry the date");
         // Stable prefix is time-invariant: two builds must agree byte-for-byte.
         let p2 = build_system_prompt(&c, Path::new("/tmp"), None).unwrap();

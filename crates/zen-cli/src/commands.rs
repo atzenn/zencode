@@ -195,7 +195,7 @@ pub fn cost_report(usage: &zen_core::UsageStats, model: &str, base_url: &str) ->
     // ~10% of the normal price (Anthropic `cache_control`, OpenAI automatic caching).
     if usage.input_tokens > 0 && usage.cache_read_input_tokens > 0 {
         s.push_str(&format!(
-            "\nPrompt cache: {} tokens served from cache ({:.0}% of input) — ~90% cheaper on paid models",
+            "\nPrompt cache: {} tokens served from cache ({:.0}% of input) - ~90% cheaper on paid models",
             usage.cache_read_input_tokens,
             usage.cache_hit_rate() * 100.0
         ));
@@ -276,7 +276,7 @@ impl CustomCommand {
         }
         // $ARGUMENTS = all args
         body = body.replace("$ARGUMENTS", args);
-        // @file inlining — expand @relative/path
+        // @file inlining - expand @relative/path
         expand_file_refs(&body, base)
     }
 }

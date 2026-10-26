@@ -8,7 +8,7 @@
 //! Pricing (`price_per_1m`) lives here so both `zen-agent` (enforcement) and
 //! `zen-cli` (the `zen cost` ledger) share one table. Prices are an
 //! informational snapshot (Oct 2026), never quotes. Unknown models return
-//! `None` — costs are never guessed, and a cap cannot be enforced on a model
+//! `None` - costs are never guessed, and a cap cannot be enforced on a model
 //! whose price is unknown (the call is allowed).
 
 /// Approximate USD price per 1M tokens as `(input, output)` for one bare model

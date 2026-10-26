@@ -1,4 +1,4 @@
-//! zen-cli library crate — public helpers reused by the binary and integration tests.
+//! zen-cli library crate - public helpers reused by the binary and integration tests.
 //! OWNER: worker C. Exposes the CLI surface, session/transcript helpers, output sinks and the
 //! orchestration entry point `run`.
 
@@ -325,7 +325,7 @@ async fn run_headless(cli: &Cli, cwd: &Path, home: Option<&Path>) -> Result<i32>
         eprintln!("{}", untrusted_notice(&cfg.trust_skipped));
     }
     if cli.ephemeral {
-        eprintln!("EPHEMERAL MODE — nothing will be saved");
+        eprintln!("EPHEMERAL MODE - nothing will be saved");
     }
     let system_prompt = build_system_prompt(cli, cwd, home)?;
 

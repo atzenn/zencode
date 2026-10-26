@@ -730,9 +730,9 @@ fn display_col(path: &str, line0: usize, utf16: u32) -> usize {
     (utf16 + 1) as usize
 }
 
-/// Render `textDocument/hover` contents — a string, a `MarkedString`
+/// Render `textDocument/hover` contents - a string, a `MarkedString`
 /// (`{language, value}`), a `MarkupContent` (`{kind, value}`), or an array of
-/// those — as markdown text.
+/// those - as markdown text.
 pub fn render_hover(result: &Value) -> String {
     match result.get("contents").unwrap_or(&Value::Null) {
         Value::Null => String::new(),
@@ -770,8 +770,8 @@ struct ServerKey {
     root: PathBuf,
 }
 
-/// Owns the language servers for one session. Servers start lazily — one per
-/// (language, project root) — and stay alive across tool calls; dropping the
+/// Owns the language servers for one session. Servers start lazily - one per
+/// (language, project root) - and stay alive across tool calls; dropping the
 /// manager kills them (`kill_on_drop`).
 pub struct LspManager {
     servers: Mutex<HashMap<ServerKey, Arc<LspConnection>>>,
@@ -800,7 +800,7 @@ impl LspManager {
                 .and_then(|e| e.to_str())
                 .unwrap_or("(none)");
             anyhow::anyhow!(
-                "unsupported file type '.{ext}' — LSP code intelligence covers \
+                "unsupported file type '.{ext}' - LSP code intelligence covers \
                  Rust (.rs), Python (.py) and TypeScript/JavaScript \
                  (.ts, .tsx, .js, .jsx, .mjs, .cjs)"
             )
@@ -820,7 +820,7 @@ impl LspManager {
             .unwrap_or((spec.command.clone(), spec.args.clone()));
         if find_binary(&command).is_none() {
             anyhow::bail!(
-                "language server '{command}' not found on PATH — install it with: {}",
+                "language server '{command}' not found on PATH - install it with: {}",
                 spec.install_hint
             );
         }

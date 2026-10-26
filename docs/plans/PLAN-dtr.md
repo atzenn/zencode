@@ -1,4 +1,4 @@
-# PLAN-dtr — durable tool results (branch `feat/durable-tool-results`)
+# PLAN-dtr - durable tool results (branch `feat/durable-tool-results`)
 
 Problem: the transcript gets the turn's messages only when the turn ends (`persist_turn`). A turn
 that dies mid-tool (crash, SIGKILL, timeout, Ctrl-C) loses every tool result it already had, so
@@ -28,11 +28,11 @@ Design (minimal, no new deps):
   the Bash start result and JobOutput reads are tool results like any other.
 
 Steps (proof per step):
-1. core trait + agent field + journal calls — `cargo build`; agent unit tests unchanged.
-2. Recorder impl + `resume_history` — unit test: 2 Read calls, journal 1 result, kill before the
+1. core trait + agent field + journal calls - `cargo build`; agent unit tests unchanged.
+2. Recorder impl + `resume_history` - unit test: 2 Read calls, journal 1 result, kill before the
    2nd → `resume_history` has the 1st result + interrupted marker for the 2nd; parallel batch test
    records raw results; old-format file → `resume_history == load_history`, nothing recovered.
-3. Wiring headless/REPL — integration test with the binary: tool sleeps, process SIGKILLed after
+3. Wiring headless/REPL - integration test with the binary: tool sleeps, process SIGKILLed after
    the first tool finished, `--resume` → the request the server receives contains tool result 1.
 4. Existing `p0b_3_*` replay tests stay byte-identical; `cargo test` all green (baseline 465),
    `cargo clippy --all-targets -- -D warnings` clean.

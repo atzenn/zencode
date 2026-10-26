@@ -92,7 +92,7 @@ def run_timed(argv, env, stdin_data=None, timeout=60):
 
     Peak RSS via os.wait4 on POSIX; None where unsupported. NOTE: we must reap
     the child with wait4 ourselves (not via communicate(), which reaps first and
-    makes rusage unavailable) — stdout/stderr are drained on threads.
+    makes rusage unavailable) - stdout/stderr are drained on threads.
     """
     import threading
 
@@ -255,7 +255,7 @@ def measure_repl_prompt(zen, runs):
         buf = b""
         deadline = start + REPL_TIMEOUT_S
         try:
-            # NOTE: read(1) — never read(N>1) here. The REPL prints the banner
+            # NOTE: read(1) - never read(N>1) here. The REPL prints the banner
             # + "> " (fewer than N bytes total) and then blocks on stdin, so a
             # larger read would hang forever waiting for bytes that never come.
             while time.perf_counter() < deadline:
@@ -459,7 +459,7 @@ def main():
         json.dump(results, f, indent=2)
     with open(os.path.join(args.out_dir, "results.md"), "w") as f:
         f.write("# Cold-start benchmark results\n\n")
-        f.write(f"Binary: `{results['binary']}` — platform `{results['platform']}`\n\n")
+        f.write(f"Binary: `{results['binary']}` - platform `{results['platform']}`\n\n")
         f.write(markdown_table(results) + "\n")
 
     print("\n" + markdown_table(results))

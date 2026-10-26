@@ -7,7 +7,7 @@
 //! 1. [`zen_agent::plan::plan_mode_tools`] hides `Write`/`Edit`/state-changing `Bash`/…
 //!    from the `tools` array of every request while plan mode is active.
 //! 2. `prepare_call` in zen-agent rejects a hallucinated mutating call with the tool error
-//!    `"Tool '<name>' is not available in plan mode"` — the tool never executes and no
+//!    `"Tool '<name>' is not available in plan mode"` - the tool never executes and no
 //!    permission denial is recorded, so the turn stays a clean plan.
 //!
 //! This module owns the REPL side of the contract: the `/plan` toggle, the `[PLAN]` prompt
@@ -27,7 +27,7 @@ pub fn is_approve_word(s: &str) -> bool {
 
 /// Remove trailing plan-exit markers (`ExitPlanMode`, `/exitplan`, backticked variants)
 /// from plan text before it is stored or shown back to the user. Markers in the middle of
-/// the text are kept — only the trailing signal lines are stripped.
+/// the text are kept - only the trailing signal lines are stripped.
 pub fn strip_plan_exit_markers(text: &str) -> String {
     let mut lines: Vec<&str> = text.lines().collect();
     while let Some(last) = lines.last() {

@@ -1,4 +1,4 @@
-//! `zen models` — free-model auto-discovery (roadmap v0.6.0 "The Free Agent").
+//! `zen models` - free-model auto-discovery (roadmap v0.6.0 "The Free Agent").
 //!
 //! Free-model catalogs (OpenRouter `:free`, etc.) rotate constantly, so a static
 //! "best free model" list goes stale on publish day. This module probes the
@@ -8,7 +8,7 @@
 //! Design notes:
 //! - Probing is written against `zen_core::LlmBackend` so unit tests use a mock
 //!   (no network). The real [`ProbeClient`] is a thin reqwest wrapper with a
-//!   short timeout and **no retries** — a probe must fail fast, not hang.
+//!   short timeout and **no retries** - a probe must fail fast, not hang.
 //! - Probing is deliberately sequential with a small gap between models: free
 //!   tiers are rate-limited and hammering them would be rude (and get us
 //!   429'd, which proves nothing).
@@ -196,7 +196,7 @@ pub fn best_model(results: &[ModelProbe]) -> Option<&ModelProbe> {
 ///
 /// `provider`, `context_window` and `free` are metadata about the candidate;
 /// the probe itself only measures "does it answer, how well, how fast".
-/// Any task error (timeout, 429, 5xx, bad response) fails the whole model —
+/// Any task error (timeout, 429, 5xx, bad response) fails the whole model -
 /// strict, because a "verified" badge must mean something.
 pub async fn probe_model(
     backend: &dyn LlmBackend,
@@ -357,7 +357,7 @@ fn id_looks_free(id: &str) -> bool {
 }
 
 /// GET `{base_url}/models` (OpenAI-compatible). Returns an empty vec on any
-/// failure — discovery is best-effort; the static catalog is the fallback.
+/// failure - discovery is best-effort; the static catalog is the fallback.
 pub async fn fetch_models_list(base_url: &str, api_key: Option<&str>) -> Vec<DiscoveredModel> {
     let url = format!("{}/models", base_url.trim_end_matches('/'));
     let http = reqwest::Client::builder()
@@ -562,7 +562,7 @@ fn fmt_latency(ms: u64, success: bool) -> String {
 }
 
 fn print_table(results: &[ModelProbe], base_url: &str) {
-    println!("zen models — {} candidate(s) from {}", results.len(), base_url);
+    println!("zen models - {} candidate(s) from {}", results.len(), base_url);
     println!("  {:<40} {:<16} {:>6} {:>7} {:>8} {:>6}  STATUS", "MODEL", "PROVIDER", "CTX", "PRICE", "LATENCY", "SCORE");
     let best = best_model(results).map(|m| m.model.clone());
     for r in results {

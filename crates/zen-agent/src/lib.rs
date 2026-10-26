@@ -12,21 +12,21 @@
 //!
 //! ## Module layout
 //!
-//! - [`client`] — `OpenAiClient`: POSTs `{base_url}/chat/completions`, retries 429/5xx/network with
+//! - [`client`] - `OpenAiClient`: POSTs `{base_url}/chat/completions`, retries 429/5xx/network with
 //!   exponential backoff and emits `ApiRetry` events. Also owns the small request-level helpers
 //!   shared by the loop and by compaction.
-//! - [`agent`] — `AgentConfig` and `Agent`, the SPEC §3 loop: per-turn model fallback, the tool
+//! - [`agent`] - `AgentConfig` and `Agent`, the SPEC §3 loop: per-turn model fallback, the tool
 //!   dispatch pipeline (bad-JSON → error, PreToolUse → permission → execute → PostToolUse) and the
 //!   Stop-hook loop guard.
-//! - [`compaction`] — `compact` implementation and the token accounting that drives auto-compaction.
-//! - [`plan`] — plan-mode tool hiding (SPEC §5 / Appendix B4), plan-text extraction and the
+//! - [`compaction`] - `compact` implementation and the token accounting that drives auto-compaction.
+//! - [`plan`] - plan-mode tool hiding (SPEC §5 / Appendix B4), plan-text extraction and the
 //!   tool-call-pair repair helpers used by both compaction and the request builder.
-//! - [`finish`] — check-before-finish gate: one reminder after unverified edits, or an automatic
+//! - [`finish`] - check-before-finish gate: one reminder after unverified edits, or an automatic
 //!   `verify.command` run (max 2 rounds) at the would-be stop (r7).
-//! - [`guard`] — per-turn repeat-edit / repeated-failure nudges and todo re-injection (r7).
-//! - [`repair`] — tool-call repair before rejection: near-miss tool names, fenced/malformed JSON,
+//! - [`guard`] - per-turn repeat-edit / repeated-failure nudges and todo re-injection (r7).
+//! - [`repair`] - tool-call repair before rejection: near-miss tool names, fenced/malformed JSON,
 //!   schema type coercion (r7).
-//! - [`subagent`] — `SubAgentExecutor` backing the `Task` tool (SPEC §9).
+//! - [`subagent`] - `SubAgentExecutor` backing the `Task` tool (SPEC §9).
 //!
 //! ## Public API (zen-cli codes against these exact signatures; add freely)
 //!

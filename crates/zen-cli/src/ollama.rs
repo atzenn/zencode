@@ -29,7 +29,7 @@ pub fn is_ollama_id(model: &str) -> bool {
 }
 
 /// Strip the `ollama/` prefix: `ollama/qwen3-coder:30b` → `Some("qwen3-coder:30b")`.
-/// A bare `ollama/` yields `Some("")` — the caller must reject it as a user
+/// A bare `ollama/` yields `Some("")` - the caller must reject it as a user
 /// error. Anything without the prefix yields `None`.
 pub fn strip_ollama_prefix(model: &str) -> Option<&str> {
     model.strip_prefix(OLLAMA_PREFIX)
@@ -97,7 +97,7 @@ pub fn model_matches(available: &str, requested: &str) -> bool {
 /// - the base URL defaults to Ollama unless explicitly configured;
 /// - the API key is dropped for the default local endpoint (Ollama needs none;
 ///   don't leak ambient keys like `OPENAI_API_KEY` to it) but kept when the
-///   user pointed at an explicit — possibly authed — gateway.
+///   user pointed at an explicit - possibly authed - gateway.
 pub fn apply_ollama_routing(
     provider_is_ollama: bool,
     model: &str,
@@ -167,7 +167,7 @@ pub async fn list_local_models(base_url: &str) -> anyhow::Result<Vec<String>> {
         .map_err(|e| anyhow::anyhow!("could not query Ollama at {origin}/api/tags: {e}"))
 }
 
-/// Verify Ollama is up and the model is pulled, with actionable errors —
+/// Verify Ollama is up and the model is pulled, with actionable errors -
 /// never a cryptic connection failure.
 pub async fn ensure_ollama_ready(base_url: &str, model: &str) -> anyhow::Result<()> {
     let origin = api_origin(base_url);

@@ -170,7 +170,7 @@ pub fn api_timeout_secs(api: Option<&serde_json::Value>, key: &str, env: Option<
 /// Settings `maxParallelToolCalls`: how many tool calls may run concurrently in one parallel
 /// batch. A non-negative integer; anything else → the default
 /// ([`zen_agent::DEFAULT_MAX_PARALLEL_TOOL_CALLS`]). Clamped to at least 1, so 0 (or a
-/// missing/invalid value) never means "unlimited" — 1 runs every call sequentially.
+/// missing/invalid value) never means "unlimited" - 1 runs every call sequentially.
 pub fn max_parallel_tool_calls(v: Option<&serde_json::Value>) -> usize {
     v.and_then(|v| v.as_u64())
         .map_or(zen_agent::DEFAULT_MAX_PARALLEL_TOOL_CALLS, |n| n as usize)

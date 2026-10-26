@@ -4,7 +4,7 @@
 //! `<home>/.zen/cost/<session-id>.json`. `zen cost` renders the ledger as a
 //! dashboard: per-model token counts, estimated USD cost, and a prominent
 //! `$0.00` when everything ran on free models. Unknown models are reported as
-//! "pricing unknown" — costs are never guessed.
+//! "pricing unknown" - costs are never guessed.
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -101,7 +101,7 @@ fn ledger_path(home: &Path, session_id: &str) -> std::path::PathBuf {
 }
 
 /// Append one usage entry to the session ledger. Zero-token entries are
-/// skipped; write failures are silent — cost tracking must never break a run.
+/// skipped; write failures are silent - cost tracking must never break a run.
 pub fn record(
     home: Option<&Path>,
     session_id: &str,
@@ -274,10 +274,10 @@ pub fn render_text(summary: &CostSummary) -> String {
         format_usd(summary.total_cost_usd)
     ));
     if summary.all_free {
-        out.push_str("All usage was on free models — this session cost $0.00.\n");
+        out.push_str("All usage was on free models - this session cost $0.00.\n");
     } else if !summary.unknown_pricing.is_empty() {
         out.push_str(&format!(
-            "Note: pricing unknown for {} — total excludes them.\n",
+            "Note: pricing unknown for {} - total excludes them.\n",
             summary.unknown_pricing.join(", ")
         ));
     }

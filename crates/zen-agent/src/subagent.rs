@@ -1,7 +1,7 @@
 //! Sub-agent runner backing the `Task` tool (SPEC §9).
 //!
 //! The `Task` tool lives in `zen-mcp`/`zen-tools`, but running a sub-agent requires an
-//! [`Agent`] plus the `zen-agent` loop — which is this crate. To avoid a crate cycle (zen-tools
+//! [`Agent`] plus the `zen-agent` loop - which is this crate. To avoid a crate cycle (zen-tools
 //! cannot depend on zen-agent), zen-core exposes the [`SubAgentRunner`] trait and `zen-agent`
 //! provides this concrete implementation. The Task tool holds an `Arc<dyn SubAgentRunner>` and
 //! just calls it.

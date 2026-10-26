@@ -10,7 +10,7 @@
 //!
 //! The measurement uses `--bare` mode for determinism: it skips the project snapshot,
 //! memory (ZEN.md) and skills list, which all depend on the working directory. The
-//! environment block (cwd, platform, date) is included — its size is stable.
+//! environment block (cwd, platform, date) is included - its size is stable.
 
 use std::path::Path;
 
@@ -93,7 +93,7 @@ mod tests {
     use super::*;
 
     /// Roadmap g4 target: 1,200 tokens. Currently OVER BUDGET (2,331 as of 2026-10-17,
-    /// see breakdown below) — Z Core must decide what to cut before this can be enabled.
+    /// see breakdown below) - Z Core must decide what to cut before this can be enabled.
     /// Biggest sections: Grep (325), Bash (305), MultiEdit (219), system prompt (374).
     /// Run explicitly with: cargo test -p zen-cli --lib prompt_budget -- --ignored
     #[test]
@@ -112,7 +112,7 @@ mod tests {
 
     /// Regression guard: the budget must not grow past its measured value while the
     /// g4 target (above) is still over budget. Update CURRENT_BUDGET_TOKENS only when
-    /// the prompt or tool defs intentionally change — never to silence a failure.
+    /// the prompt or tool defs intentionally change - never to silence a failure.
     const CURRENT_BUDGET_TOKENS: u64 = 2_331; // measured 2026-10-17, chars/4
 
     #[test]

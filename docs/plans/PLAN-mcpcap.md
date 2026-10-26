@@ -1,4 +1,4 @@
-# PLAN-mcpcap — cap MCP tool output, spill to file (competitor proposal 2)
+# PLAN-mcpcap - cap MCP tool output, spill to file (competitor proposal 2)
 
 Goal: an MCP tool result larger than the Bash cap no longer floods the model's context. The model
 gets the same head/tail preview + file path that Bash gives (`zen_tools::spill_output`).

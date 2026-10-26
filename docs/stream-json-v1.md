@@ -1,4 +1,4 @@
-# stream-json v1 — the `zen -p --output-format stream-json` contract
+# stream-json v1 - the `zen -p --output-format stream-json` contract
 
 This is what the CLI emits **today** (zen 0.1.0). It is written from
 `crates/zen-cli/src/output.rs` (`StreamJsonSink`, `result_json`) and
@@ -174,7 +174,7 @@ the complete message still follows as an `assistant` record.
 ```
 
 **Consumer contract (issue #20):** `--include-partial-messages` is the required flag for
-streaming UIs that render token-by-token output — without it, the stream contains only complete
+streaming UIs that render token-by-token output - without it, the stream contains only complete
 messages. Deltas are **provisional**: the subsequent full `assistant` record is authoritative.
 UIs must **replace** (not append) the accumulated deltas when the full message arrives, keyed by
 `session_id` and turn order. Naive append-then-append-again double-renders the text.

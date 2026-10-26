@@ -790,7 +790,7 @@ pub fn is_wsl_launcher(path: &Path, system_root: Option<&str>) -> bool {
 
 /// Env var names that may carry the LLM API key: the two well-known names plus the
 /// configured `apiKeyEnv` name. Child processes (Bash tool, background jobs, hooks,
-/// MCP servers) must not inherit these — the key is only needed in-process by the
+/// MCP servers) must not inherit these - the key is only needed in-process by the
 /// LLM HTTP client (MEDIUM-1). Callers apply `Command::env_remove` for each name.
 pub fn api_key_env_names(api_key_env: Option<&str>) -> Vec<String> {
     let mut names = vec!["ZEN_API_KEY".to_string(), "OPENAI_API_KEY".to_string()];

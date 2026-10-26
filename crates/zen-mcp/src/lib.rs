@@ -1,4 +1,4 @@
-//! zen-mcp — OWNER: worker E. MCP client (SPEC §8) + sub-agent definitions and the Task tool (SPEC §9).
+//! zen-mcp - OWNER: worker E. MCP client (SPEC §8) + sub-agent definitions and the Task tool (SPEC §9).
 //! PUBLIC API CONTRACT (zen-cli codes against these exact signatures; keep them, add freely):
 //!   McpServerConfig, load_mcp_configs, McpManager::{start, tools, status, shutdown},
 //!   load_agents, TaskTool::new (impl Tool),

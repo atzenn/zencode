@@ -4,11 +4,11 @@
 //! shipped a marketing automation platform") and declare work done without evidence. This
 //! module implements the mechanical side:
 //!
-//! - [`run_done_checks`]: the `/done` checklist — project tests, linter, and acceptance
+//! - [`run_done_checks`]: the `/done` checklist - project tests, linter, and acceptance
 //!   criteria (the session todo list). The agent should not say "done" while any fail.
 //! - [`ScopeGuard`]: the `/scope` declared task scope. Changed files outside it are
 //!   reported; the turn guard in `zen-agent` nudges the model to confirm mid-turn.
-//! - [`yagni_scan`]: flags newly added `pub` items with no callers in the repo —
+//! - [`yagni_scan`]: flags newly added `pub` items with no callers in the repo -
 //!   speculative surface nobody asked for.
 //!
 //! Everything here is best-effort and advisory except the check commands themselves:
@@ -185,7 +185,7 @@ fn check(name: &'static str, status: CheckStatus, detail: impl Into<String>) -> 
 }
 
 /// Run the definition-of-done checklist: project tests, linter, and acceptance criteria
-/// (the session todo list — every item must be `completed`).
+/// (the session todo list - every item must be `completed`).
 pub async fn run_done_checks(cwd: &Path, todos: &[TodoItem]) -> Vec<DoneCheck> {
     let cmds = check_commands_for(detect_project(cwd), cwd);
     run_done_checks_with(cwd, todos, &cmds).await
@@ -394,7 +394,7 @@ impl ScopeGuard {
 }
 
 
-/// A newly added public API item with no callers anywhere else in the repo —
+/// A newly added public API item with no callers anywhere else in the repo -
 /// possibly speculative surface nobody asked for. Advisory only: the scan is a
 /// heuristic (word search; macro-generated callers are invisible to it).
 #[derive(Debug)]
@@ -598,7 +598,7 @@ pub struct DoneReport {
 /// output tail as evidence; passing checks show one line.
 pub fn format_report(cwd: &Path, r: &DoneReport) -> String {
     let mut s = String::new();
-    s.push_str(&format!("definition of done — {}\n", cwd.display()));
+    s.push_str(&format!("definition of done - {}\n", cwd.display()));
     for c in &r.checks {
         let mark = match c.status {
             CheckStatus::Pass => "PASS",
@@ -606,7 +606,7 @@ pub fn format_report(cwd: &Path, r: &DoneReport) -> String {
             CheckStatus::Skip => "SKIP",
         };
         let first = c.detail.lines().next().unwrap_or("");
-        s.push_str(&format!("[{mark}] {} — {first}\n", c.name));
+        s.push_str(&format!("[{mark}] {} - {first}\n", c.name));
         if c.status == CheckStatus::Fail && c.detail.lines().count() > 1 {
             s.push_str(&c.detail);
             if !c.detail.ends_with('\n') {
@@ -625,7 +625,7 @@ pub fn format_report(cwd: &Path, r: &DoneReport) -> String {
         s.push_str("scope: none declared (/scope <glob>... to set one)\n");
     } else if r.scope_violations.is_empty() {
         s.push_str(&format!(
-            "scope: ok — all changes within {}\n",
+            "scope: ok - all changes within {}\n",
             r.scope.join(", ")
         ));
     } else {
@@ -653,7 +653,7 @@ pub fn format_report(cwd: &Path, r: &DoneReport) -> String {
         .iter()
         .any(|c| c.status == CheckStatus::Fail);
     s.push_str(if failed {
-        "verdict: NOT DONE — fix the failures above\n"
+        "verdict: NOT DONE - fix the failures above\n"
     } else {
         "verdict: done\n"
     });

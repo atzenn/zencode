@@ -1,7 +1,7 @@
 # Hooks
 
 ZenCode hooks are **guarantees the model can't skip**: shell commands that run at
-fixed points of the agent loop — before/after tool calls, when a prompt is
+fixed points of the agent loop - before/after tool calls, when a prompt is
 submitted, when a turn ends, before compaction. Use them for validation,
 auto-linting, context injection, end-of-turn checks, and backups.
 
@@ -11,7 +11,7 @@ command handlers, per-tool matchers, JSON on stdin, exit-code protocol.
 ## Configuration
 
 Hooks live in settings under the `"hooks"` key (project `.zen/settings.json`,
-user `~/.zen/settings.json` — see [settings layering](./ARCHITECTURE.md)):
+user `~/.zen/settings.json` - see [settings layering](./ARCHITECTURE.md)):
 
 ```jsonc
 {
@@ -51,14 +51,14 @@ Field reference per hook entry:
 | Field | Required | Description |
 |---|---|---|
 | `type` | yes | Must be `"command"`. Other types are ignored. |
-| `command` | yes | Shell command run via `bash -c` — **unless** `args` is set, in which case the program is exec'd directly with no shell. |
+| `command` | yes | Shell command run via `bash -c` - **unless** `args` is set, in which case the program is exec'd directly with no shell. |
 | `args` | no | Array of arguments; bypasses the shell (no expansion, no injection). |
 | `timeout` | no | Seconds before the hook is killed (default `60`). Timed-out output is discarded and never blocks, unless `onFailure` is `"block"`. |
 | `onFailure` | no | `"block"`: a spawn failure or timeout blocks the event (with the error as the reason) instead of being a non-blocking error. Default: ignore. |
 
 Global switches:
 
-- `"disableAllHooks": true` (top-level settings) — no hook runs at all.
+- `"disableAllHooks": true` (top-level settings) - no hook runs at all.
 - `--trust-folder` / folder trust: in an **untrusted** folder, project hooks do not
   load (same rule as MCP servers and `env`). The REPL asks once and records trust
   in `~/.zen/trusted-folders.json`.
@@ -87,7 +87,7 @@ events (see table below).
 
 ## Events
 
-### `PreToolUse` — validate before a tool runs
+### `PreToolUse` - validate before a tool runs
 
 Fires **before every tool call**, with the tool name as the matcher target.
 This is the validation layer: lint the arguments, deny dangerous commands,
@@ -116,11 +116,11 @@ Hook powers:
   `{"hookSpecificOutput": {"permissionDecision": "deny|ask|allow",
   "permissionDecisionReason": "..."}}`.
 
-Example — refuse destructive shell commands:
+Example - refuse destructive shell commands:
 
 ```bash
 #!/bin/bash
-# scripts/no-rm-rf.sh — PreToolUse, matcher "Bash"
+# scripts/no-rm-rf.sh - PreToolUse, matcher "Bash"
 input=$(cat)
 cmd=$(echo "$input" | python3 -c "import json,sys; print(json.load(sys.stdin)['tool_input']['command'])")
 if echo "$cmd" | grep -Eq '\brm +-rf\b|:\(\)\{.*\}&'; then
@@ -130,7 +130,7 @@ fi
 exit 0
 ```
 
-### `PostToolUse` — react after a tool runs
+### `PostToolUse` - react after a tool runs
 
 Fires **after every tool call** (and `PostToolUseFailure` when the tool errored),
 with the tool name as the matcher target. Use for auto-lint, test feedback,
@@ -151,13 +151,13 @@ Stdin payload:
 Hook powers:
 
 - **Feedback to the model**: exit `2` (stderr = message) **or** any stdout text via
-  JSON — the message is appended to the tool result the model sees. It does
+  JSON - the message is appended to the tool result the model sees. It does
   **not** block; the tool already ran.
 - **Replace output**: stdout JSON
   `{"hookSpecificOutput": {"updatedToolOutput": "[redacted]"}}` swaps what the
   model sees (e.g. strip secrets from tool output).
 
-Example — run the formatter check after every edit:
+Example - run the formatter check after every edit:
 
 ```jsonc
 "PostToolUse": [{
@@ -171,7 +171,7 @@ Example — run the formatter check after every edit:
 (A non-empty diff makes the hook exit 2; the diff text is fed back to the model
 as part of the tool result.)
 
-### `UserPromptSubmit` — inject context with the prompt
+### `UserPromptSubmit` - inject context with the prompt
 
 Fires when the user submits a prompt, **before the model sees it**.
 
@@ -188,7 +188,7 @@ Hook powers:
   user's message before it reaches the model.
 - **Block**: exit `2` (stderr = reason) rejects the prompt entirely.
 
-Example — always tell the model what day it is and which repo it's in:
+Example - always tell the model what day it is and which repo it's in:
 
 ```bash
 #!/bin/bash
@@ -196,7 +196,7 @@ Example — always tell the model what day it is and which repo it's in:
 echo "Today is $(date +%A). Working in $(basename $PWD). Main branch is 'main', never push to it."
 ```
 
-### `Stop` — end-of-turn checks
+### `Stop` - end-of-turn checks
 
 Fires when the model finishes a turn with no more tool calls.
 
@@ -217,11 +217,11 @@ Hook powers:
 - **End with a message**: stdout JSON `{"continue": false, "stopReason": "..."}`
   stops the run; `stopReason` (or stderr) is what the user sees.
 
-Example — don't let the model stop before tests pass:
+Example - don't let the model stop before tests pass:
 
 ```bash
 #!/bin/bash
-# Stop — re-prompt until cargo test is green
+# Stop - re-prompt until cargo test is green
 if ! cargo test --quiet 2>&1 | tail -3; then
   echo "Tests are failing. Fix them before stopping." >&2
   exit 2
@@ -229,7 +229,7 @@ fi
 exit 0
 ```
 
-### `PreCompact` — before compaction
+### `PreCompact` - before compaction
 
 Fires right before conversation compaction (manual `/compact` or automatic),
 with the trigger (`"manual"` or `"auto"`) as the matcher target.
@@ -247,13 +247,13 @@ Stdin payload:
 Hook powers:
 
 - **Veto**: exit `2` skips this compaction (the turn continues on the full history).
-- **Backup**: the classic use — copy the transcript elsewhere before it's summarized.
+- **Backup**: the classic use - copy the transcript elsewhere before it's summarized.
 
-Example — archive the transcript before every compaction:
+Example - archive the transcript before every compaction:
 
 ```bash
 #!/bin/bash
-# PreCompact — matcher "auto" (or "*" for both)
+# PreCompact - matcher "auto" (or "*" for both)
 input=$(cat)
 ts=$(date +%Y%m%d-%H%M%S)
 sid=$(echo "$input" | python3 -c "import json,sys; print(json.load(sys.stdin)['session_id'])")
@@ -267,12 +267,12 @@ exit 0
 | Event | When it fires | Matcher target |
 |---|---|---|
 | `SessionStart` | session begins | `"startup"` / `"resume"` / `"clear"` |
-| `SessionEnd` | session ends | — |
+| `SessionEnd` | session ends | - |
 | `SubagentStart` / `SubagentStop` | a sub-agent starts / finishes | agent type |
 | `PostCompact` | compaction finished | `"manual"` / `"auto"` |
 | `PermissionRequest` | a permission prompt is about to be shown | tool name |
 | `PermissionDenied` | a tool call was denied by permissions | tool name |
-| `Notification` | a notification is sent | — |
+| `Notification` | a notification is sent | - |
 
 ## Payload schema (stdin)
 
@@ -304,7 +304,7 @@ above **plus** these standard fields:
 | Exit | Meaning |
 |---|---|
 | `0` | Success. Stdout: parsed as JSON if it's a JSON object (see below); otherwise plain text becomes extra context **only** for `UserPromptSubmit` / `SessionStart`, ignored for other events. |
-| `2` | **Block / intervene.** For `PreToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `PermissionRequest`: stderr is the reason; the event is blocked (tool doesn't run / prompt rejected / turn continues / compaction skipped). For `PostToolUse` / `PostToolUseFailure`: stderr is fed back to the model (the tool already ran — nothing to block). For other events: non-blocking error, stderr to the user only. |
+| `2` | **Block / intervene.** For `PreToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `PermissionRequest`: stderr is the reason; the event is blocked (tool doesn't run / prompt rejected / turn continues / compaction skipped). For `PostToolUse` / `PostToolUseFailure`: stderr is fed back to the model (the tool already ran - nothing to block). For other events: non-blocking error, stderr to the user only. |
 | other non-zero | Non-blocking error: stderr goes to the user, the agent loop continues. |
 | timeout | Process killed, output discarded, never blocks (unless the hook sets `"onFailure": "block"`). |
 
@@ -336,7 +336,7 @@ with newlines. Hook output fed back is capped at 10,000 chars per hook.
 
 ## Security notes
 
-- Hook commands run with the user's privileges — only install hooks you trust,
+- Hook commands run with the user's privileges - only install hooks you trust,
   and prefer the `args` form (no shell) for anything handling untrusted input.
 - The LLM API key is **scrubbed** from hook processes (env vars holding it are removed).
 - Settings `env` is exported to every hook plus `ZEN_PROJECT_DIR` (the session cwd).
@@ -347,20 +347,20 @@ with newlines. Hook output fed back is capped at 10,000 chars per hook.
 ## See also
 
 - `/hooks` in the REPL prints the currently loaded hook config.
-- `docs/stream-json-v1.md` — hook activity surfaces as `system_message` events.
+- `docs/stream-json-v1.md` - hook activity surfaces as `system_message` events.
 
 ## Dedicated `hooks.json` files (reference)
 
 ### Where hooks live: `settings.json` and dedicated `hooks.json` files
 
-Hooks live under the `hooks` key. You can put them in `settings.json`, or — cleaner for
-larger setups — in a dedicated `hooks.json` file:
+Hooks live under the `hooks` key. You can put them in `settings.json`, or - cleaner for
+larger setups - in a dedicated `hooks.json` file:
 
 | File | Layer | Gated by folder trust |
 |---|---|---|
 | `~/.zen/hooks.json` | user | no (your own machine) |
-| `<project>/.zen/hooks.json` | project | **yes** — skipped in untrusted folders |
-| `<project>/.zen/hooks.local.json` | local (git-ignored) | **yes** — skipped in untrusted folders |
+| `<project>/.zen/hooks.json` | project | **yes** - skipped in untrusted folders |
+| `<project>/.zen/hooks.local.json` | local (git-ignored) | **yes** - skipped in untrusted folders |
 | `hooks` key in any `settings.json` layer | same as that layer | same as that layer |
 
 Precedence is `user < project < local < --settings < managed`, exactly like `settings.json`.
@@ -388,7 +388,7 @@ A `hooks.json` file must contain a JSON object mapping event names to matcher en
 }
 ```
 
-Invalid JSON or a non-object top level produces a warning and the file is skipped —
+Invalid JSON or a non-object top level produces a warning and the file is skipped -
 one bad file never breaks the run. `--setting-sources user,project,local` filters the
 `hooks.json` files exactly like the `settings.json` layers.
 
@@ -430,9 +430,9 @@ Environment: settings `env` plus `ZEN_PROJECT_DIR`.
 
 | Exit | Meaning |
 |---|---|
-| `0` | success — see "JSON output" below |
-| `2` | **block** — for `PreToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `PermissionRequest` the action is vetoed and stderr becomes the reason shown to the model/user. For `PostToolUse`/`PostToolUseFailure` stderr is fed back to the model as context instead of blocking. Anywhere else it is a non-blocking error (stderr to the user only). |
-| other | non-blocking error — stderr is shown to the user, the run continues |
+| `0` | success - see "JSON output" below |
+| `2` | **block** - for `PreToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `PermissionRequest` the action is vetoed and stderr becomes the reason shown to the model/user. For `PostToolUse`/`PostToolUseFailure` stderr is fed back to the model as context instead of blocking. Anywhere else it is a non-blocking error (stderr to the user only). |
+| other | non-blocking error - stderr is shown to the user, the run continues |
 | timeout | the process is killed and its output discarded; never blocks unless `onFailure: "block"` |
 
 **JSON output (exit 0).** When stdout is a JSON object it is interpreted; otherwise plain
@@ -510,7 +510,7 @@ Block edits to generated files:
 }
 ```
 
-(With exit 2, print the reason to stderr — it becomes the block message.)
+(With exit 2, print the reason to stderr - it becomes the block message.)
 
 Append the ticket context on session start (`~/.zen/hooks.json`):
 

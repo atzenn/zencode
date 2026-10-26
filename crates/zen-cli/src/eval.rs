@@ -1,4 +1,4 @@
-//! `zencode eval` — 10-task benchmark harness (Desktop roadmap g5, v0.3.0 milestone).
+//! `zencode eval` - 10-task benchmark harness (Desktop roadmap g5, v0.3.0 milestone).
 //!
 //! Runs a fixed set of small, deterministic coding tasks against the agent loop and
 //! reports per-task metrics: model requests, tokens, 429 rate-limits, edit failures,
@@ -324,7 +324,7 @@ impl EvalReport {
     pub fn to_markdown(&self) -> String {
         let mut out = String::new();
         out.push_str(&format!(
-            "# zencode eval — {}\n\n{}/{} tasks passed\n\n",
+            "# zencode eval - {}\n\n{}/{} tasks passed\n\n",
             self.model, self.passed_count, self.task_count
         ));
         out.push_str("| Task | Pass | Requests | Tokens in | Tokens out | 429s | Edit fails | ms |\n");

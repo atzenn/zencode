@@ -1,4 +1,4 @@
-# User Counter — Design Doc
+# User Counter - Design Doc
 
 **Status:** Draft (leader proposal, 2026-10-20)
 **Goal:** Count anonymous ZenCode users for research and communication (launch numbers, growth tracking, public community stats).
@@ -9,7 +9,7 @@
 2. **Opt-out respected.** `DO_NOT_TRACK=1` or `ZENCODE_TELEMETRY=0` or `zen config set telemetry off` disables all pings. First-run shows a one-line notice.
 3. **Transparent.** Method documented publicly (this file); counting backend code is open source; raw data never published, only aggregates.
 4. **Minimal.** One ping per 24h max, tiny payload, no cookies, no fingerprinting.
-5. **BYOK-clean (Constitution VIII).** The counter uses no API keys at all — not the team's, not the user's. Model calls elsewhere in ZenCode always run on the user's own keys/endpoints; this counter is separate, keyless infrastructure.
+5. **BYOK-clean (Constitution VIII).** The counter uses no API keys at all - not the team's, not the user's. Model calls elsewhere in ZenCode always run on the user's own keys/endpoints; this counter is separate, keyless infrastructure.
 
 ## 2. What is counted
 
@@ -17,7 +17,7 @@
 - **DAU / WAU / MAU:** distinct install_ids seen in the last 1/7/30 days.
 - **Version + OS distribution:** from the ping payload, aggregated only.
 
-A "user" = a distinct install_id. Multi-device installs count as multiple — documented openly, acceptable for a v1 counter.
+A "user" = a distinct install_id. Multi-device installs count as multiple - documented openly, acceptable for a v1 counter.
 
 ## 3. Mechanism (client)
 
@@ -31,9 +31,9 @@ On startup, `zen` checks `~/.config/zencode/config.toml`:
 
 ## 4. Backend (server)
 
-- **Recommended:** Cloudflare Workers + D1 (free tier: 100k requests/day — far above needs).
+- **Recommended:** Cloudflare Workers + D1 (free tier: 100k requests/day - far above needs).
 - Server stores `SHA-256(install_id)`, date, version, os, arch. **IP is never stored.**
-- Public read API: `GET /stats` → `{installs, mau, wau, dau, versions, updated_at}` — feeds the website badge and launch communications.
+- Public read API: `GET /stats` → `{installs, mau, wau, dau, versions, updated_at}` - feeds the website badge and launch communications.
 - Anti-gaming: rate-limit one ping per install_id per 12h; drop malformed payloads.
 - Retention: raw pings 13 months, aggregates kept forever.
 

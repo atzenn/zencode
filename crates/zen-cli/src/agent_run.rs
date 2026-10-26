@@ -114,7 +114,7 @@ impl Prompter for ReplPrompter {
 /// * absent or `default` → all built-ins; `""` → none;
 /// * `Read,Bash` → exactly those (allowlist);
 /// * only `+Name`/`-Name` entries (e.g. `-Bash,-Write`) → the default set with those added or
-///   removed — a delta form borrowed from Pi's `--tools` (docs/research/pi-and-oh-my-pi.md), so
+///   removed - a delta form borrowed from Pi's `--tools` (docs/research/pi-and-oh-my-pi.md), so
 ///   "everything but Bash" no longer needs every other name spelled out.
 ///
 /// Mixing plain names with `+`/`-` entries is an error, as is a `+`/`-` name that is not a built-in
@@ -1794,7 +1794,7 @@ mod verify_tests {
     async fn run_verify_command_timeout() {
         let env = std::collections::HashMap::new();
         // SAFETY: env var is process-global; this test file runs serially with the others here
-        // only by convention — keep the timeout tiny and restore afterwards.
+        // only by convention - keep the timeout tiny and restore afterwards.
         std::env::set_var("VERIFY_TIMEOUT_SECS", "1");
         let o = run_verify_command("sleep 30", &std::env::temp_dir(), &env).await;
         std::env::remove_var("VERIFY_TIMEOUT_SECS");

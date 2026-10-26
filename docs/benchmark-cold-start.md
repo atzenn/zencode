@@ -1,7 +1,7 @@
 # Cold-Start Benchmarks
 
 **Status:** implemented (`scripts/bench_cold_start.py`), first results below.
-**Roadmap:** v0.8.0 "Trust" item #13 — *"Cold-start & memory benchmarks, published."*
+**Roadmap:** v0.8.0 "Trust" item #13 - *"Cold-start & memory benchmarks, published."*
 
 Fast startup is a structural advantage of a native Rust binary over Electron/Node-based
 tools, and it compounds: every `zen -p` invocation in a script, hook, or CI job pays
@@ -49,7 +49,7 @@ Results are written to `bench-results/results.json` (raw) and `bench-results/res
 ## Results
 
 Measured on the project's Linux build worker (4 vCPU / 8 GB, `x86_64-unknown-linux-gnu`,
-release binary, `zen 0.1.0`). Primary run: 15 warm iterations, 5 cold iterations —
+release binary, `zen 0.1.0`). Primary run: 15 warm iterations, 5 cold iterations -
 all warm measurements stable (CV < 0.20). A second confirmation run on the same
 heavily-loaded shared machine reproduced the same medians within ~4 ms; peak RSS
 was rock-stable (CV 0.00) across both runs.
@@ -65,11 +65,11 @@ was rock-stable (CV 0.00) across both runs.
 
 Headline: **`zen --version` answers in ~1 ms warm (~1–6 ms cold) with a 20 MB
 footprint; the REPL is interactive in ~3 ms; a headless `-p` turn reaches its
-first token in ~4 ms** (mock server — harness overhead only, no model latency).
+first token in ~4 ms** (mock server - harness overhead only, no model latency).
 
 ## Comparison points
 
-Published cold-start numbers for competing CLIs (for context — measure with the same
+Published cold-start numbers for competing CLIs (for context - measure with the same
 script methodology before citing side-by-side):
 
 | Tool | Runtime | Reported cold start |
@@ -94,8 +94,8 @@ required to push workflow files directly.) Once enabled, it builds the release
 binary on `ubuntu-latest` and runs the benchmark with
 `--thresholds benches/cold_start_thresholds.json`. The job fails if:
 
-- any median exceeds its threshold (exit 1) — catches real regressions;
-- any warm measurement is unstable, CV > 0.30 (exit 2) — catches flaky environments.
+- any median exceeds its threshold (exit 1) - catches real regressions;
+- any warm measurement is unstable, CV > 0.30 (exit 2) - catches flaky environments.
 
 Thresholds are intentionally generous (multiples of measured medians) because CI
 runners vary. Tighten them only with data from repeated CI runs. If a legitimate

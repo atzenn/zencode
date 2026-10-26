@@ -1,10 +1,10 @@
 ---
 name: token-diet
-description: Token-efficiency habits — keep every model call lean without losing correctness
+description: Token-efficiency habits - keep every model call lean without losing correctness
 allowed-tools: read
 ---
 
-# Token Diet — Spend Tokens Like They Cost Money (They Do)
+# Token Diet - Spend Tokens Like They Cost Money (They Do)
 
 ## Output discipline
 
@@ -15,7 +15,7 @@ allowed-tools: read
 ## Context discipline
 
 - Prefer the repo map / symbol outline over full file reads for orientation.
-- When a tool result is large, extract the 3 lines that matter and move on — do not paste the whole output back into your reasoning.
+- When a tool result is large, extract the 3 lines that matter and move on - do not paste the whole output back into your reasoning.
 - Summarize, don't accumulate: if the conversation is long, compress settled facts into a short recap and drop the raw turns.
 
 ## Tool discipline
@@ -28,4 +28,4 @@ allowed-tools: read
 
 - Do not dump entire files into the context "just in case".
 - Do not repeat the user's request back to them.
-- Do not add "helpful" extras beyond the asked scope — scope creep burns tokens twice (yours now, theirs on review).
+- Do not add "helpful" extras beyond the asked scope - scope creep burns tokens twice (yours now, theirs on review).

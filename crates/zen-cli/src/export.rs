@@ -1,6 +1,6 @@
 //! Session portability: `zen export` / `zen import` (roadmap v0.8.0).
 //!
-//! No major coding agent ships session portability — users are locked into one
+//! No major coding agent ships session portability - users are locked into one
 //! tool's session format. ZenCode leads here with a documented, versioned
 //! export format (`format_version`) that any tool (or a future ZenCode web UI)
 //! can consume, plus `zen import` to restore a JSON export as a new session.
@@ -104,7 +104,7 @@ fn record_str(v: &Value, key: &str) -> Option<String> {
 /// Journal records (`tools`/`request`/`response`/`response_error`) are metadata,
 /// not conversation: `request` contributes the model name, the rest are
 /// skipped. Per-turn `system`/`usage` records are summed (they are deltas, not
-/// cumulative — see `agent_run.rs`).
+/// cumulative - see `agent_run.rs`).
 pub fn load_session_for_export(path: &Path) -> Result<LoadedSession> {
     let session_id = path
         .file_stem()
@@ -308,7 +308,7 @@ fn redact_after_marker(s: &str, marker: &str, replacement: &str) -> String {
         if token_len >= 8 {
             out.push_str(replacement);
         } else {
-            // Not a token (e.g. "Bearer of good news") — keep as-is.
+            // Not a token (e.g. "Bearer of good news") - keep as-is.
             out.push_str(&rest[token_start..token_start + token_len]);
         }
         rest = &rest[token_start + token_len..];

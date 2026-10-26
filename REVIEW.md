@@ -1,4 +1,4 @@
-# REVIEW.md — what matters when reviewing ZenCode
+# REVIEW.md - what matters when reviewing ZenCode
 
 ZenCode is a Rust coding-agent CLI. A review exists to stop changes that break users, not to polish style.
 

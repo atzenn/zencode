@@ -1,8 +1,8 @@
 //! Full per-tool documentation backing `zen tool-help <name>`.
 //!
 //! Tool `description()` strings sent to the model are intentionally one
-//! sentence (token-saving: schema audit). The complete reference — parameters,
-//! behavior, examples — lives in `docs/tools/*.md` and is embedded here so the
+//! sentence (token-saving: schema audit). The complete reference - parameters,
+//! behavior, examples - lives in `docs/tools/*.md` and is embedded here so the
 //! installed CLI can print it without the repo checkout.
 
 /// Full Markdown documentation for a builtin tool, or `None` for unknown names.

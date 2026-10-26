@@ -18,7 +18,7 @@
 //! Block-level HTML comments `<!-- … -->` (starting a line, possibly spanning lines) are stripped
 //! before imports are resolved, except inside fenced code blocks (C4.3).
 //!
-//! AGENTS.md fallback (C4.4, per directory — idea from Pi's context files, see
+//! AGENTS.md fallback (C4.4, per directory - idea from Pi's context files, see
 //! docs/research/pi-and-oh-my-pi.md): in a directory that has none of `ZEN.md`, `.zen/ZEN.md`,
 //! `ZEN.local.md`, zen loads `AGENTS.md` then `.zen/AGENTS.md` instead, so repositories written for
 //! other agents work unchanged. Likewise `~/.zen/AGENTS.md` stands in for a missing `~/.zen/ZEN.md`.
@@ -638,7 +638,7 @@ mod tests {
         let tmp = TempDir::new();
         let proj = tmp.path().join("proj");
         fs::create_dir_all(&proj).unwrap();
-        // no memory files anywhere below tmp; may still pick up real home — but home None,
+        // no memory files anywhere below tmp; may still pick up real home - but home None,
         // so dirs::home_dir() could find one. Guard by checking it's at least a String.
         let prompt = memory_prompt(&proj, Some(&tmp.path().join("nohome")));
         assert_eq!(prompt, "");

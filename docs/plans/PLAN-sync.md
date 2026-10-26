@@ -1,4 +1,4 @@
-# PLAN-sync — CLI side of the Desktop sync plan (items 11–14)
+# PLAN-sync - CLI side of the Desktop sync plan (items 11–14)
 
 Branch `feat/desktop-sync` (worktree /workspace/work/zc-sync) from main 3a87c47.
 Rules: minimal change, no new deps, no repo-wide `cargo fmt`, no secrets printed.
@@ -38,7 +38,7 @@ Same step fails twice → stop, note here, report.
 - Root cause: `zen_core::pick_shell` returns the *bare name* `bash` after checking PATH, and the
   Bash tool / jobs / hooks / REPL `!cmd` spawn `bash` by name. Windows process creation (Rust std
   included) searches the system directory *before* PATH, so `bash` resolves to
-  `C:\Windows\System32\bash.exe` — the WSL launcher — even when Git Bash is on PATH. With no WSL
+  `C:\Windows\System32\bash.exe` - the WSL launcher - even when Git Bash is on PATH. With no WSL
   distro installed (CI runners, most Desktop users) every command fails with exit 1.
 - Fix (small): resolve the shell to the **full path** found on PATH, skipping the WSL launcher in
   `%SystemRoot%`, with a fallback to Git for Windows' `%ProgramFiles%\Git\bin\bash.exe`; hooks and
@@ -54,8 +54,8 @@ Same step fails twice → stop, note here, report.
   MCP e2e) are separate and not in scope; left for a follow-up issue if they persist.
 
 ## Status
-- [x] 1 #11 non_exhaustive + CHANGELOG — builds, clippy clean.
-- [x] 2 #12 doc + 6 fixtures + contract test — passes twice in a row; a one-byte fixture edit fails it.
+- [x] 1 #11 non_exhaustive + CHANGELOG - builds, clippy clean.
+- [x] 2 #12 doc + 6 fixtures + contract test - passes twice in a row; a one-byte fixture edit fails it.
 - [x] 3 #13 Windows Bash fix + `windows_bash_skips_wsl_launcher` unit test (real proof = Windows CI job).
 - [x] 4 `cargo test --workspace` 492 passed / 0 failed (baseline 484 + 7 contract + 1 shell);
       `cargo clippy --all-targets -- -D warnings` clean (local, aarch64 Linux).

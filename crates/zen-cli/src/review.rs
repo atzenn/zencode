@@ -1,4 +1,4 @@
-//! `zen review` — standalone code-review subcommand (parity item P1: mirrors `codex review`).
+//! `zen review` - standalone code-review subcommand (parity item P1: mirrors `codex review`).
 //!
 //! Reviews uncommitted changes (default), a diff against a base ref (`--base`), or a
 //! specific commit (`--commit`). The review runs with a mechanically enforced read-only
@@ -509,7 +509,7 @@ impl PermissionChecker for ReviewPermissions {
 
 fn render_text(report: &ReviewReport, threshold: Severity) -> String {
     let mut out = String::new();
-    out.push_str(&format!("zen review — {}\n", report.scope));
+    out.push_str(&format!("zen review - {}\n", report.scope));
     out.push_str(&format!(
         "model: {} · findings: {}\n\n",
         report.model, report.summary.total
@@ -538,7 +538,7 @@ fn render_text(report: &ReviewReport, threshold: Severity) -> String {
                 Some(l) => format!("{}:{}", f.file, l),
                 None => f.file.clone(),
             };
-            out.push_str(&format!("- [{}] {} — {}\n", f.category, loc, f.title));
+            out.push_str(&format!("- [{}] {} - {}\n", f.category, loc, f.title));
             if !f.detail.is_empty() {
                 out.push_str(&format!("    {}\n", f.detail));
             }
@@ -628,7 +628,7 @@ pub async fn run_review(
         match args.output_format {
             OutputFormat::Text => {
                 println!(
-                    "zen review — {}: no changes to review.",
+                    "zen review - {}: no changes to review.",
                     diff.scope_description
                 );
             }

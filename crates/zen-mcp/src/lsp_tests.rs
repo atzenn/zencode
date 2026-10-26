@@ -363,7 +363,7 @@ fn parse_definition_null_and_empty() {
 
 #[test]
 fn parse_definition_converts_utf16_columns_via_target_file() {
-    // `let café_☕_😀 = 1;` — the 😀 starts at UTF-16 offset 11, char column 12.
+    // `let café_☕_😀 = 1;` - the 😀 starts at UTF-16 offset 11, char column 12.
     let tmp = unique_tmpdir("utf16-target");
     let target = tmp.join("u.rs");
     write_file(&target, "fn x() {}\nlet caf\u{e9}_\u{2615}_\u{1f600} = 1;\n");

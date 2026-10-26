@@ -7,7 +7,7 @@ the registry answers "what skills exist?".
 ```bash
 zen skill search tdd                # ranked search: name > tag > description
 zen skill search "commit"           # finds commit-msg, security-review, ...
-zen skill info security-review      # tier, permissions, source — BEFORE installing
+zen skill info security-review      # tier, permissions, source - BEFORE installing
 zen skill install registry:tdd --yes   # resolves + reuses the standard install flow
 ```
 
@@ -16,8 +16,8 @@ zen skill install registry:tdd --yes   # resolves + reuses the standard install 
 - A **curated registry** (`skills/community-registry.json`) ships with the
   binary and is embedded at compile time, so `zen skill search` works offline.
   It lists the 3 built-in verified skills plus reviewed community examples.
-- `zen skill info <name>` shows the full entry — trust tier, declared
-  permissions, source — so you can decide **before** installing.
+- `zen skill info <name>` shows the full entry - trust tier, declared
+  permissions, source - so you can decide **before** installing.
 - `zen skill install registry:<name> --yes` resolves the entry to
   `builtin:<name>` or its git URL and runs the **unchanged** install flow:
   permission diff preview, explicit `--yes`, hash pinning.
@@ -30,7 +30,7 @@ The registry is **advisory**. The tier displayed comes from the registry entry,
 but the tier actually assigned at install is recomputed by `assign_tier()` from
 the fetched `zen-plugin.json` manifest and its ed25519 signature. A registry
 claiming `verified` for an unsigned skill installs as `community` or
-`unverified` — **a registry can never upgrade trust**. This is what makes a
+`unverified` - **a registry can never upgrade trust**. This is what makes a
 future open HTTP registry safe to browse.
 
 ## Registry schema
@@ -44,7 +44,7 @@ future open HTTP registry safe to browse.
   "skills": [
     {
       "name": "tdd",
-      "description": "Test-driven development workflow — write the failing test first",
+      "description": "Test-driven development workflow - write the failing test first",
       "version": "1.0.0",
       "author": "ZenCode",
       "tier": "verified",
@@ -78,7 +78,7 @@ future open HTTP registry safe to browse.
 }
 ```
 
-Field rules (validated on load — invalid registries are rejected with the
+Field rules (validated on load - invalid registries are rejected with the
 reasons listed):
 
 | field | rule |
@@ -86,7 +86,7 @@ reasons listed):
 | `format_version` | must equal `1` (this zen's supported version) |
 | `name` | `[a-zA-Z0-9_-]+`, unique (case-insensitive) |
 | `description`, `version` | non-empty |
-| `tier` | `verified` \| `community` \| `unverified` (advisory — see Trust model) |
+| `tier` | `verified` \| `community` \| `unverified` (advisory - see Trust model) |
 | `permissions` | same shape as `zen-plugin.json`; `file_scope` is `project` or `user` |
 | `source` | `{"kind": "builtin"}` or `{"kind": "git", "url": "https://…"}` / `git@…` |
 

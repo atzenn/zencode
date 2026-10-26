@@ -139,7 +139,7 @@ fn p0_4_key_body_parsing_and_exhausted_marker() {
     .unwrap();
     assert_eq!((q.free_used, q.free_limit, q.free_remaining), (Some(50), Some(50), Some(0)));
     let r = q.report();
-    assert!(r.contains("used 50 / limit 50 (remaining 0) — EXHAUSTED"), "{r}");
+    assert!(r.contains("used 50 / limit 50 (remaining 0) - EXHAUSTED"), "{r}");
     assert!(r.contains("key credit limit: 5.00 (remaining 1.25)"), "{r}");
     assert!(KeyQuota::from_body("{}").is_err());
     assert!(KeyQuota::from_body("nope").is_err());

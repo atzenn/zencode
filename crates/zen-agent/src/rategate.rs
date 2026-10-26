@@ -6,13 +6,13 @@
 //! a clear error **before** hitting the network. Because the agent loop's
 //! [`chat_with_fallback`](crate::client::chat_with_fallback) treats any backend error as
 //! "try the next model", an exhausted quota automatically moves the run to the next
-//! configured fallback model — no loop changes needed.
+//! configured fallback model - no loop changes needed.
 //!
 //! Design notes (see atzenn/zencode#10):
 //! - Counts live in `~/.zen/rategate.json` (`{"date":"2026-10-17","counts":{"openrouter.ai":12}}`);
 //!   the date rolls over on first use each UTC day. Writes are atomic (temp file + rename).
 //! - Every `chat` call counts as one request, **including failures** (a 429 that the inner
-//!   client retried internally still counts once — per-attempt counting would burn the quota
+//!   client retried internally still counts once - per-attempt counting would burn the quota
 //!   on a single flaky call).
 //! - Local gateways (`localhost`, `127.0.0.1`, `::1`) are never gated: they have no caps.
 //! - The provider key is the base URL's host (`https://openrouter.ai/api/v1` → `openrouter.ai`).
@@ -300,7 +300,7 @@ fn format_quota_report(status: &[QuotaStatus], enabled: bool) -> String {
             q.used,
             q.limit,
             q.remaining(),
-            if q.exhausted() { " — EXHAUSTED" } else { "" }
+            if q.exhausted() { " - EXHAUSTED" } else { "" }
         ));
     }
     lines.join("\n")
@@ -368,7 +368,7 @@ impl KeyQuota {
                 let r = r.unwrap_or_else(|| l.saturating_sub(u));
                 lines.push(format!(
                     "  free-model requests: used {u} / limit {l} (remaining {r}){}",
-                    if r == 0 { " — EXHAUSTED" } else { "" }
+                    if r == 0 { " - EXHAUSTED" } else { "" }
                 ));
             }
             _ => lines.push("  free-model requests: not reported for this key".into()),
@@ -467,7 +467,7 @@ impl LlmBackend for RateGate {
             ));
         }
         // Count every attempt once, including failures (a 429 retried internally by the
-        // inner client still consumes quota — per-attempt counting would burn the daily
+        // inner client still consumes quota - per-attempt counting would burn the daily
         // budget on a single flaky call).
         let res = self.inner.chat(req).await;
         self.record(&provider);

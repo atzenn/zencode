@@ -1,10 +1,10 @@
 ---
 name: security-review
-description: Pre-commit security checklist — secrets, injection, auth, and dependency risks before code ships
+description: Pre-commit security checklist - secrets, injection, auth, and dependency risks before code ships
 allowed-tools: read, grep, glob
 ---
 
-# Security Review — Pre-Commit Checklist
+# Security Review - Pre-Commit Checklist
 
 Run through this list before any commit or PR. One FAIL blocks the ship.
 
@@ -16,7 +16,7 @@ Run through this list before any commit or PR. One FAIL blocks the ship.
 
 ## 2. Injection
 
-- [ ] No shell commands built by string-concatenating user input — use argument arrays.
+- [ ] No shell commands built by string-concatenating user input - use argument arrays.
 - [ ] No SQL/HTML/JS built from untrusted input without parameterization or escaping.
 - [ ] `eval`, `exec(`, `Function(`, and template injection sinks: none on user-controlled data.
 
@@ -28,7 +28,7 @@ Run through this list before any commit or PR. One FAIL blocks the ship.
 
 ## 4. Dependencies & supply chain
 
-- [ ] No new dependency without a reason — check what it pulls in transitively.
+- [ ] No new dependency without a reason - check what it pulls in transitively.
 - [ ] Pinned versions for new deps; no `*` ranges, no git URLs without a pinned hash.
 
 ## 5. Data handling

@@ -23,7 +23,7 @@ texts. This document explains how the pieces fit together so you can study the c
 **Why so many crates?** Each crate owns one concern and depends only on `zen-core`, so they can be
 built, tested and understood in isolation (they were literally written in parallel by separate
 workers). Only `zen-cli` depends on everything; it is the composition root. Cross-crate needs that
-would create cycles are expressed as traits in `zen-core` — e.g. the `Task` tool (zen-mcp) needs to run
+would create cycles are expressed as traits in `zen-core` - e.g. the `Task` tool (zen-mcp) needs to run
 an agent (zen-agent), so it receives an `Arc<dyn SubAgentRunner>` that zen-cli builds from zen-agent.
 
 ## 1. Shared vocabulary: `zen-core`
@@ -51,9 +51,9 @@ same loop drive the REPL, `--output-format json`, `stream-json`, and sub-agents.
 2. **Model call.** The request is `[system prompt] + history`, plus the tool definitions from the
    registry. The system prompt is *not* stored in history; it is prepended on every request, so it
    can be rebuilt (memory, skills) without rewriting the transcript. The CLI builds it once per
-   session — role, environment, the **project snapshot** (`zen-cli/src/envsnap.rs`, r7: shallow
+   session - role, environment, the **project snapshot** (`zen-cli/src/envsnap.rs`, r7: shallow
    tree, detected build/test commands, toolchain versions, test dirs; ≤4000 chars; off with
-   `--bare`), memory, skills — so every request carries the same bytes and the provider can cache
+   `--bare`), memory, skills - so every request carries the same bytes and the provider can cache
    the prefix. The role prompt ends with a short explore → reproduce → fix → rerun → edge-cases
    workflow (r7 bench C2, `system_prompt.rs`).
 3. **Tool calls.** If the assistant message contains `tool_calls`, each one is handled in order:
@@ -64,11 +64,11 @@ same loop drive the REPL, `--output-format json`, `stream-json`, and sub-agents.
      whole text is one JSON tool call is turned into a real call before this step. Tool names with
      leaked chat-template tokens (`Bash<|channel|>commentary`, `to=functions.Read`) are cut back to
      the tool name, and the note does not echo the tokens (r7 bench C4);
-   * **PreToolUse hook** — may block (its stderr becomes the tool result) or force a permission decision;
-   * **permission check** (§4 below) — `Ask` goes to the `Prompter` in the REPL; in headless mode it is
+   * **PreToolUse hook** - may block (its stderr becomes the tool result) or force a permission decision;
+   * **permission check** (§4 below) - `Ask` goes to the `Prompter` in the REPL; in headless mode it is
      denied and recorded in `permission_denials`;
    * the tool runs with a per-call clone of `ToolContext` whose `current_tool_use_id` is set;
-   * **PostToolUse hook** — may add feedback for the model;
+   * **PostToolUse hook** - may add feedback for the model;
    * the per-turn **loop guard** (`guard.rs`, r7) may append one note (4th edit of a file, 3rd
      identical failure), and the finish gate records which files changed;
    * a `role:"tool"` message with the matching `tool_call_id` is appended, and events are emitted.
@@ -158,23 +158,23 @@ Answering "always" in the REPL appends a rule to `.zen/settings.local.json`.
 
 ## 5. Settings, memory, skills and hooks (`zen-ext`)
 
-* **Settings layering** — `user (~/.zen/settings.json) < project (.zen/settings.json) <
+* **Settings layering** - `user (~/.zen/settings.json) < project (.zen/settings.json) <
   local (.zen/settings.local.json) < --settings < managed (/etc/zen/managed-settings.json)`.
   Objects merge deeply, arrays concatenate with de-duplication, scalars are overridden. Broken files
   produce warnings and are skipped. CLI flags and env vars (`--model`, `ZEN_MODEL`) are applied on top
   by zen-cli.
-* **ZEN.md memory** (`memory.rs`) — `~/.zen/ZEN.md`, then every `ZEN.md` / `.zen/ZEN.md` from the filesystem root
+* **ZEN.md memory** (`memory.rs`) - `~/.zen/ZEN.md`, then every `ZEN.md` / `.zen/ZEN.md` from the filesystem root
   down to the cwd, then `ZEN.local.md`; `@path` lines import other files (depth-limited, cycle-safe).
   **AGENTS.md fallback (C4.4)** is decided per directory: a directory with no ZEN file loads its
   `AGENTS.md` then `.zen/AGENTS.md` instead (never both kinds), and `~/.zen/AGENTS.md` stands in for a
   missing `~/.zen/ZEN.md`. The result is a system-prompt section with path headers.
-* **Skills** — folders with a `SKILL.md` (frontmatter `name`, `description`). Only names and
+* **Skills** - folders with a `SKILL.md` (frontmatter `name`, `description`). Only names and
   descriptions go into the system prompt; the model loads a body on demand with the `Skill` tool.
   This "progressive disclosure" keeps the prompt small.
-* **Custom slash commands** (`commands.rs`) — Markdown files in `~/.zen/commands/` and
+* **Custom slash commands** (`commands.rs`) - Markdown files in `~/.zen/commands/` and
   `.zen/commands/` (project overrides user, subdirectories become namespaces), with argument
   placeholders and permission-gated shell pre-execution; user-invocable skills appear here too.
-* **Hooks** — `settings.hooks[Event] = [{matcher, hooks:[{type:"command", command, timeout}]}]`.
+* **Hooks** - `settings.hooks[Event] = [{matcher, hooks:[{type:"command", command, timeout}]}]`.
   Commands run with `bash -c`, receive a JSON payload on stdin, and communicate through their exit
   code (0 ok, 2 block with stderr as feedback, other = non-blocking error) or optional JSON stdout.
 
@@ -192,7 +192,7 @@ Answering "always" in the REPL appends a rule to `.zen/settings.local.json`.
   `~/.zen/agents/*.md`) or `--agents` JSON; a built-in `general-purpose` agent always exists. The
   `Task` tool picks a definition and calls `SubAgentRunner::run_subagent`. zen-agent's
   `SubAgentExecutor` builds a *fresh* `Agent` (empty history, filtered tools, depth + 1) and returns
-  only its final text — the parent's context stays small. Sub-agent events carry
+  only its final text - the parent's context stays small. Sub-agent events carry
   `parent_tool_use_id` so stream-json consumers can rebuild the tree.
 
 ## 7. Context compaction
@@ -204,7 +204,7 @@ chars/4 estimate) exceed the threshold (`autoCompact` setting / `--autocompact`)
 1. runs the `PreCompact` hook;
 2. flattens history into a plain-text transcript (`[User]`, `[Assistant]`, `[Assistant tool calls]`,
    `[Tool result]` lines, tool results capped) inside one user message and asks the model, with no
-   tools and no system prompt, for a structured summary (goal, decisions, files, open tasks) — so the
+   tools and no system prompt, for a structured summary (goal, decisions, files, open tasks) - so the
    model summarizes instead of continuing the chat;
    * paths from `Read` and `Write`/`Edit` calls are appended as `<read-files>` / `<modified-files>`
      blocks, merged with the previous summary's lists, so they survive repeated compactions;
@@ -223,10 +223,10 @@ last summary are replayed, so a resumed session starts from the compacted state.
 
 ## 9. Output formats (`zen-cli::output`)
 
-* `text` — the final answer only.
-* `json` — one `RunResult` object (`type, subtype, is_error, duration_ms, duration_api_ms, num_turns,
+* `text` - the final answer only.
+* `json` - one `RunResult` object (`type, subtype, is_error, duration_ms, duration_api_ms, num_turns,
   result, session_id, total_cost_usd, usage, model, permission_denials`).
-* `stream-json` — NDJSON: a `system/init` line (model, tools, MCP status, permission mode, slash
+* `stream-json` - NDJSON: a `system/init` line (model, tools, MCP status, permission mode, slash
   commands, cwd), then `assistant` and `user` (tool result) lines with `parent_tool_use_id`, optional
   `system/api_retry`, `system/compact_boundary`, `system/permission_denied`, and finally the `result`.
 

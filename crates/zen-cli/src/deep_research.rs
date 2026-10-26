@@ -1,4 +1,4 @@
-//! `/deep-research` agentic workflow (parity item H7 — Claude Code's `/deep-research`).
+//! `/deep-research` agentic workflow (parity item H7 - Claude Code's `/deep-research`).
 //!
 //! A `/deep-research <topic>` REPL command that fans out N parallel research
 //! sub-agents (via the `Task` tool already in the agent's registry), shows live
@@ -388,11 +388,11 @@ pub fn render_report(
     out.push_str("\n\n---\n\n## Appendix: raw researcher output\n");
     for f in findings {
         out.push_str(&format!(
-            "\n### {} — `{}` ({}s){}\n\n{}\n",
+            "\n### {} - `{}` ({}s){}\n\n{}\n",
             f.angle_title,
             f.angle_name,
             f.elapsed_secs,
-            if f.ok { "" } else { " — FAILED" },
+            if f.ok { "" } else { " - FAILED" },
             truncate(&f.text, MAX_FINDING_CHARS),
         ));
     }
@@ -412,7 +412,7 @@ pub fn render_fallback_report(
         "## Summary\n\n_Automated synthesis unavailable ({why}); findings below are unmerged._\n\n\
          ## Findings\n\n(See the per-researcher reports in the appendix.)\n\n\
          ## Sources\n\nSee per-researcher citations in the appendix.\n\n\
-         ## Confidence\n\nUnassessed — synthesis did not run.\n\n\
+         ## Confidence\n\nUnassessed - synthesis did not run.\n\n\
          ## Open questions\n\n- Re-run synthesis to merge these findings into a single narrative.\n"
     );
     render_report(topic, model, opts, findings, &body)
@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     fn truncate_respects_char_boundaries() {
-        let s = "héllo wörld — emoji 🎉 done";
+        let s = "héllo wörld - emoji 🎉 done";
         let t = truncate(s, 12);
         assert!(t.len() < s.len() + 60);
         assert!(t.contains("truncated from"));

@@ -563,7 +563,7 @@ pub fn format_ci_text(status: &CiStatus) -> String {
     }
     s.push_str(&format!("{} failing check(s):\n", status.failing.len()));
     for f in &status.failing {
-        s.push_str(&format!("\n## {} — {}\n{}\n", f.name, f.conclusion, f.url));
+        s.push_str(&format!("\n## {} - {}\n{}\n", f.name, f.conclusion, f.url));
         match &f.log_excerpt {
             Some(log) => {
                 let errors = extract_error_lines(log, MAX_ERROR_LINES);
@@ -618,7 +618,7 @@ pub fn ci_fix_prompt(status: &CiStatus) -> String {
             .unwrap_or_default()
     );
     for f in &status.failing {
-        p.push_str(&format!("## {} — {}\n{}\n", f.name, f.conclusion, f.url));
+        p.push_str(&format!("## {} - {}\n{}\n", f.name, f.conclusion, f.url));
         if let Some(log) = &f.log_excerpt {
             p.push_str("Failed log excerpt:\n```\n");
             p.push_str(log);

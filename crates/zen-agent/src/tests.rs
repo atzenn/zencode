@@ -1610,8 +1610,8 @@ async fn result_total_cost_is_priced_from_usage_for_paid_model() {
     let (mut agent, _sink, _h) = build_agent(llm.clone(), ToolRegistry::new(), allow(), cfg);
     let r = agent.run_turn("hi").await;
     // `resp` reports 10 prompt / 5 completion tokens. The result record must carry the
-    // cost priced by the shared budget table — the same table the `zen cost` ledger
-    // uses — not a hard-coded 0.0.
+    // cost priced by the shared budget table - the same table the `zen cost` ledger
+    // uses - not a hard-coded 0.0.
     let expected = crate::budget::estimate_cost_usd("gpt-4o", 10, 5).expect("gpt-4o is priced");
     assert!(expected > 0.0);
     assert!(

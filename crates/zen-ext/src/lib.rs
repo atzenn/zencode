@@ -1,4 +1,4 @@
-//! zen-ext — OWNER: worker D. Settings layering (SPEC §12), ZEN.md memory (§7), skills (§7), hooks (§13).
+//! zen-ext - OWNER: worker D. Settings layering (SPEC §12), ZEN.md memory (§7), skills (§7), hooks (§13).
 //! PUBLIC API CONTRACT (zen-cli codes against these exact signatures; keep them, add freely):
 //!   load_settings, merge_json, memory_files, memory_prompt, append_memory_note,
 //!   discover_skills, skills_prompt, SkillTool, CommandHooks (impl HookRunner)

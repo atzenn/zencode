@@ -1,4 +1,4 @@
-//! Context debugger: `zen context` — an observable, attributable, traceable view of
+//! Context debugger: `zen context` - an observable, attributable, traceable view of
 //! what the model actually saw.
 //!
 //! The session transcript (`~/.zen/projects/<encoded-cwd>/<session-id>.jsonl`) already
@@ -13,7 +13,7 @@
 //!   schemas (per-tool JSON size), then each history turn with tool results labeled by
 //!   the tool call that produced them (e.g. `read src/main.rs`).
 //! - A tool result is flagged PRUNABLE when it is large and its key identifier (file
-//!   path) is not referenced by any later message — a heuristic, documented as such.
+//!   path) is not referenced by any later message - a heuristic, documented as such.
 
 use anyhow::{anyhow, Result};
 use serde::Serialize;
@@ -394,7 +394,7 @@ fn analyze(parsed: &ParsedSession) -> ContextAnalysis {
             consumers.push(ConsumerHint {
                 label: t.label.clone(),
                 tokens: t.tokens,
-                suggestion: "Large result no longer referenced — a future prune pass could summarize or drop it.".to_string(),
+                suggestion: "Large result no longer referenced - a future prune pass could summarize or drop it.".to_string(),
             });
         } else if t.tokens >= PRUNE_CANDIDATE_TOKENS * 2 {
             consumers.push(ConsumerHint {
@@ -437,7 +437,7 @@ pub fn render_text(a: &ContextAnalysis) -> String {
         TotalSource::Estimated => "estimated (chars/4)",
     };
     out.push_str(&format!(
-        "Context: {} tokens ({}) — session {}\n",
+        "Context: {} tokens ({}) - session {}\n",
         a.total_tokens, src, a.session_id
     ));
     if !a.model.is_empty() {
@@ -489,17 +489,17 @@ pub fn render_text(a: &ContextAnalysis) -> String {
         out.push_str(&format!("\nCompactions ({}):\n", a.compactions.len()));
         for (i, c) in a.compactions.iter().enumerate() {
             out.push_str(&format!(
-                "  {}. {} — {} tokens → {} summary tokens ({} dropped)\n",
+                "  {}. {} - {} tokens → {} summary tokens ({} dropped)\n",
                 i + 1, c.timestamp, c.tokens_before, c.summary_tokens, c.dropped_tokens
             ));
         }
     }
 
     if !a.top_consumers.is_empty() {
-        out.push_str("\nTop token consumers — where did your tokens go?\n");
+        out.push_str("\nTop token consumers - where did your tokens go?\n");
         for (i, c) in a.top_consumers.iter().enumerate() {
             out.push_str(&format!(
-                "  {}. {} — {} tokens\n     → {}\n",
+                "  {}. {} - {} tokens\n     → {}\n",
                 i + 1, c.label, c.tokens, c.suggestion
             ));
         }

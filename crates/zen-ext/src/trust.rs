@@ -240,7 +240,7 @@ mod tests {
     #[test]
     fn canon_is_symmetric_for_missing_paths() {
         // HIGH: when canonicalize fails (missing path), both sides must still normalize
-        // identically — `.`, `..` and trailing slashes must not change a trust decision.
+        // identically - `.`, `..` and trailing slashes must not change a trust decision.
         use std::path::Path;
         assert_eq!(canon(Path::new("/nope/a/./b")), canon(Path::new("/nope/a/b")));
         assert_eq!(canon(Path::new("/nope/a/b/")), canon(Path::new("/nope/a/b")));

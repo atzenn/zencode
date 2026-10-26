@@ -1,11 +1,11 @@
 //! `@file` mentions and `!cmd` shell passthrough for the REPL (parity P5).
 //!
-//! * `@<glob>` — file mentions are expanded to their contents before the prompt is sent.
+//! * `@<glob>` - file mentions are expanded to their contents before the prompt is sent.
 //!   `@./src/main.rs`, `@src/**/*.test.ts`; multiple mentions per prompt; `.gitignore`
 //!   is respected; a pattern that matches nothing is a hard error naming the pattern.
 //!   Expansion over the token budget only warns (settings `mentions.tokenBudget`,
 //!   default 10 000).
-//! * `!cmd` — shell passthrough runs the command directly (no model round-trip) and
+//! * `!cmd` - shell passthrough runs the command directly (no model round-trip) and
 //!   appends stdout/stderr to the conversation as a `shell_passthrough` record. It runs
 //!   under the current permission mode: the same check the agent applies to the `Bash`
 //!   tool (`Allow` → run, `Ask` → prompt, `Deny`/plan mode → refuse).
@@ -151,7 +151,7 @@ fn read_mention_file(path: &Path) -> String {
         Err(e) => return format!("[could not read file: {}]", e),
     };
     if bytes.iter().take(BINARY_SNIFF_BYTES).any(|b| *b == 0) {
-        return "[binary file — contents not included]".to_string();
+        return "[binary file - contents not included]".to_string();
     }
     let mut text = String::from_utf8_lossy(&bytes).into_owned();
     if bytes.len() as u64 > MAX_MENTION_FILE_BYTES {
@@ -181,7 +181,7 @@ fn expand_pattern(pattern: &str, cwd: &Path) -> Result<Vec<PathBuf>, NoMatchErro
         };
         if abs.is_dir() {
             return Err(NoMatchError(format!(
-                "{} is a directory, not a file — use a glob like {}/**/*",
+                "{} is a directory, not a file - use a glob like {}/**/*",
                 pattern,
                 pattern.trim_end_matches('/')
             )));
@@ -341,7 +341,7 @@ pub struct ShellOutput {
 }
 
 /// Run the command with the resolved shell (portable: Git Bash on Windows), in `cwd`,
-/// with the configured extra env. No permission check — call [`decide_shell`] first.
+/// with the configured extra env. No permission check - call [`decide_shell`] first.
 pub fn run_shell_command(cmd: &str, cwd: &Path, env: &HashMap<String, String>) -> ShellOutput {
     let sh = zen_core::resolve_shell("bash");
     let mut command = std::process::Command::new(&sh.program);
@@ -373,7 +373,7 @@ pub fn run_shell_command(cmd: &str, cwd: &Path, env: &HashMap<String, String>) -
 /// The `shell_passthrough` record appended to the conversation after `!cmd` runs.
 pub fn shell_passthrough_record(cmd: &str, out: &ShellOutput) -> String {
     format!(
-        "[shell_passthrough `!{}` — exit {}]\n{}",
+        "[shell_passthrough `!{}` - exit {}]\n{}",
         cmd,
         out.exit_code,
         out.combined.trim_end()
@@ -662,7 +662,7 @@ mod tests {
         assert_eq!(out.exit_code, 0);
         assert!(out.combined.contains("hello"));
         let rec = shell_passthrough_record("echo hello", &out);
-        assert!(rec.starts_with("[shell_passthrough `!echo hello` — exit 0]"));
+        assert!(rec.starts_with("[shell_passthrough `!echo hello` - exit 0]"));
         assert!(rec.contains("hello"));
     }
 

@@ -1,6 +1,6 @@
 //! Tool-result pruning: kills the N× re-billing multiplier.
 //!
-//! In a long agent loop the cost driver is rarely the model's answers — it is the
+//! In a long agent loop the cost driver is rarely the model's answers - it is the
 //! ever-growing input prefix replayed on every step. A 5,000-token tool result added
 //! on step 2 of a 15-step run is re-billed ~13 more times, and no provider feature
 //! fixes it: this is pure harness work.
@@ -13,7 +13,7 @@
 //!    marker). Summaries are extractive, never generative: exact identifiers
 //!    (paths, connection strings, …) are preserved byte-identical, because the
 //!    research shows LLM summarizers turn `postgres://db.prod/main` into
-//!    "the database was discussed" — accurate, useless.
+//!    "the database was discussed" - accurate, useless.
 //! 2. **Capping.** New tool results over `max_result_tokens` are truncated with a
 //!    machine-readable re-read hint instead of being sent whole.
 //!
@@ -155,7 +155,7 @@ pub fn summarize_pruned(label: &str, identifier: Option<&str>, tokens: u64, age:
         None => "no identifiable target and no later references; ".to_string(),
     };
     format!(
-        "{} {}-token tool result ({}) — {} turns old; {}first line preserved below. Full output in session journal; re-read with `zen context` if needed.]",
+        "{} {}-token tool result ({}) - {} turns old; {}first line preserved below. Full output in session journal; re-read with `zen context` if needed.]",
         PRUNE_MARKER, tokens, label, age, id_note,
     )
 }
@@ -253,9 +253,9 @@ fn should_prune(
 
 /// Replace prunable old tool results in `messages` with extractive summaries.
 ///
-/// * `turn_starts` — message-index boundaries per model call (see [`turn_of`]).
-/// * `current_turn` — the turn about to run.
-/// * `protected` — plan text + recent tool-call identifiers; results whose
+/// * `turn_starts` - message-index boundaries per model call (see [`turn_of`]).
+/// * `current_turn` - the turn about to run.
+/// * `protected` - plan text + recent tool-call identifiers; results whose
 ///   identifier appears here are never pruned.
 ///
 /// Structure is preserved (role and `tool_call_id` untouched) so request
@@ -460,7 +460,7 @@ mod tests {
 
     /// Build a 15-turn fixture transcript: each turn = assistant tool call +
     /// large tool result for a distinct file. Turn 2's result is large (5k tokens)
-    /// and never referenced again — the research's canonical example.
+    /// and never referenced again - the research's canonical example.
     fn fixture_15_turns() -> (Vec<ChatMessage>, Vec<usize>) {
         let mut messages = vec![ChatMessage::user("do the thing")];
         let mut turn_starts = vec![0usize];
@@ -475,7 +475,7 @@ mod tests {
             // 5k-token result: 20k chars.
             let body = format!("// file{} contents\n", turn) + &"x".repeat(20_000);
             messages.push(tool_msg(&call_id, &body));
-            // The assistant moves on without ever naming the file again — the
+            // The assistant moves on without ever naming the file again - the
             // research's canonical "never referenced again" case. (A note that
             // named the file would count as a later reference and protect it.)
             if turn > 1 {

@@ -1,9 +1,9 @@
-# Agent Loop Research — Preparing ZenCode Phase 1
+# Agent Loop Research - Preparing ZenCode Phase 1
 
 **Date:** 2026-10-20
 **Author:** ZC Developer (team CLI)
 **Scope:** How Claude Code, OpenAI Codex CLI, and OpenCode implement the agent loop
-(tool calling, permissions, compaction) — from public documentation only.
+(tool calling, permissions, compaction) - from public documentation only.
 **Clean-room note:** All findings below come from official docs, engineering blogs,
 and public changelogs. No leaked source code, decompiled binaries, or unofficial
 reproductions were used.
@@ -25,9 +25,9 @@ reproductions were used.
 
 **Claude Code.** The canonical ReAct loop: (1) model receives system prompt, tool
 definitions, history; (2) model emits text and/or tool calls; (3) harness executes
-tools, feeds `tool_result` blocks back; (4) repeat — one full cycle is one turn;
+tools, feeds `tool_result` blocks back; (4) repeat - one full cycle is one turn;
 (5) stop when a response contains no tool calls. Parallel tool calls are natively
-supported — independent calls are batched in one turn. Sub-agent delegation is
+supported - independent calls are batched in one turn. Sub-agent delegation is
 itself a tool call (`Agent` tool, fork-exec): the child runs an isolated loop
 with its own context, system prompt, tool subset, and permissions; the parent
 receives only a summary. Built-ins: Explore (read-only), Plan, general-purpose.
@@ -57,7 +57,7 @@ revert safety net.
 
 ### 1.3 Permissions
 
-**Claude Code** — layered system:
+**Claude Code** - layered system:
 - **Modes:** `default` (prompt on first use), `acceptEdits` (auto-accept edits),
   `plan` (read-only), `auto` (classifier reviews shell/network), `dontAsk`
   (auto-deny; CI), `bypassPermissions` (skip prompts; still guards `.git`,
@@ -72,7 +72,7 @@ revert safety net.
   self-correction. Community mantra: "CLAUDE.md is advisory, hooks are
   mandatory."
 
-**Codex CLI** — two independent knobs:
+**Codex CLI** - two independent knobs:
 - **`sandbox_mode`** (what the agent can reach): `read-only` | `workspace-write`
   (network off by default) | `danger-full-access` (disposable envs only).
   OS-level enforcement: macOS Seatbelt, Linux Landlock + seccomp-BPF.
@@ -82,7 +82,7 @@ revert safety net.
 - Granularity: `writable_roots`, `[[rules]]` command-prefix allowlists,
   protected paths (`.git/`, `.codex/` stay read-only).
 
-**OpenCode** — most distinctive: every tool resolves to `allow` / `ask` / `deny`
+**OpenCode** - most distinctive: every tool resolves to `allow` / `ask` / `deny`
 via ordered pattern rules in `opencode.json` (`permission` section), set
 globally (`*`), per tool, or per agent (agent overrides global). **Last matching
 rule wins** (put catch-all first). Input-level granularity: bash `ask` by
@@ -91,7 +91,7 @@ default, `git *` allowed, `rm *` denied; edit denied except a docs glob.
 Permission keys gate tool families: `read`, `edit`, `bash`, `task` (subagents),
 `external_directory`, `webfetch`, `skill`, `doom_loop`, etc. Caution: schema is
 migrating from object to ordered `permissions` array (`bash` → `shell`,
-`task` → `subagent`) — design against an abstraction, not either spelling.
+`task` → `subagent`) - design against an abstraction, not either spelling.
 
 ### 1.4 Compaction / context management
 
@@ -99,7 +99,7 @@ migrating from object to ordered `permissions` array (`bash` → `shell`,
 third-party: ~95%). Precedence: `CLAUDE_CODE_AUTO_COMPACT_WINDOW` env →
 `--autocompact` flag → `/autocompact` command → `autoCompactWindow` in settings.
 Mechanism: older history replaced by an LLM-generated summary
-(`compact_boundary` in stream); durable layers re-injected afterwards —
+(`compact_boundary` in stream); durable layers re-injected afterwards -
 project `CLAUDE.md` (reloaded *every* request), auto-memory, recently touched
 files re-read. `/compact` accepts inline focus (`/compact focus on the auth
 bug fix`); `PreCompact` hook can archive or block. Related: `/clear`, `/rewind`,
@@ -108,15 +108,15 @@ bug fix`); `PreCompact` hook can archive or block. Related: `/clear`, `/rewind`,
 **Codex CLI.** `/compact` manual; auto when usage exceeds
 `model_auto_compact_token_limit` (third-party: ~95%) or on
 `ContextWindowExceeded`. A "CONTEXT CHECKPOINT COMPACTION" prompt requests a
-handoff summary (progress, decisions, constraints, next steps); the summary —
-prefixed "Another language model started to solve this problem…" — replaces
+handoff summary (progress, decisions, constraints, next steps); the summary -
+prefixed "Another language model started to solve this problem…" - replaces
 history alongside initial context + recent messages (up to ~20k tokens).
 `/status` shows usage headroom; <10% warning nudges `/compact`.
 
 **OpenCode.** `compaction` key: `auto` (default true), `prune` (strip old tool
 outputs without summarizing; default false), `reserved` (token buffer against
 overflow). Manual `/compact` (alias `/summarize`). A hidden `compact` agent
-(not UI-selectable) generates the summary; durable checkpoints with retry —
+(not UI-selectable) generates the summary; durable checkpoints with retry -
 older history serialized, summary generated, event persisted, request retried
 from the new checkpoint; raw rows stay in SQLite for audit but leave the
 model-visible window. Plugin hook `experimental.session.compacting` lets
@@ -150,7 +150,7 @@ OpenAI-compatible endpoint, clean-room implementation).
 
 - **Two knobs like Codex** (simple to explain): `sandbox` (what the agent can
   touch: `read-only` | `workspace` | `off`) × `approval` (when to ask:
-  `always` | `on-edit` | `never`). Keep the matrix small — free-first users
+  `always` | `on-edit` | `never`). Keep the matrix small - free-first users
   won't read a 31-event hook reference on day one.
 - **Ordered allow/ask/deny rules** (OpenCode) with **deny-first evaluation**
   (Claude Code): patterns like `Bash(cargo test *)`, evaluated deny → ask →
@@ -158,12 +158,12 @@ OpenAI-compatible endpoint, clean-room implementation).
   project (`.zen/settings.json`, committed) → project-local (gitignored)
   precedence.
 - **Deterministic guard layer** (Claude Code's hooks, minimal v1): a
-  `pre_tool_use` hook table evaluated before execution — block on match
+  `pre_tool_use` hook table evaluated before execution - block on match
   (e.g. never `rm -rf /`, never exfiltrate `~/.ssh`). Advisory prompt text is
   not enforcement.
 - **Sub-agent permissions**: child loops inherit a *narrower* policy than the
   parent by default (read-only Explore-style), escalating only via explicit
-  config — keeps exploration noise out of the main window *and* the blast
+  config - keeps exploration noise out of the main window *and* the blast
   radius small.
 
 ### 2.3 Compaction (borrow from all three)
@@ -180,13 +180,13 @@ OpenAI-compatible endpoint, clean-room implementation).
   `/compact [focus]` manual command with optional focus text.
 - **Prune mode** (OpenCode): optional config to strip verbose tool outputs
   (e.g. long `cargo test` logs) from old turns without a full summarization
-  pass — cheaper than compaction for noisy-but-unimportant history.
+  pass - cheaper than compaction for noisy-but-unimportant history.
 
 ### 2.4 What NOT to copy
 
 - Don't copy any tool's exact config schema (OpenCode's permission schema is
   churning; Claude's 31 hooks are overkill for v1).
-- Don't implement OS-level sandboxing (Seatbelt/Landlock) in Phase 1 — do
+- Don't implement OS-level sandboxing (Seatbelt/Landlock) in Phase 1 - do
   process-level guards (cwd jail, command denylist, no-network flag) first;
   OS sandboxes are Phase 2+.
 - Keep the free-first constraint front and center: every loop feature must
@@ -196,28 +196,28 @@ OpenAI-compatible endpoint, clean-room implementation).
 
 ## 3. Phase 1 task list (proposed)
 
-1. **Loop core** — implement turn loop with step cap + stuck detection in
+1. **Loop core** - implement turn loop with step cap + stuck detection in
    `zen-agent` (`agent.max_steps`, doom-loop nudge). Acceptance: a runaway
    prompt terminates with a summary instead of looping; unit test with a mock
    provider.
-2. **Parallel tool calls** — batch independent read-only calls in one turn.
+2. **Parallel tool calls** - batch independent read-only calls in one turn.
    Acceptance: 3 parallel reads complete in one model round-trip in tests.
-3. **Permission model v1** — `sandbox` × `approval` knobs + ordered
+3. **Permission model v1** - `sandbox` × `approval` knobs + ordered
    deny→ask→allow rules in settings (`~/.zen`, `.zen/`, `.zen.local`).
    Acceptance: `Bash(rm -rf *)` denied even when a broader allow exists.
-4. **Deterministic guards** — `pre_tool_use` blocklist (destructive commands,
+4. **Deterministic guards** - `pre_tool_use` blocklist (destructive commands,
    secret paths). Acceptance: blocked call never reaches the tool; user sees
    why.
-5. **Sub-agents v1** — spawn child loop with narrowed permissions + own
+5. **Sub-agents v1** - spawn child loop with narrowed permissions + own
    context; parent receives summary only. Acceptance: Explore-style read-only
    subagent completes a codebase question without touching the main history.
-6. **Auto-compaction** — threshold-triggered summarization with tail
+6. **Auto-compaction** - threshold-triggered summarization with tail
    preservation + `ZEN.md` re-injection; `/compact [focus]` command.
    Acceptance: a long session compacts without losing the active task; config
    survives compaction.
-7. **Prune mode** — strip old verbose tool outputs (opt-in). Acceptance:
+7. **Prune mode** - strip old verbose tool outputs (opt-in). Acceptance:
    token usage drops on noisy sessions with no summary pass.
-8. **Contract tests** — extend the stream-json contract suite with loop
+8. **Contract tests** - extend the stream-json contract suite with loop
    lifecycle events (turn start/end, compaction boundary) so the Desktop team
    can observe loop state. Acceptance: `cargo test -p zen-cli` green.
 
@@ -231,14 +231,14 @@ sync throughout.*
 
 - Anthropic, Claude Code docs: agent loop ("How the agent loop works"),
   permissions, sub-agents, hooks reference, model config, commands
-  (code.claude.com — official).
+  (code.claude.com - official).
 - OpenAI, Codex CLI docs (developers.openai.com/codex); OpenAI engineering
   blog, "Unlocking the Codex harness" (Feb 2026); `openai/codex` public repo
   (`codex-rs/core/src/compact.rs`, templates).
 - SST, OpenCode docs: agents, permissions, config, plugins, sessions
-  (opencode.ai/docs — official); third-party technical analyses of the
+  (opencode.ai/docs - official); third-party technical analyses of the
   open-source implementation.
-- Vercel AI Gateway changelog (MiniMax M3.1 Flash free tier — context only).
+- Vercel AI Gateway changelog (MiniMax M3.1 Flash free tier - context only).
 
 *All mechanics described from public documentation. Where a claim rests on
 third-party analysis rather than official prose, it is marked inline above.*

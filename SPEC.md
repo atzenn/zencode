@@ -1,4 +1,4 @@
-# ZenCode — Behavioral Specification (clean-room)
+# ZenCode - Behavioral Specification (clean-room)
 
 Status: v1 (2026-10-14). Sources: public docs at code.claude.com/docs (headless, settings, hooks, cli-reference pages),
 `claude --help` output (saved in `claude-help.txt`), and black-box observation via REA on Railway (see Appendix A).
@@ -55,7 +55,7 @@ Stdin: when `-p` and stdin is not a TTY, read stdin (cap 10 MB, error if larger)
 - Every turn is persisted to the session transcript (§10).
 
 ## 3. Agent loop
-1. Build request: system prompt (built-in + env info: cwd, OS, date, git status summary, + project snapshot + ZEN.md memory + skills list + `--append-system-prompt`), message history, tool schemas (built-in + MCP + Task). The system prompt is built once per session and sent byte-identical on every request (cache-friendly). **Project snapshot (r7, skipped with `--bare`):** a 2-level file tree (hidden dirs, `node_modules`/`target`/`dist`/`build`/`out`/`__pycache__`/`venv`/`vendor`/`coverage` and plain names from the top-level `.gitignore` omitted; ≤40 lines, ≤8 children per directory), build/test/lint commands detected from `Cargo.toml`, `package.json` scripts (npm/pnpm/yarn/bun by lockfile), `pyproject.toml`/`setup.py`/`requirements.txt`, `go.mod`, `pom.xml`, Gradle and Makefile targets, `--version` of the matching toolchains, test directories, and a line saying the work is judged by those checks; capped at 4000 characters. **Change workflow (r7 bench C2):** the built-in role prompt ends with a 5-step workflow for code changes — explore the relevant files, reproduce the problem (failing test or a tiny script), fix the root cause with the smallest change without editing/deleting/weakening tests unless asked, rerun the reproduction and the project's tests, check the edge cases the task implies — after https://www.anthropic.com/engineering/swe-bench-sonnet. `--system-prompt` replaces it with the rest of the role prompt.
+1. Build request: system prompt (built-in + env info: cwd, OS, date, git status summary, + project snapshot + ZEN.md memory + skills list + `--append-system-prompt`), message history, tool schemas (built-in + MCP + Task). The system prompt is built once per session and sent byte-identical on every request (cache-friendly). **Project snapshot (r7, skipped with `--bare`):** a 2-level file tree (hidden dirs, `node_modules`/`target`/`dist`/`build`/`out`/`__pycache__`/`venv`/`vendor`/`coverage` and plain names from the top-level `.gitignore` omitted; ≤40 lines, ≤8 children per directory), build/test/lint commands detected from `Cargo.toml`, `package.json` scripts (npm/pnpm/yarn/bun by lockfile), `pyproject.toml`/`setup.py`/`requirements.txt`, `go.mod`, `pom.xml`, Gradle and Makefile targets, `--version` of the matching toolchains, test directories, and a line saying the work is judged by those checks; capped at 4000 characters. **Change workflow (r7 bench C2):** the built-in role prompt ends with a 5-step workflow for code changes - explore the relevant files, reproduce the problem (failing test or a tiny script), fix the root cause with the smallest change without editing/deleting/weakening tests unless asked, rerun the reproduction and the project's tests, check the edge cases the task implies - after https://www.anthropic.com/engineering/swe-bench-sonnet. `--system-prompt` replaces it with the rest of the role prompt.
 2. Send to model. If response has `tool_calls`: for each call (in order) → run PreToolUse hooks → permission check → execute → PostToolUse hooks → append `role:"tool"` message with `tool_call_id` and textual result (errors returned as text with `is_error`-style prefix, never thrown away).
 3. Loop until the model returns a message without tool calls, or `--max-turns` reached (then result subtype `error_max_turns`).
 4. Run Stop hooks; a Stop hook exit 2 injects its stderr as a user message and continues the loop.
@@ -90,10 +90,10 @@ Read-only tools (no permission needed in `default`): Read, Glob, Grep, TodoWrite
 
 ## 5. Permissions
 **Modes**
-- `default`: read-only tools run; Write/Edit/Bash/WebFetch/MCP ask (REPL) — in `-p` with no way to ask → denied, reason returned to the model.
+- `default`: read-only tools run; Write/Edit/Bash/WebFetch/MCP ask (REPL) - in `-p` with no way to ask → denied, reason returned to the model.
 - `acceptEdits`: Write/Edit auto-allowed (within working dirs); simple fs commands (`mkdir`, `touch`, `mv`, `cp`) auto-allowed; other Bash still asks.
 - `plan`: no mutating tool runs; the model is told to research and present a plan; an `ExitPlanMode`-style tool (`ExitPlan{plan}`) ends plan mode after user approval.
-- `bypassPermissions`: everything allowed (still subject to `deny` rules? → No: bypass skips checks, but `deny` rules still win — zen choice for safety).
+- `bypassPermissions`: everything allowed (still subject to `deny` rules? → No: bypass skips checks, but `deny` rules still win - zen choice for safety).
 - `dontAsk`: anything that would prompt is denied automatically; allow rules still apply.
 
 **Rule syntax** (in settings `permissions.allow|ask|deny` arrays and CLI flags): `Tool` or `Tool(specifier)`.
@@ -121,7 +121,7 @@ Custom commands: Markdown files in `.zen/commands/*.md` (project) and `~/.zen/co
 
 **Skills**: directories `~/.zen/skills/<name>/SKILL.md` and `.zen/skills/<name>/SKILL.md`. SKILL.md has YAML frontmatter `name`, `description` (required), optional `allowed-tools`, `disable-model-invocation`. Only name+description are put in the system prompt; the model loads the full body via the `Skill` tool (or user types `/<skill-name>` which inlines it). Supporting files in the skill dir are readable by path.
 
-**Skill registry** (discoverability; `docs/skill-registry.md`): `zen skill search <query>` (ranked: exact name > prefix > substring > tag > description), `zen skill info <name>` (tier, permissions, source — shown before install), `zen skill install registry:<name> --yes` (resolves to `builtin:<name>` or the entry's git URL, then the standard install flow). Curated registry `skills/community-registry.json` is embedded in the binary (works offline); `--registry <path>` overrides with a local file. The registry is advisory: install re-computes the trust tier from the fetched manifest signature — a registry can never upgrade trust.
+**Skill registry** (discoverability; `docs/skill-registry.md`): `zen skill search <query>` (ranked: exact name > prefix > substring > tag > description), `zen skill info <name>` (tier, permissions, source - shown before install), `zen skill install registry:<name> --yes` (resolves to `builtin:<name>` or the entry's git URL, then the standard install flow). Curated registry `skills/community-registry.json` is embedded in the binary (works offline); `--registry <path>` overrides with a local file. The registry is advisory: install re-computes the trust tier from the fetched manifest signature - a registry can never upgrade trust.
 
 ## 8. MCP client
 - Config sources: `.mcp.json` in project root (`{"mcpServers": {name: cfg}}`), `~/.zen.json`/`~/.zen/mcp.json` user, `--mcp-config` files/JSON strings. `--strict-mcp-config` = only CLI ones.
@@ -142,7 +142,7 @@ Custom commands: Markdown files in `.zen/commands/*.md` (project) and `~/.zen/co
 - One JSON object per line: `{ "type": "user"|"assistant"|"tool"|"system"|"summary", "uuid", "parentUuid", "sessionId", "timestamp", "cwd", "message": {...OpenAI-style message...} }`.
 - `--continue`: most recently modified transcript for the current cwd. `--resume <id>`: search all project dirs for `<id>.jsonl`, or accept a path. Resume reloads messages (after the last compaction summary) and continues appending to the same file unless `--fork-session`.
 - Todo list and permission "always" rules persist with the session/settings respectively.
-- **Portability** (`zen export` / `zen import`, format spec in `docs/session-format.md`): `zen export [--format json|markdown|html] [--session <id>] [-o file] [--redact]` renders any stored session — JSON (versioned portable document with `format_version`, the only importable format), Markdown (human-readable), or HTML (styled report). `--redact` strips potential secrets (provider keys, tokens, PEM private keys, `key=value` assignments) mirroring the account-safety redaction rules. `zen import <file.json>` validates `format_version` (refuses newer-than-zen and unsupported older versions) and restores the conversation as a NEW session id, leaving the original untouched.
+- **Portability** (`zen export` / `zen import`, format spec in `docs/session-format.md`): `zen export [--format json|markdown|html] [--session <id>] [-o file] [--redact]` renders any stored session - JSON (versioned portable document with `format_version`, the only importable format), Markdown (human-readable), or HTML (styled report). `--redact` strips potential secrets (provider keys, tokens, PEM private keys, `key=value` assignments) mirroring the account-safety redaction rules. `zen import <file.json>` validates `format_version` (refuses newer-than-zen and unsupported older versions) and restores the conversation as a NEW session id, leaving the original untouched.
 
 ## 11. Context compaction
 - Track estimated tokens (usage from API, else chars/4). When history exceeds `autoCompactThreshold` (default 80% of model context window, configurable via settings `autoCompact` / `--autocompact`), auto-compact before the next request.
@@ -165,7 +165,7 @@ Invalid file → warning on stderr, file skipped (in `-p` silently skipped, visi
 - Configured in settings: `"hooks": { "<Event>": [ { "matcher": "<regex or tool name, optional>", "hooks": [ { "type": "command", "command": "...", "timeout": 60 } ] } ] }`.
 - Events: `PreToolUse`, `PostToolUse` (matcher = tool name regex, e.g. `Edit|Write`, `mcp__.*`), `UserPromptSubmit`, `Stop`, `SubagentStop`, `SessionStart` (matcher: `startup|resume|clear|compact`), `SessionEnd`, `PreCompact` (matcher `manual|auto`), `Notification`.
 - Command runs with `bash -c`, cwd = project dir, env `ZEN_PROJECT_DIR`. Stdin = JSON: `{session_id, transcript_path, cwd, hook_event_name, permission_mode, ...event fields}`; tool events add `tool_name`, `tool_input` (+ `tool_response` for Post); UserPromptSubmit adds `prompt`.
-- Exit codes: `0` success (stdout shown in verbose; for UserPromptSubmit/SessionStart stdout is added to context); `2` blocking — PreToolUse: tool call blocked and stderr returned to the model; PostToolUse: stderr fed to the model; UserPromptSubmit: prompt rejected, stderr shown to user; Stop/SubagentStop: prevents stopping, stderr given to model as next instruction; other non-zero: non-blocking error, stderr shown to user, execution continues.
+- Exit codes: `0` success (stdout shown in verbose; for UserPromptSubmit/SessionStart stdout is added to context); `2` blocking - PreToolUse: tool call blocked and stderr returned to the model; PostToolUse: stderr fed to the model; UserPromptSubmit: prompt rejected, stderr shown to user; Stop/SubagentStop: prevents stopping, stderr given to model as next instruction; other non-zero: non-blocking error, stderr shown to user, execution continues.
 - JSON stdout (optional, exit 0): `{"continue": false, "stopReason": "..."}`, `{"decision": "block", "reason": "..."}`, PreToolUse `{"hookSpecificOutput": {"hookEventName":"PreToolUse","permissionDecision":"allow"|"deny"|"ask","permissionDecisionReason":"..."}}`.
 - Hooks with the same event run in parallel; timeout default 60 s.
 
@@ -191,14 +191,14 @@ With `--include-partial-messages`: `{"type":"stream_event","event":{"type":"cont
 ## 15. Non-goals for MVP (explicitly out of scope / stub)
 IDE integration, Chrome, cloud/teleport/remote-control, background sessions (`--bg`, `attach`), plugins/marketplaces, worktrees, auto-mode classifier, OAuth MCP, image input, voice, status line, output styles, `--json-schema` validation (optional), sandboxed bash.
 
-## Appendix A — Evidence sources
+## Appendix A - Evidence sources
 - `claude --help` (v2.1.296) captured on Railway box → `claude-help.txt`.
 - https://code.claude.com/docs/en/headless (output formats, result/init fields, retries, continue/resume)
 - https://code.claude.com/docs/en/settings (layers, precedence, list merging)
 - https://code.claude.com/docs/en/hooks (events, exit codes, JSON IO)
 - REA black-box run (Claude Code on google/gemini-4-argon:free via relay) → `SPEC-rea.md` (merged notes in Appendix B).
 
-## Appendix B — REA black-box findings (merged 2026-10-14; raw notes in SPEC-rea.md)
+## Appendix B - REA black-box findings (merged 2026-10-14; raw notes in SPEC-rea.md)
 REA run: Claude Code 2.1.296 on Railway, 34 turns, black-box only (help output, docs pages, `-p` experiments in a scratch dir).
 Model: started on google/gemini-4-argon:free; argon's free allowance ran out mid-run, so the final run was on nvidia/nemotron-3-super-120b-a12b:free (OpenRouter) via the relay chain.
 Changes/additions adopted into zen (override the sections above where they differ):
@@ -209,7 +209,7 @@ Changes/additions adopted into zen (override the sections above where they diffe
 - B5 (§14) stream-json events carry `uuid` and `session_id` on every line; tool permission denials appear as `{"type":"system","subtype":"permission_denied","tool_name","tool_use_id","decision_reason"}`. The json result has many extra telemetry fields; zen keeps the documented core set (type, subtype, is_error, duration_ms, duration_api_ms, num_turns, result, session_id, total_cost_usd, usage, permission_denials) plus `model` and `uuid`, and adds `stop_reason`.
 - B6 (§10) Transcript lines have top-level `type`, `sessionId`, `timestamp` (+ message payload); zen's record format in §10 is compatible in spirit (own field set).
 
-## Appendix C — Behavior parity checklist (2026-10-14)
+## Appendix C - Behavior parity checklist (2026-10-14)
 Sources (formats/behaviors only; nothing copied verbatim, no code or prompt text taken):
 public repo github.com/anthropics/claude-code (README, examples/settings/*.json, examples/hooks/bash_command_validator_example.py,
 plugins/*/.claude-plugin/plugin.json + hooks/hooks.json layout), and docs pages code.claude.com/docs/en/{hooks, settings, permissions,
@@ -237,7 +237,7 @@ Status column is maintained in PLAN.md ("Parity status").
 - C2.8 P1 `WebFetch(domain:x)` hostname match, case-insensitive; `*.x` = subdomains only; `domain:*` = all.
 - C2.9 P1 MCP: `mcp__srv`, `mcp__srv__*`, `mcp__srv__tool`; deny/ask accept tool-name globs (`*`, `mcp__*`).
 - C2.10 P2 `Agent(name)` / `Task(name)` rules gate sub-agent types.
-- C2.11 P1 Modes: default (alias `manual`), acceptEdits (edits + mkdir/touch/mv/cp inside working dirs), plan (no mutations), dontAsk (would-ask → deny), bypassPermissions (deny rules still win); `auto` is P3 (classifier) — accepted as alias of default with a warning.
+- C2.11 P1 Modes: default (alias `manual`), acceptEdits (edits + mkdir/touch/mv/cp inside working dirs), plan (no mutations), dontAsk (would-ask → deny), bypassPermissions (deny rules still win); `auto` is P3 (classifier) - accepted as alias of default with a warning.
 - C2.12 P1 "Always allow" from the REPL writes to `.zen/settings.local.json`; for a compound Bash command one rule per sub-command (max 5).
 - C2.13 P1 PreToolUse hook decisions cannot override deny/ask rules; exit-2 block beats allow rules.
 
@@ -276,7 +276,7 @@ Status column is maintained in PLAN.md ("Parity status").
 - C5.2 P1 Custom commands `.zen/commands/**.md`, `~/.zen/commands/**.md` (subdir → `dir:name`), frontmatter description, argument-hint, allowed-tools, model, disable-model-invocation; `$ARGUMENTS`, `$0..$9`/`$ARGUMENTS[N]` positional, `${ZEN_SESSION_ID}`, `${ZEN_PROJECT_DIR}`, `` !`cmd` `` pre-execution, `@file` inlining.
 - C5.3 P1 Skills `.zen/skills/<name>/SKILL.md`, `~/.zen/skills/...`; frontmatter name, description, allowed-tools, disable-model-invocation (not listed for the model), user-invocable (false → hidden from `/`), argument-hint, model; skills and commands share `/name`, skill wins; `${ZEN_SKILL_DIR}`.
 - C5.4 P1 In -p, `/name args` as the prompt is expanded; terminal-only built-ins unavailable; `/model x`, `/compact`, `/cost`, `/mcp` work.
-- C5.5 P3 plugins (`.zen-plugin/plugin.json` with commands/, agents/, skills/, hooks/hooks.json and `${ZEN_PLUGIN_ROOT}`) — documented layout only; `--plugin-dir` P3.
+- C5.5 P3 plugins (`.zen-plugin/plugin.json` with commands/, agents/, skills/, hooks/hooks.json and `${ZEN_PLUGIN_ROOT}`) - documented layout only; `--plugin-dir` P3.
 
 ### C6 Sub-agents
 - C6.1 P1 Definition frontmatter: name, description (required), tools (allowlist; omitted = inherit), disallowedTools, model (alias/full/`inherit`), permissionMode, maxTurns, skills (preloaded), initialPrompt P3, memory P3, isolation P3, mcpServers P3, hooks P3.

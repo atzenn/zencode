@@ -3,10 +3,10 @@
 //! Builds on [`zen_ext::skills`] (SKILL.md discovery + frontmatter parsing) with:
 //!
 //! - `zen-plugin.json` manifest declaring permissions (Codex-style declarative policy,
-//!   enforced by the harness — not advisory).
+//!   enforced by the harness - not advisory).
 //! - Three trust tiers: **verified** (ed25519-signed by ZenCode), **community**
 //!   (explicit install approval, hash-pinned), **unverified** (sandboxed).
-//! - `zen skill test`: deterministic evals from `test.md` CHECK lines — no model
+//! - `zen skill test`: deterministic evals from `test.md` CHECK lines - no model
 //!   calls, so evals are free and reproducible.
 //! - Runtime loading: installed skills inject into the system prompt with tier badges;
 //!   a session permission gate ([`SkillPermissionGate`]) enforces each loaded
@@ -96,7 +96,7 @@ fn default_file_scope() -> String {
 impl Default for SkillPermissions {
     /// Matches the serde field default: advisory-only, project-scoped.
     /// (Deriving Default would leave `file_scope` empty, which `validate()`
-    /// rejects — the derived and deserialized defaults must agree.)
+    /// rejects - the derived and deserialized defaults must agree.)
     fn default() -> Self {
         SkillPermissions::advisory()
     }
@@ -233,7 +233,7 @@ impl PluginManifest {
     }
 
     /// Canonical bytes that the signature covers (signature field excluded,
-    /// keys sorted, tool lists sorted — deterministic across platforms).
+    /// keys sorted, tool lists sorted - deterministic across platforms).
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut tools = self.permissions.allowed_tools.clone();
         tools.sort();
@@ -637,7 +637,7 @@ pub fn install_builtin(home: &Path, name: &str) -> Result<RegistryEntry> {
             problems.join("; ")
         ));
     }
-    // Verify the embedded signature against the baked-in pubkey — the
+    // Verify the embedded signature against the baked-in pubkey - the
     // built-in skills prove the verified tier works end to end.
     match &manifest.signature {
         Some(sig) if verify_signature(&manifest.canonical_bytes(), sig) => {}
@@ -1009,7 +1009,7 @@ fn truncate(s: &str, n: usize) -> String {
 }
 
 /// Run a skill's evals: parse `test.md` CHECK lines, evaluate deterministically.
-/// No model calls — free and reproducible.
+/// No model calls - free and reproducible.
 pub fn run_skill_tests(skill_dir: &Path) -> Result<Vec<CheckResult>> {
     let skill_md = std::fs::read_to_string(skill_dir.join("SKILL.md"))
         .with_context(|| format!("reading {}", skill_dir.join("SKILL.md").display()))?;
@@ -1034,7 +1034,7 @@ pub fn run_skill_tests(skill_dir: &Path) -> Result<Vec<CheckResult>> {
     let test_path = skill_dir.join("test.md");
     if !test_path.is_file() {
         return Err(anyhow!(
-            "skill at {} ships no test.md — cannot evaluate",
+            "skill at {} ships no test.md - cannot evaluate",
             skill_dir.display()
         ));
     }
@@ -1055,20 +1055,20 @@ pub fn run_skill_tests(skill_dir: &Path) -> Result<Vec<CheckResult>> {
 
 const SCAFFOLD_SKILL_MD: &str = r#"---
 name: {name}
-description: TODO — one line describing what this skill does
+description: TODO - one line describing what this skill does
 allowed-tools: read
 ---
 
 # {Name}
 
-TODO — write the skill instructions here. Keep them short and specific:
+TODO - write the skill instructions here. Keep them short and specific:
 state when the skill applies, the exact steps to follow, and what done looks like.
 "#;
 
 const SCAFFOLD_MANIFEST: &str = r#"{
   "name": "{name}",
   "version": "0.1.0",
-  "description": "TODO — one line describing what this skill does",
+  "description": "TODO - one line describing what this skill does",
   "author": "",
   "permissions": {
     "allowed_tools": ["read"],
@@ -1301,7 +1301,7 @@ pub async fn skill_command(
         crate::cli::SkillSubcommand::Create { name } => {
             let dir = create_skill(&home, name)?;
             println!("created skill {:?} at {}", name, dir.display());
-            println!("next: edit SKILL.md, zen-plugin.json, test.md — then `zen skill test {}`", name);
+            println!("next: edit SKILL.md, zen-plugin.json, test.md - then `zen skill test {}`", name);
             Ok(0)
         }
     }
@@ -1316,7 +1316,7 @@ fn cmd_list(home: &Path) -> Result<()> {
     println!("installed skills:");
     for (name, e) in &registry.skills {
         println!(
-            "  {} {} v{} — {}",
+            "  {} {} v{} - {}",
             e.tier.badge(),
             name,
             e.version,
@@ -1349,7 +1349,7 @@ fn cmd_install(
         println!("{}", crate::skill_registry::format_skill_info(entry));
         return cmd_install(home, &resolved, yes, registry_override);
     }
-    // builtin:NAME installs the embedded skill (no permission prompt needed —
+    // builtin:NAME installs the embedded skill (no permission prompt needed -
     // reviewed in-repo, signature verified at install).
     if let Some(name) = source.strip_prefix("builtin:") {
         let entry = install_builtin(home, name)?;
@@ -1557,7 +1557,7 @@ impl zen_core::PermissionChecker for SkillPolicyChecker {
 // closes that gap: it wraps the session's permission checker, and every time
 // the model loads a skill through the [`GatedSkillTool`], the skill is
 // recorded here. Subsequent tool calls are filtered by the union of all
-// loaded skills' allowlists (advisory skills — empty `allowed_tools` — add no
+// loaded skills' allowlists (advisory skills - empty `allowed_tools` - add no
 // filtering), on top of the session's own permission rules.
 //
 // The active-skill set is shared (`Arc<Mutex<..>>`), so sub-agents spawned

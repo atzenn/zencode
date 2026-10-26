@@ -203,7 +203,7 @@ fn strip_noise(line: &str) -> String {
         if c == '\'' {
             match chars.get(i + 1) {
                 Some('\\') => {
-                    // Escaped char literal: `'\X'` — 4 chars.
+                    // Escaped char literal: `'\X'` - 4 chars.
                     for _ in 0..4 {
                         if i < chars.len() {
                             out.push(' ');
@@ -212,7 +212,7 @@ fn strip_noise(line: &str) -> String {
                     }
                 }
                 Some(_) if chars.get(i + 2) == Some(&'\'') => {
-                    // Simple char literal: `'x'` — 3 chars.
+                    // Simple char literal: `'x'` - 3 chars.
                     for _ in 0..3 {
                         out.push(' ');
                         i += 1;
@@ -347,7 +347,7 @@ fn extract_symbols(path: &Path) -> Vec<Symbol> {
                 continue;
             }
             // Depth is back at (or below) the entry level: the module is closed.
-            // Don't reset brace_depth — the outer depth is still valid.
+            // Don't reset brace_depth - the outer depth is still valid.
             in_test_mod = false;
         }
 

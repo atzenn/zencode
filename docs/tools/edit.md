@@ -12,7 +12,7 @@ Replace an exact string inside a file.
 
 ## Behavior
 
-- Matching is exact and whitespace-sensitive — copy the target text verbatim,
+- Matching is exact and whitespace-sensitive - copy the target text verbatim,
   ideally from a fresh `Read`.
 - `old_string` occurring 0 times is an error; occurring 2+ times without
   `replace_all` is an error (no silent partial edits).

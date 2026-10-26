@@ -287,7 +287,7 @@ pub fn changed_files(cwd: &Path) -> Vec<(String, String)> {
             }
             let status = l[..2].to_string();
             let path = l[3..].trim().to_string();
-            // Handle renames: "R  old -> new" — take the new path.
+            // Handle renames: "R  old -> new" - take the new path.
             let path = path.split(" -> ").last().unwrap_or(&path).to_string();
             Some((status, path))
         })

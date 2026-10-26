@@ -18,7 +18,7 @@ Run a shell command with `bash -c` in the session working directory.
   whose path is reported, along with the exit code.
 - This is a mutating tool: in `default` permission mode it may prompt; in
   `plan` mode it is hidden entirely.
-- Prefer `Read`/`Glob`/`Grep` for inspecting files — spawning a shell costs a
+- Prefer `Read`/`Glob`/`Grep` for inspecting files - spawning a shell costs a
   round-trip and its output is billed as context.
 
 ## Background jobs

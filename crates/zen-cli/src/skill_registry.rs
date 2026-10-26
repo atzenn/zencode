@@ -10,8 +10,8 @@
 //! - `zen skill info <name>` shows full details (trust tier, permissions) so the
 //!   user can decide BEFORE installing.
 //! - `zen skill install registry:<name> [--yes]` resolves the entry's source
-//!   and reuses the standard install flow — permission diff, explicit `--yes`,
-//!   hash pinning — unchanged.
+//!   and reuses the standard install flow - permission diff, explicit `--yes`,
+//!   hash pinning - unchanged.
 //! - `--registry <path>` overrides the bundled registry with a local file, the
 //!   stepping stone to a future HTTP registry (see `docs/skill-registry.md`).
 //!
@@ -19,7 +19,7 @@
 //! entry, but the tier actually assigned at install is computed by
 //! [`crate::skills::assign_tier`] from the fetched manifest and its signature.
 //! A registry claiming "verified" for an unsigned skill installs as community
-//! or unverified — the registry cannot upgrade trust.
+//! or unverified - the registry cannot upgrade trust.
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -56,7 +56,7 @@ pub struct RegistrySkill {
     pub version: String,
     #[serde(default)]
     pub author: String,
-    /// Advisory trust tier — the install re-computes the real tier (see module docs).
+    /// Advisory trust tier - the install re-computes the real tier (see module docs).
     pub tier: String,
     #[serde(default)]
     pub tags: Vec<String>,
@@ -262,7 +262,7 @@ pub fn cmd_search(query: &str, registry_override: Option<&str>) -> Result<()> {
     println!("registry results for {query:?}:");
     for (_, s) in &hits {
         println!(
-            "  {} {} v{} — {}",
+            "  {} {} v{} - {}",
             s.tier_enum().badge(),
             s.name,
             s.version,
@@ -311,7 +311,7 @@ mod tests {
     #[test]
     fn bundled_registry_matches_builtin_manifests() {
         // The registry's permission declarations must match the manifests that
-        // install_builtin() embeds — drift here misleads `zen skill info`.
+        // install_builtin() embeds - drift here misleads `zen skill info`.
         let reg = seed();
         let tdd = find_in_registry(&reg, "tdd").unwrap();
         assert!(tdd.permissions.exec);

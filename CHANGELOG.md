@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - stream-json: `system`/`tool_progress` heartbeat records, emitted every 5 seconds while a
   tool call is still running (`tool_use_id`, `tool_name`, `elapsed_ms`), so UIs can
   distinguish "tool still working" from stalled (issue #21).
-- docs: `--include-partial-messages` consumer contract in `docs/stream-json-v1.md` —
+- docs: `--include-partial-messages` consumer contract in `docs/stream-json-v1.md` -
   deltas are provisional, the following full `assistant` record is authoritative; UIs must
   replace (not append) accumulated deltas (issue #20).
 ### Added

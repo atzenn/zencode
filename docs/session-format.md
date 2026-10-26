@@ -1,11 +1,11 @@
 # ZenCode Session Export Format
 
 **Version:** 1 (`format_version: 1`)
-**Status:** stable — v1 is frozen; breaking changes get a new version number.
+**Status:** stable - v1 is frozen; breaking changes get a new version number.
 
 No major coding agent ships session portability: transcripts are locked into
 one tool's internal format. ZenCode's export format is documented and versioned
-so that any tool — another agent, a script, or a future ZenCode web UI — can
+so that any tool - another agent, a script, or a future ZenCode web UI - can
 read a session without knowing zen's internals.
 
 ## Producing / consuming
@@ -58,7 +58,7 @@ session id and prints it; the original session is never modified.
 
 Journal metadata (`tools`, `request`, `response`, `response_error`) is not
 exported as messages: the model name is harvested from `request`, usage from
-the per-turn `system`/`usage` records (deltas — they are summed).
+the per-turn `system`/`usage` records (deltas - they are summed).
 
 ### `format_version` contract
 
@@ -84,7 +84,7 @@ account-safety redaction rules):
 - JSON object keys naming a secret (`"api_key": "…"` → `"[REDACTED]"`)
 
 Redacted values become `[REDACTED]` (or `[REDACTED PRIVATE KEY]`); the document
-sets `"redacted": true`. Redaction is best-effort pattern matching — review
+sets `"redacted": true`. Redaction is best-effort pattern matching - review
 before publishing an export that touched real credentials.
 
 ## Import semantics

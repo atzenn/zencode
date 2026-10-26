@@ -3,16 +3,16 @@
 //! This module implements the core tools that the agent can invoke. Each tool is a
 //! struct implementing `zen_core::Tool`. The tools are:
 //!
-//! - `Read` — Read a text file with 1-based line numbers, offset/limit paging.
-//! - `Write` — Create or overwrite a file (requires prior Read for existing files).
-//! - `Edit` — String replacement in a file (requires prior Read; refuses a file changed since
+//! - `Read` - Read a text file with 1-based line numbers, offset/limit paging.
+//! - `Write` - Create or overwrite a file (requires prior Read for existing files).
+//! - `Edit` - String replacement in a file (requires prior Read; refuses a file changed since
 //!   that Read; whitespace/indent-tolerant fallback, see `edit_match.rs`).
-//! - `MultiEdit` — Several Edit replacements on one file, all or nothing.
-//! - `Bash` — Run a shell command with persistent cwd, timeout, and optional background mode.
-//! - `Glob` — Find files by glob pattern, respecting .gitignore, sorted by mtime.
-//! - `Grep` — Search file contents with regex, using ripgrep when available or a built-in walker.
-//! - `WebFetch` — Fetch a URL over HTTP(S), return readable text (HTML→markdown-ish).
-//! - `TodoWrite` — Manage the session task list with status tracking.
+//! - `MultiEdit` - Several Edit replacements on one file, all or nothing.
+//! - `Bash` - Run a shell command with persistent cwd, timeout, and optional background mode.
+//! - `Glob` - Find files by glob pattern, respecting .gitignore, sorted by mtime.
+//! - `Grep` - Search file contents with regex, using ripgrep when available or a built-in walker.
+//! - `WebFetch` - Fetch a URL over HTTP(S), return readable text (HTML→markdown-ish).
+//! - `TodoWrite` - Manage the session task list with status tracking.
 //!
 //! Cross-tool helpers (`resolve_path`, `expand_tilde`, `truncate_middle`, `spill_output`,
 //! `canonicalize_lenient`, `html_to_text`, `render_todos`, `search_builtin`) live here
@@ -163,7 +163,7 @@ fn missing(key: &str) -> ToolOutput {
     ToolOutput::err(format!("Error: missing required parameter '{}'", key))
 }
 
-/// Keep the head and the tail, elide the middle (SPEC §4 — Bash).
+/// Keep the head and the tail, elide the middle (SPEC §4 - Bash).
 pub fn truncate_middle(s: &str, max_chars: usize) -> String {
     let count = s.chars().count();
     if count <= max_chars {

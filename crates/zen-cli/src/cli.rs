@@ -133,7 +133,7 @@ pub struct Cli {
     /// Emit partial stream events in stream-json mode.
     /// Required for streaming UIs that render token-by-token output; without it,
     /// only complete assistant messages appear in the stream. Deltas are
-    /// provisional: the following full `assistant` record is authoritative —
+    /// provisional: the following full `assistant` record is authoritative -
     /// replace (not append) accumulated deltas when it arrives.
     #[arg(long = "include-partial-messages")]
     pub include_partial_messages: bool,

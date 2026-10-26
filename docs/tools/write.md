@@ -15,7 +15,7 @@ Create a file or overwrite it completely.
   (via `Read`); otherwise the call is rejected. This prevents clobbering files
   you have not seen.
 - The write is atomic: a temp file is written and renamed over the target.
-- Large content is fine, but prefer `Edit` for small changes to large files —
+- Large content is fine, but prefer `Edit` for small changes to large files -
   rewriting a whole file costs tokens for the full content.
 
 ## Examples

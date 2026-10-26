@@ -1,6 +1,6 @@
 # GitHub integration
 
-ZenCode talks to GitHub through the [`gh` CLI](https://cli.github.com) — auth
+ZenCode talks to GitHub through the [`gh` CLI](https://cli.github.com) - auth
 belongs to `gh` (`gh auth login`), zen never sees tokens. Everything zen fetches
 is read-only; applying fixes happens through normal agent turns, gated by the
 permission mode.
@@ -23,7 +23,7 @@ https://github.com/atzenn/zencode/pull/1
 
 Severity is a keyword heuristic (`CRITICAL` for security/blocking language,
 `HIGH` for bugs, `MEDIUM` for questions, `LOW` for suggestions, `NIT` for
-style) — a triage aid, not a verdict.
+style) - a triage aid, not a verdict.
 
 After displaying, zen offers to address the comments with the agent:
 

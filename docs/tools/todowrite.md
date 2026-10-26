@@ -28,4 +28,4 @@ Replace the session task list.
 
 ## Phase bundle
 
-`core` — always sent with a full schema, in every bundle.
+`core` - always sent with a full schema, in every bundle.

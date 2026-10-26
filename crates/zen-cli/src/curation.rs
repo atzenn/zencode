@@ -1,13 +1,13 @@
 //! Curated plugin registry (roadmap v0.9.0+ item #14).
 //!
 //! The curated registry is the human-reviewed layer on top of the community
-//! skill registry. Every curated entry carries curation metadata — who
-//! reviewed it, when, and the review notes — so users can see *why* a plugin
+//! skill registry. Every curated entry carries curation metadata - who
+//! reviewed it, when, and the review notes - so users can see *why* a plugin
 //! earned its badge. Two tiers:
 //!
-//! - `curated` — reviewed by maintainers against the criteria in
+//! - `curated` - reviewed by maintainers against the criteria in
 //!   `docs/plugin-curation.md`; the badge is version-scoped (`reviewed_version`).
-//! - `community` — unreviewed; install shows a stronger warning.
+//! - `community` - unreviewed; install shows a stronger warning.
 //!
 //! The registry ships embedded (`registry-curated.json` at the crate root) and
 //! can be extended per-user at `~/.zen/registry-curated.json` (user entries
@@ -314,10 +314,10 @@ pub fn format_hits(hits: &[SearchHit], curated_only: bool) -> String {
         } else {
             "[community]"
         };
-        out.push_str(&format!("{} {} v{} — {}\n", badge, h.name, h.version, h.description));
+        out.push_str(&format!("{} {} v{} - {}\n", badge, h.name, h.version, h.description));
         out.push_str(&format!("    by {}{}\n", h.author, match &h.review_summary {
             Some(s) => format!(" · {}", s),
-            None => " · unreviewed — inspect before installing".to_string(),
+            None => " · unreviewed - inspect before installing".to_string(),
         }));
     }
     out
@@ -516,7 +516,7 @@ mod tests {
         assert!(out.contains("[curated ✓] tdd"));
         assert!(out.contains("[community] tdd-helper"));
         assert!(out.contains("reviewed by ZC Leader"));
-        assert!(out.contains("unreviewed — inspect before installing"));
+        assert!(out.contains("unreviewed - inspect before installing"));
     }
 
     #[test]

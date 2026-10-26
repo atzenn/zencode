@@ -7,9 +7,9 @@ the process and expectations.
 
 - **Never push directly to `main`.** All changes go through pull requests.
 - Branch naming (English, kebab-case):
-  - `dev/<name>` — developer tasks
-  - `lead/<name>` — leader tasks
-  - `hotfix/<name>` — urgent fixes
+  - `dev/<name>` - developer tasks
+  - `lead/<name>` - leader tasks
+  - `hotfix/<name>` - urgent fixes
 - One branch = one task = one PR.
 - Create branches from the latest `main`.
 
@@ -18,7 +18,7 @@ the process and expectations.
 1. Before opening a PR, run `~/workspace/tools/gh-pace-check.sh` (anti-suspend:
    max 5 new PRs per day per repo).
 2. PRs must be in **English** (title, description, comments, commits).
-3. Link related issues. Keep the diff minimal — no unrelated refactors.
+3. Link related issues. Keep the diff minimal - no unrelated refactors.
 4. A leader reviews every PR. Developers do **not** self-merge.
 5. CI must be green. Run before pushing:
    ```bash
@@ -31,7 +31,7 @@ the process and expectations.
 ## Code Standards
 
 - Rust edition 2024. Follow `rustfmt` defaults.
-- No `unwrap()` in production paths — use proper error types (`thiserror`/`anyhow`).
+- No `unwrap()` in production paths - use proper error types (`thiserror`/`anyhow`).
 - No hardcoded secrets, API keys, or credentials. Ever.
 - Cross-platform: code must work on Linux, macOS, and Windows.
   Use the `dirs` crate for paths, never hardcode `/home` or `C:\`.
@@ -41,7 +41,7 @@ the process and expectations.
 ## Clean-Room Rule
 
 ZenCode is built clean-room. Never copy code, prompts, or tool descriptions
-from Claude Code, Codex, or similar tools — even from memory of leaked sources.
+from Claude Code, Codex, or similar tools - even from memory of leaked sources.
 Only public binaries, SDK types, official docs, and changelogs may be used
 as references.
 
@@ -54,11 +54,11 @@ Do **not** open public issues for vulnerabilities.
 
 No release ships until all five gates pass:
 
-1. **context7** — dependencies and APIs checked against current docs; no deprecated usage.
-2. **ocr** (OpenCodeReview) — full code review of the release diff.
-3. **e2e** — full end-to-end test suite green on Linux, macOS, and Windows.
-4. **rea** (REA research) — reverse-engineering/parity checks against reference behavior.
-5. **bughunter** — security audit, including dependency scans:
+1. **context7** - dependencies and APIs checked against current docs; no deprecated usage.
+2. **ocr** (OpenCodeReview) - full code review of the release diff.
+3. **e2e** - full end-to-end test suite green on Linux, macOS, and Windows.
+4. **rea** (REA research) - reverse-engineering/parity checks against reference behavior.
+5. **bughunter** - security audit, including dependency scans:
    `cargo audit` and `osv-scanner scan source -r .` (OSV-Scanner, against OSV.dev)
    must both report no unresolved vulnerabilities.
 

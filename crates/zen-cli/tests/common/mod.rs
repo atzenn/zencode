@@ -10,8 +10,8 @@
 //! * **No fixed ports.** Each mock binds `127.0.0.1:0` and reports its actual port, so tests
 //!   can run fully in parallel without collisions.
 //! * **Full request capture.** The mock reads the complete request (headers + `Content-Length`
-//!   body) so tests can assert on the JSON the agent actually sent — system prompt, message
-//!   history, tool list, tool results — not just on stdout.
+//!   body) so tests can assert on the JSON the agent actually sent - system prompt, message
+//!   history, tool list, tool results - not just on stdout.
 //! * **Queued responses.** A `MockServer` is given a list of canned `chat.completion` bodies.
 //!   One process invocation may make several requests (tool round-trips, compaction); each
 //!   accepted connection consumes the next scripted reply. The last reply is reused if the
@@ -231,7 +231,7 @@ impl MockServer {
         Self::start(vec![Reply::text(text)]).await
     }
 
-    /// `http://127.0.0.1:<port>/v1` — the value to pass to `--base-url`.
+    /// `http://127.0.0.1:<port>/v1` - the value to pass to `--base-url`.
     pub fn base_url(&self) -> String {
         format!("http://{}/v1", self.addr)
     }
@@ -332,7 +332,7 @@ pub fn request_messages(raw: &str) -> Vec<serde_json::Value> {
         .unwrap_or_default()
 }
 
-/// Concatenate the serialized `messages` of a request — handy for `contains` assertions.
+/// Concatenate the serialized `messages` of a request - handy for `contains` assertions.
 pub fn request_messages_text(raw: &str) -> String {
     serde_json::to_string(&request_messages(raw)).unwrap_or_default()
 }

@@ -1,4 +1,4 @@
-# PLAN-trunc — continue on truncation (branch `feat/continue-on-truncation`)
+# PLAN-trunc - continue on truncation (branch `feat/continue-on-truncation`)
 
 Problem: when a reply stops because it hit the output token limit (`finish_reason: "length"` on
 OpenAI/OpenRouter; some gateways pass the native `max_tokens` / `MAX_TOKENS` /
@@ -33,7 +33,7 @@ Design (minimal, no new deps, all in `zen-agent/src/agent.rs` + one settings key
   record, the cap note reuses `system/hook_message` (`hook_event_name: "Truncation"`).
 
 Steps (proof per step):
-1. Agent logic + config field — `cargo build`; existing agent tests unchanged.
+1. Agent logic + config field - `cargo build`; existing agent tests unchanged.
 2. Tests in `zen-agent/src/tests_trunc.rs`: text truncation continues & stitches; truncated tool
    call (bad JSON) is not executed and is re-emitted; truncated but complete call runs; cap
    reached → clear message (text and tool cases); `max_tokens` native reason recognized.

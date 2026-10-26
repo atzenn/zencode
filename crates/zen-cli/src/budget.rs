@@ -59,9 +59,9 @@ pub fn budget_line(policy: &BudgetPolicy, spent_usd: f64) -> String {
         spent_usd,
         pct,
         if spent_usd > policy.max_budget_usd {
-            " — OVER BUDGET"
+            " - OVER BUDGET"
         } else if pct >= policy.warn_at * 100.0 {
-            " — over warn threshold"
+            " - over warn threshold"
         } else {
             ""
         }

@@ -355,7 +355,7 @@ fn allow_covers(rules: &[String], tool_name: &str, input: &Value, cwd: &Path) ->
 /// is never substitution.
 ///
 /// Security (HIGH-1): the permission engine evaluates these bodies as independent
-/// fragments so a denied inner command cannot hide inside substitution —
+/// fragments so a denied inner command cannot hide inside substitution -
 /// `echo $(rm -rf ~)` must not bypass a `Bash(rm *)` deny rule.
 fn substitution_bodies(command: &str) -> Vec<String> {
     fn scan(chars: &[char], out: &mut Vec<String>) {
@@ -781,7 +781,7 @@ mod tests {
         assert!(is_deny(&check_bash(&perms, "rm -rf /tmp/x")));
     }
 
-    /// HIGH-1: allow rules fail closed on substitution — the inner command needs
+    /// HIGH-1: allow rules fail closed on substitution - the inner command needs
     /// its own allow rule.
     #[test]
     fn substitution_allow_fails_closed() {
@@ -800,7 +800,7 @@ mod tests {
         assert!(is_deny(&check_bash(&perms, "echo \"${X:-$(rm -rf ~)}\"")), "dq ${{}} bypass not blocked");
     }
 
-    /// Single quotes prevent substitution — the inner text is inert.
+    /// Single quotes prevent substitution - the inner text is inert.
     #[test]
     fn substitution_single_quoted_not_extracted() {
         let perms = test_perms(&["Bash(rm *)"], &[]);

@@ -1,4 +1,4 @@
-# Harness² (arXiv:2610.14224, Google Cloud AI Research, 2026-10-09) — lessons for ZenCode
+# Harness² (arXiv:2610.14224, Google Cloud AI Research, 2026-10-09) - lessons for ZenCode
 
 Source: https://arxiv.org/abs/2610.14224 · code github.com/google-research/harness2 (CC BY 4.0). Read 2026-10-15.
 
@@ -7,7 +7,7 @@ Self-improving harness at test time. Per task: run reference → propose 2 harne
 
 ## Numbers that matter for us
 - Same model (Gemini 3.5 Flash), OpenCode → Harness² k=5: +7.4/+8.4/+9.4 on WB Code/Web/Office; beats unchanged Claude Code/Codex by 4.6–5.8. Harness, not model, is the lever (validates ZenCode r7: oss-20b 8→10/10 from harness fixes only).
-- Component ablation (E.1): removing skills −5.3 avg, scripts −3.7, prompt group −1.5. Prompt edits are the weakest lever — matches our C2 (neutral) and C6 (reverted).
+- Component ablation (E.1): removing skills −5.3 avg, scripts −3.7, prompt group −1.5. Prompt edits are the weakest lever - matches our C2 (neutral) and C6 (reverted).
 - Tool-error rate −20 to −37% after one step; calls not always fewer.
 - Failure analysis: wrong candidate selection, shared wrong premise across candidates, and run-to-run noise. They recommend repeated executions to separate edit effect from variance.
 - Case: model emitting tool calls as plain text; a guidance edit forbidding pseudo-calls 60→100. ZenCode already repairs this (repair.rs `tool_call_in_text`).

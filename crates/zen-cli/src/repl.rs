@@ -49,7 +49,7 @@ pub async fn run_repl(cli: &Cli, cwd: &Path, home: Option<&Path>) -> Result<()> 
         .session_id
         .clone()
         .unwrap_or_else(crate::session::new_session_id);
-    // `--ephemeral`: no session directory, no transcript file — everything stays in memory.
+    // `--ephemeral`: no session directory, no transcript file - everything stays in memory.
     let transcript_path: Option<std::path::PathBuf> = if cli.ephemeral {
         None
     } else {
@@ -61,20 +61,20 @@ pub async fn run_repl(cli: &Cli, cwd: &Path, home: Option<&Path>) -> Result<()> 
         Some(crate::session::session_path(&proj_dir, &session_id))
     };
     // Every turn (and every slash command that rewrites history, e.g. /compact) is persisted
-    // through the parentUuid-chained transcript writer (SPEC C9) — a no-op in ephemeral mode.
+    // through the parentUuid-chained transcript writer (SPEC C9) - a no-op in ephemeral mode.
     let mut writer = match &transcript_path {
         Some(p) => crate::session::TranscriptWriter::new(p.clone(), &session_id, cwd),
         None => crate::session::TranscriptWriter::ephemeral(&session_id, cwd),
     };
 
     println!(
-        "zen {} — model {}, cwd {}",
+        "zen {} - model {}, cwd {}",
         env!("CARGO_PKG_VERSION"),
         cfg.model,
         cwd.display()
     );
     if cli.ephemeral {
-        println!("EPHEMERAL MODE — nothing will be saved");
+        println!("EPHEMERAL MODE - nothing will be saved");
     }
     println!("Type /help for commands, !cmd for shell, @file to attach files, #note to remember, Ctrl-D to exit.");
 
@@ -120,7 +120,7 @@ pub async fn run_repl(cli: &Cli, cwd: &Path, home: Option<&Path>) -> Result<()> 
         Arc::new(zen_core::NullSink),
         {
             let mut ctx = crate::agent_run::tool_context_public(cwd, &cfg, cli, &session_id);
-            // Ephemeral: no session dir under ~/.zen — tools fall back to a temp scratch dir.
+            // Ephemeral: no session dir under ~/.zen - tools fall back to a temp scratch dir.
             ctx.session_dir = transcript_path
                 .as_ref()
                 .map(|q| crate::session::session_scratch_dir(q));
@@ -441,7 +441,7 @@ async fn handle_line(
             zen_core::PermissionMode::AcceptEdits,
             &repl.base_system_prompt,
         );
-        println!("plan approved and recorded — permission mode is now acceptEdits.");
+        println!("plan approved and recorded - permission mode is now acceptEdits.");
         return Ok(LineAction::Continue);
     }
     // Any other prompt while a plan is pending means the user is refining it; the stale
@@ -862,7 +862,7 @@ async fn handle_slash(
                 println!("scope cleared");
             } else if arg.is_empty() {
                 if repl.scope.declared.is_empty() {
-                    println!("(no declared scope — /scope <glob>... to set one, e.g. /scope src/**)");
+                    println!("(no declared scope - /scope <glob>... to set one, e.g. /scope src/**)");
                 } else {
                     println!("scope: {}", repl.scope.declared.join(" "));
                     let changed = crate::doneguard::changed_files(cwd);
@@ -1164,7 +1164,7 @@ async fn handle_slash(
                     &repl.base_system_prompt,
                 );
                 repl.pending_plan = None;
-                println!("plan mode OFF — permission mode: {}", restore.as_str());
+                println!("plan mode OFF - permission mode: {}", restore.as_str());
             } else {
                 repl.pre_plan_mode = agent.config.permission_mode;
                 crate::planmode::set_permission_mode(
@@ -1174,7 +1174,7 @@ async fn handle_slash(
                 );
                 repl.pending_plan = None;
                 println!(
-                    "plan mode ON — read-only. Research with the available tools, then present \
+                    "plan mode ON - read-only. Research with the available tools, then present \
                      a plan ending with `ExitPlanMode`. /plan again to exit without approving."
                 );
             }

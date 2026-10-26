@@ -385,7 +385,7 @@ async fn json_result_total_cost_matches_cost_ledger_for_paid_model() {
     );
 }
 
-/// A `:free` model spends real tokens but its `result` record must say exactly 0.0 —
+/// A `:free` model spends real tokens but its `result` record must say exactly 0.0 -
 /// a genuine zero from the pricing table, not the old hard-coded placeholder.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn json_result_total_cost_is_genuine_zero_for_free_model() {

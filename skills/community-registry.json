@@ -3,7 +3,7 @@
   "skills": [
     {
       "author": "ZenCode",
-      "description": "Test-driven development workflow — write the failing test first",
+      "description": "Test-driven development workflow - write the failing test first",
       "name": "tdd",
       "permissions": {
         "allowed_tools": [
@@ -80,7 +80,7 @@
     },
     {
       "author": "zencode-community",
-      "description": "EXAMPLE ENTRY — conventional-commit message generator from staged diffs",
+      "description": "EXAMPLE ENTRY - conventional-commit message generator from staged diffs",
       "name": "commit-msg",
       "permissions": {
         "allowed_tools": [
@@ -106,7 +106,7 @@
     },
     {
       "author": "zencode-community",
-      "description": "EXAMPLE ENTRY — plain-language explanations of unfamiliar code",
+      "description": "EXAMPLE ENTRY - plain-language explanations of unfamiliar code",
       "name": "explain-code",
       "permissions": {
         "allowed_tools": [
@@ -133,7 +133,7 @@
     },
     {
       "author": "zencode-community",
-      "description": "EXAMPLE ENTRY — generate API reference docs from source annotations",
+      "description": "EXAMPLE ENTRY - generate API reference docs from source annotations",
       "name": "api-docs",
       "permissions": {
         "allowed_tools": [

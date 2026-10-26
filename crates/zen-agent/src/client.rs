@@ -769,7 +769,7 @@ impl LlmBackend for OpenAiClient {
             // For 529 (provider overloaded), suggest fallback in the event.
             let mut err_for_event = err_text.clone();
             if class == ErrorClass::Overloaded {
-                err_for_event.push_str(" (provider overloaded — consider a fallback provider)");
+                err_for_event.push_str(" (provider overloaded - consider a fallback provider)");
             }
             self.sink.emit(AgentEvent::ApiRetry {
                 attempt,
@@ -1131,7 +1131,7 @@ mod tests {
 // Prompt caching design (see ~/workspace/zencode-token-saving-research.md §1):
 // - Breakpoints (`cache_control: {"type": "ephemeral"}`) sit after the *latest
 //   stable* content: the end of the tool definitions and the end of the stable
-//   system block. They are NEVER placed after the newest message — doing so
+//   system block. They are NEVER placed after the newest message - doing so
 //   rewrites the cache from scratch every turn.
 // - Cache hierarchy is tools → system → messages, so tool definitions must be a
 //   *stable bundle*: the same tools in the same order every turn. Recomposing
@@ -1291,7 +1291,7 @@ pub(crate) fn anthropic_request_body(req: &ChatRequest) -> Value {
     }
     // Cache-aware ordering: tools first (Anthropic caches them before everything
     // else), then system, then messages. The tool bundle must be stable across
-    // turns — the breakpoint goes on the LAST tool so the whole block is cached.
+    // turns - the breakpoint goes on the LAST tool so the whole block is cached.
     let tools: Vec<Value> = req
         .tools
         .iter()
@@ -1608,7 +1608,7 @@ mod anthropic_tests {
         );
         let blocks = anthropic_system_blocks(&prompt);
         assert_eq!(blocks.len(), 2);
-        // Breakpoint on the stable block only — the volatile tail must not be cached.
+        // Breakpoint on the stable block only - the volatile tail must not be cached.
         assert_eq!(blocks[0]["cache_control"]["type"], "ephemeral");
         assert_eq!(blocks[0]["text"], "stable role prompt");
         assert!(blocks[1].get("cache_control").is_none());
