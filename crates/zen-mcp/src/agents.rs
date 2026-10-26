@@ -84,12 +84,12 @@ fn agent_from_markdown(name_hint: &str, text: &str) -> Option<AgentDefinition> {
         .filter(|s| !s.is_empty())
         .unwrap_or(name_hint)
         .to_string();
-    
+
     // Skip if name is missing
     if name.is_empty() {
         return None;
     }
-    
+
     // `description` is required (SPEC C6.1): without it the model cannot choose the agent.
     let description = field(&fields, "description").map(str::trim).filter(|d| !d.is_empty())?.to_string();
     let tools = field(&fields, "tools").and_then(parse_tools);
@@ -152,7 +152,7 @@ fn load_dir(into: &mut Vec<AgentDefinition>, dir: &Path) {
 
 fn agent_from_json(name: &str, value: &Value) -> Option<AgentDefinition> {
     let obj = value.as_object()?;
-    
+
     let description = obj
         .get("description")
         .and_then(|v| v.as_str())

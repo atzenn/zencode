@@ -102,11 +102,11 @@ pub struct SkipReason {
 
 /// Owns live server connections. Failed servers are kept with status "failed" (never fatal).
 pub struct McpManager {
-    statuses: Vec<(String, String)>,   
-    tools: Vec<Arc<dyn Tool>>,        
-    transports: Vec<Arc<Transport>>,  
-    skipped: Vec<SkipReason>,         
-    failed: Vec<(String, String)>,    
+    statuses: Vec<(String, String)>,
+    tools: Vec<Arc<dyn Tool>>,
+    transports: Vec<Arc<Transport>>,
+    skipped: Vec<SkipReason>,
+    failed: Vec<(String, String)>,
 }
 
 impl McpManager {
@@ -117,7 +117,7 @@ impl McpManager {
 
         let mut join = Vec::new();
         let mut skipped = Vec::new();
-        
+
         // Validate and filter configs before starting
         let mut valid_configs = BTreeMap::new();
         for (name, cfg) in configs {
@@ -132,7 +132,7 @@ impl McpManager {
                     continue;
                 }
             };
-            
+
             // Validation (SPEC C7.3): a `url` entry must say its `type`; the type must be known;
             // a stdio entry needs a command and an http entry a url.
             if let Some(reason) = validate(&expanded_cfg) {

@@ -203,14 +203,14 @@ pub fn save_mcp_config_file(path: &Path, configs: &BTreeMap<String, McpServerCon
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    
+
     let mut map = serde_json::Map::new();
     let mut servers_map = serde_json::Map::new();
     for (name, cfg) in configs {
         servers_map.insert(name.clone(), serde_json::to_value(cfg)?);
     }
     map.insert("mcpServers".to_string(), serde_json::Value::Object(servers_map));
-    
+
     let json = serde_json::to_string_pretty(&serde_json::Value::Object(map))?;
     std::fs::write(path, json)?;
     Ok(())
@@ -358,7 +358,7 @@ pub fn mcp_add_json(path: &Path, name: &str, json_str: &str) -> anyhow::Result<(
 }
 
 /// Load MCP configuration sources with precedence and strict mode, returning both the merged configs and skip reasons.
-/// 
+///
 /// Precedence: CLI > local > project > user.
 /// For each server configuration, the following validation is performed:
 /// - Environment variable expansion; missing variables produce `missing_env:VAR` skip reasons.
