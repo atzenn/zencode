@@ -205,6 +205,7 @@ impl SubAgentRunner for SubAgentExecutor {
             auto_compact_threshold: self.base_config.auto_compact_threshold,
             keep_after_compact: self.base_config.keep_after_compact,
             depth,
+            env_context_deltas: self.base_config.env_context_deltas,
             // The finish gate belongs to the main turn; sub-agents never run it.
             verify_reminder: false,
             verify_command: None,
