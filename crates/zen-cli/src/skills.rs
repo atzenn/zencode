@@ -471,6 +471,16 @@ pub fn permission_diff(old: Option<&PluginManifest>, new: &PluginManifest) -> St
 
 /// Install a skill. `yes` = user approved the permission prompt (required).
 /// Returns the installed entry.
+/// Per-call unique staging dir under the system temp dir. Keyed by pid plus a
+/// process-wide counter: parallel callers (e.g. tests in one binary) must never
+/// share one staging dir, or they delete each other's staged files mid-flight.
+fn unique_staging_dir(prefix: &str) -> PathBuf {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+    std::env::temp_dir().join(format!("{}-{}-{}", prefix, std::process::id(), n))
+}
+
 pub fn install_skill(home: &Path, source: &InstallSource, yes: bool) -> Result<RegistryEntry> {
     if !yes {
         return Err(anyhow!(
@@ -482,7 +492,7 @@ pub fn install_skill(home: &Path, source: &InstallSource, yes: bool) -> Result<R
             "internal: use install_builtin(name) for builtin sources"
         ));
     }
-    let staging = std::env::temp_dir().join(format!("zen-skill-install-{}", std::process::id()));
+    let staging = unique_staging_dir("zen-skill-install");
     if staging.exists() {
         std::fs::remove_dir_all(&staging)?;
     }
@@ -1387,7 +1397,7 @@ fn cmd_install(
     let src = InstallSource::parse(source)?;
     // Preview: install to a temp dir first, show the permission diff, then ask.
     // We do a dry staging pass by cloning to temp and loading the manifest.
-    let staging = std::env::temp_dir().join(format!("zen-skill-preview-{}", std::process::id()));
+    let staging = unique_staging_dir("zen-skill-preview");
     if staging.exists() {
         std::fs::remove_dir_all(&staging)?;
     }
