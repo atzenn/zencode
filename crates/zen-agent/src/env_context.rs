@@ -1,4 +1,4 @@
-//! Environment-context deltas (Việc 5): send the model a full environment
+//! Environment-context deltas (Task 5): send the model a full environment
 //! snapshot on the first request of a session and only the fields that
 //! changed on later requests, instead of re-sending the whole snapshot
 //! every time.

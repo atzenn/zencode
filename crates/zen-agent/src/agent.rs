@@ -146,7 +146,7 @@ pub struct AgentConfig {
     /// guard nudges the model to confirm with the user before mutating files outside it.
     /// Empty = no declared scope (the CLI seeds it from `/scope` or the first prompt).
     pub done_scope: Vec<String>,
-    /// Send per-request environment context as deltas (Viec 5): full
+    /// Send per-request environment context as deltas (Task 5): full
     /// snapshot on the first request, only changed fields afterwards,
     /// full again every 10 turns. Off by default; the CLI enables it.
     pub env_context_deltas: bool,
@@ -347,7 +347,7 @@ pub struct Agent {
     pub prune_turn_starts: Vec<usize>,
     /// Tokens saved by tool-result pruning (observability).
     pub prune_stats: PruneStats,
-    /// Per-session env-context delta state (Viec 5).
+    /// Per-session env-context delta state (Task 5).
     pub env_deltas: env_context::DeltaStore,
 }
 
@@ -392,7 +392,7 @@ impl Agent {
     pub fn set_messages(&mut self, messages: Vec<ChatMessage>) {
         self.messages = messages;
         // A resumed/reset session restarts env-context deltas from a full
-        // snapshot (Viec 5).
+        // snapshot (Task 5).
         self.env_deltas.reset();
         // A new history invalidates the API-reported context size.
         self.last_prompt_tokens = 0;
@@ -430,7 +430,7 @@ impl Agent {
         let mut msgs: Vec<ChatMessage> = Vec::with_capacity(self.messages.len() + 1);
         let mut prompt = self.config.system_prompt.clone();
         if self.config.env_context_deltas {
-            // Viec 5: append this request's env payload (full snapshot on
+            // Task 5: append this request's env payload (full snapshot on
             // the first request, changed fields only afterwards) after the
             // stable prompt text, i.e. inside the cache-volatile tail.
             let cwd = self.ctx.cwd.lock().unwrap().clone();

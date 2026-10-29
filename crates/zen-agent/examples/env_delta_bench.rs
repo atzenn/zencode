@@ -1,4 +1,4 @@
-//! Benchmark for Viec 5 env-context deltas (plan section 2.5, leader Q2/Q5).
+//! Benchmark for Task 5 env-context deltas (plan section 2.5, leader Q2/Q5).
 //!
 //! Scenario: a fixed 20-turn agent loop on one sample task - prompt:
 //! "Fix the failing parser test in the repo, then run the test suite" -
