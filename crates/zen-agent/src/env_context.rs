@@ -585,7 +585,12 @@ mod tests {
         let llm = MockLlm::new(vec![resp("one"), resp("two")]);
         let mut cfg = base_cfg();
         cfg.env_context_deltas = true;
-        let (mut agent, _sink, _h) = build_agent(llm.clone(), ToolRegistry::new(), FakePerms::new(PermissionDecision::Allow), cfg);
+        let (mut agent, _sink, _h) = build_agent(
+            llm.clone(),
+            ToolRegistry::new(),
+            FakePerms::new(PermissionDecision::Allow),
+            cfg,
+        );
         let r1 = agent.run_turn("hi").await;
         assert!(!r1.is_error);
         let r2 = agent.run_turn("again").await;
