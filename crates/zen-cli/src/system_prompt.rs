@@ -114,8 +114,12 @@ pub fn build_system_prompt(cli: &Cli, cwd: &Path, home: Option<&Path>) -> Result
     if let Some(style) = &cli.style {
         let instruction = match style.as_str() {
             "concise" => "Be concise: give short, direct answers. Skip explanations unless asked.",
-            "explain" => "Explain thoroughly: give detailed explanations with reasoning for each step.",
-            "learn" => "Teaching mode: explain concepts with examples, assume the user wants to learn.",
+            "explain" => {
+                "Explain thoroughly: give detailed explanations with reasoning for each step."
+            }
+            "learn" => {
+                "Teaching mode: explain concepts with examples, assume the user wants to learn."
+            }
             _ => "",
         };
         if !instruction.is_empty() {
@@ -211,16 +215,31 @@ mod tests {
         let c = cli(&["--bare"]);
         let p = build_system_prompt(&c, Path::new("/tmp"), None).unwrap();
         let (stable, volatile) = zen_core::split_stable_volatile(&p);
-        assert!(p.contains(zen_core::CACHE_VOLATILE_MARKER), "prompt must carry the volatile marker");
-        assert!(!volatile.is_empty(), "environment block must be present after the marker");
+        assert!(
+            p.contains(zen_core::CACHE_VOLATILE_MARKER),
+            "prompt must carry the volatile marker"
+        );
+        assert!(
+            !volatile.is_empty(),
+            "environment block must be present after the marker"
+        );
         // Today's date lives in the volatile tail, never in the stable prefix.
         let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-        assert!(!stable.contains(&today), "stable prefix leaks today's date - cache killer");
-        assert!(volatile.contains(&today), "volatile tail should carry the date");
+        assert!(
+            !stable.contains(&today),
+            "stable prefix leaks today's date - cache killer"
+        );
+        assert!(
+            volatile.contains(&today),
+            "volatile tail should carry the date"
+        );
         // Stable prefix is time-invariant: two builds must agree byte-for-byte.
         let p2 = build_system_prompt(&c, Path::new("/tmp"), None).unwrap();
         let (stable2, _) = zen_core::split_stable_volatile(&p2);
-        assert_eq!(stable, stable2, "stable prefix must be deterministic across builds");
+        assert_eq!(
+            stable, stable2,
+            "stable prefix must be deterministic across builds"
+        );
     }
 
     #[test]
@@ -230,8 +249,13 @@ mod tests {
         let c = cli(&["--bare"]);
         let p = build_system_prompt(&c, Path::new("/tmp"), None).unwrap();
         let env_pos = p.find("Environment:").expect("env block present");
-        let marker_pos = p.find(zen_core::CACHE_VOLATILE_MARKER).expect("marker present");
-        assert!(marker_pos < env_pos, "environment block must come after the volatile marker");
+        let marker_pos = p
+            .find(zen_core::CACHE_VOLATILE_MARKER)
+            .expect("marker present");
+        assert!(
+            marker_pos < env_pos,
+            "environment block must come after the volatile marker"
+        );
     }
 
     #[test]
@@ -280,9 +304,16 @@ mod tests {
         std::fs::create_dir_all(dir.join("src")).unwrap();
         std::fs::write(dir.join("Cargo.toml"), "[package]").unwrap();
         let p = build_system_prompt(&cli(&["--setting-sources", ""]), &dir, None).unwrap();
-        assert!(p.contains("Project snapshot") && p.contains("`cargo test`"), "{}", p);
+        assert!(
+            p.contains("Project snapshot") && p.contains("`cargo test`"),
+            "{}",
+            p
+        );
         let again = build_system_prompt(&cli(&["--setting-sources", ""]), &dir, None).unwrap();
-        assert_eq!(p, again, "same inputs give a byte-identical prompt (cache-stable)");
+        assert_eq!(
+            p, again,
+            "same inputs give a byte-identical prompt (cache-stable)"
+        );
         let bare = build_system_prompt(&cli(&["--bare"]), &dir, None).unwrap();
         assert!(!bare.contains("Project snapshot"), "{}", bare);
     }
@@ -292,16 +323,31 @@ mod tests {
         // r7 bench C2: explore → reproduce → fix → rerun → edge cases, tests left alone
         // (https://www.anthropic.com/engineering/swe-bench-sonnet).
         let p = build_system_prompt(&cli(&["-p", "x"]), Path::new("/tmp"), None).unwrap();
-        for step in ["Explore", "Reproduce", "root cause", "Rerun", "edge cases", "Do not edit, delete"] {
+        for step in [
+            "Explore",
+            "Reproduce",
+            "root cause",
+            "Rerun",
+            "edge cases",
+            "Do not edit, delete",
+        ] {
             assert!(p.contains(step), "missing {step:?} in {p}");
         }
-        let custom = build_system_prompt(&cli(&["-p", "x", "--system-prompt", "R"]), Path::new("/tmp"), None).unwrap();
-        assert!(!custom.contains("Workflow for a change"), "--system-prompt replaces it");
+        let custom = build_system_prompt(
+            &cli(&["-p", "x", "--system-prompt", "R"]),
+            Path::new("/tmp"),
+            None,
+        )
+        .unwrap();
+        assert!(
+            !custom.contains("Workflow for a change"),
+            "--system-prompt replaces it"
+        );
     }
 
     /// The pre-distillation wording (2026-10-17), kept as a regression guard: the distilled
     /// prompt must stay well under it while keeping every behavioral rule.
-const ORIGINAL_SYSTEM_PROMPT: &str = "\
+    const ORIGINAL_SYSTEM_PROMPT: &str = "\
 You are zen, a command-line coding agent. You help the user with software engineering tasks in \
 the terminal: reading and editing code, running commands, searching repositories and explaining \
 what you find.
@@ -401,17 +447,27 @@ call sites) and check them too. Only then report what you changed.
         let dir = std::env::temp_dir().join(format!("zen_sp_map_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("src")).unwrap();
-        std::fs::write(dir.join("src/main.rs"), "pub fn entry() {}\nfn main() { entry(); }\n").unwrap();
+        std::fs::write(
+            dir.join("src/main.rs"),
+            "pub fn entry() {}\nfn main() { entry(); }\n",
+        )
+        .unwrap();
 
         let p = build_system_prompt(&cli(&["--setting-sources", ""]), &dir, None).unwrap();
         assert!(p.contains("Repository map"), "map present by default");
         assert!(p.contains("entry"), "map lists the symbol");
 
         let bare = build_system_prompt(&cli(&["--bare"]), &dir, None).unwrap();
-        assert!(!bare.contains("Repository map"), "--bare suppresses the map");
+        assert!(
+            !bare.contains("Repository map"),
+            "--bare suppresses the map"
+        );
 
         let zero = build_system_prompt(&cli(&["--repomap-budget", "0"]), &dir, None).unwrap();
-        assert!(!zero.contains("Repository map"), "--repomap-budget 0 suppresses the map");
+        assert!(
+            !zero.contains("Repository map"),
+            "--repomap-budget 0 suppresses the map"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

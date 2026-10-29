@@ -55,7 +55,9 @@ fn run_gh_with(bin: &str, cwd: &Path, args: &[&str]) -> Result<String> {
     loop {
         match child.try_wait() {
             Ok(Some(status)) => {
-                let (o, e) = reader.join().map_err(|_| anyhow!("gh output thread failed"))?;
+                let (o, e) = reader
+                    .join()
+                    .map_err(|_| anyhow!("gh output thread failed"))?;
                 let stderr = String::from_utf8_lossy(&e);
                 if !status.success() {
                     if stderr.contains("auth login") || stderr.contains("GH_TOKEN") {
@@ -73,7 +75,11 @@ fn run_gh_with(bin: &str, cwd: &Path, args: &[&str]) -> Result<String> {
                     let _ = child.kill();
                     let _ = child.wait();
                     let _ = reader.join();
-                    return Err(anyhow!("gh {} timed out after {:?}", args.join(" "), GH_TIMEOUT));
+                    return Err(anyhow!(
+                        "gh {} timed out after {:?}",
+                        args.join(" "),
+                        GH_TIMEOUT
+                    ));
                 }
                 std::thread::sleep(Duration::from_millis(5));
             }
@@ -211,14 +217,24 @@ pub fn parse_issue_comments(json: &str) -> Result<Vec<PrComment>> {
 fn resolve_pr(cwd: &Path, pr_arg: Option<&str>) -> Result<(String, u64)> {
     // The binary prints only the outermost error, so let the actionable auth hint
     // through unwrapped instead of burying it under repo-detection context.
-    let nwo = gh_json(cwd, &["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
-        .map_err(|e| {
-            if e.to_string().contains("not authenticated") {
-                e
-            } else {
-                anyhow!("could not determine the GitHub repo (is this a GitHub checkout?)")
-            }
-        })?;
+    let nwo = gh_json(
+        cwd,
+        &[
+            "repo",
+            "view",
+            "--json",
+            "nameWithOwner",
+            "--jq",
+            ".nameWithOwner",
+        ],
+    )
+    .map_err(|e| {
+        if e.to_string().contains("not authenticated") {
+            e
+        } else {
+            anyhow!("could not determine the GitHub repo (is this a GitHub checkout?)")
+        }
+    })?;
     let nwo = nwo.as_str().unwrap_or("").trim().to_string();
     if nwo.is_empty() {
         return Err(anyhow!("could not determine the GitHub repo"));
@@ -255,12 +271,20 @@ pub fn fetch_pr_comments(cwd: &Path, pr_arg: Option<&str>) -> Result<FetchedComm
     .with_context(|| format!("could not fetch PR #{number}"))?;
     let review_json = run_gh(
         cwd,
-        &["api", &format!("repos/{nwo}/pulls/{number}/comments"), "--paginate"],
+        &[
+            "api",
+            &format!("repos/{nwo}/pulls/{number}/comments"),
+            "--paginate",
+        ],
     )
     .with_context(|| format!("could not fetch review comments for PR #{number}"))?;
     let issue_json = run_gh(
         cwd,
-        &["api", &format!("repos/{nwo}/issues/{number}/comments"), "--paginate"],
+        &[
+            "api",
+            &format!("repos/{nwo}/issues/{number}/comments"),
+            "--paginate",
+        ],
     )
     .with_context(|| format!("could not fetch conversation comments for PR #{number}"))?;
     Ok(FetchedComments {
@@ -331,7 +355,14 @@ pub fn severity_of(body: &str) -> Severity {
     } else if contains_any(
         &b,
         &[
-            "bug", "wrong", "incorrect", "broken", "fails", "missing", "should", "fix this",
+            "bug",
+            "wrong",
+            "incorrect",
+            "broken",
+            "fails",
+            "missing",
+            "should",
+            "fix this",
         ],
     ) {
         Severity::High
@@ -387,7 +418,10 @@ pub fn group_comments(fetched: &FetchedComments) -> Vec<CommentGroup> {
 /// Human-readable, file-grouped rendering of PR comments (pure; testable).
 pub fn format_comments_text(fetched: &FetchedComments) -> String {
     let mut s = String::new();
-    s.push_str(&format!("PR #{}: {}\n{}\n", fetched.number, fetched.title, fetched.url));
+    s.push_str(&format!(
+        "PR #{}: {}\n{}\n",
+        fetched.number, fetched.title, fetched.url
+    ));
     if fetched.total() == 0 {
         s.push_str("No review comments.\n");
         return s;
@@ -651,9 +685,9 @@ pub fn fix_offer_for_mode(mode: PermissionMode) -> FixOffer {
     match mode {
         PermissionMode::Plan => FixOffer::Never,
         PermissionMode::Default => FixOffer::Ask,
-        PermissionMode::AcceptEdits | PermissionMode::BypassPermissions | PermissionMode::DontAsk => {
-            FixOffer::Auto
-        }
+        PermissionMode::AcceptEdits
+        | PermissionMode::BypassPermissions
+        | PermissionMode::DontAsk => FixOffer::Auto,
     }
 }
 
@@ -744,7 +778,10 @@ mod tests {
 
     #[test]
     fn severity_table() {
-        assert_eq!(severity_of("security vulnerability here"), Severity::Critical);
+        assert_eq!(
+            severity_of("security vulnerability here"),
+            Severity::Critical
+        );
         assert_eq!(severity_of("do not merge yet"), Severity::Critical);
         assert_eq!(severity_of("this is wrong"), Severity::High);
         assert_eq!(severity_of("bug: off by one"), Severity::High);
@@ -803,7 +840,10 @@ mod tests {
 
     #[test]
     fn truncate_log_keeps_tail() {
-        let log: String = (0..200).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
+        let log: String = (0..200)
+            .map(|i| format!("line {i}"))
+            .collect::<Vec<_>>()
+            .join("\n");
         let t = truncate_log(&log, 120);
         assert!(t.starts_with("... (80 earlier lines omitted)"));
         assert!(t.contains("line 199"));
@@ -825,7 +865,10 @@ mod tests {
     fn fix_offer_for_mode_all_modes() {
         assert_eq!(fix_offer_for_mode(PermissionMode::Plan), FixOffer::Never);
         assert_eq!(fix_offer_for_mode(PermissionMode::Default), FixOffer::Ask);
-        assert_eq!(fix_offer_for_mode(PermissionMode::AcceptEdits), FixOffer::Auto);
+        assert_eq!(
+            fix_offer_for_mode(PermissionMode::AcceptEdits),
+            FixOffer::Auto
+        );
         assert_eq!(
             fix_offer_for_mode(PermissionMode::BypassPermissions),
             FixOffer::Auto
@@ -835,8 +878,12 @@ mod tests {
 
     #[test]
     fn run_gh_missing_binary_is_clear_error() {
-        let err = run_gh_with("zen-no-such-gh-binary", &std::env::temp_dir(), &["--version"])
-            .unwrap_err();
+        let err = run_gh_with(
+            "zen-no-such-gh-binary",
+            &std::env::temp_dir(),
+            &["--version"],
+        )
+        .unwrap_err();
         assert!(err.to_string().contains("gh CLI not found"), "{err}");
     }
 

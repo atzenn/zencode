@@ -15,11 +15,17 @@ pub struct Buffered {
 }
 impl Buffered {
     pub fn new() -> Self {
-        Self { out: Arc::new(Mutex::new(Vec::new())), passthrough: false }
+        Self {
+            out: Arc::new(Mutex::new(Vec::new())),
+            passthrough: false,
+        }
     }
     /// Line-flushed stdout writer (stream-json): nothing is kept in memory.
     pub fn stdout() -> Self {
-        Self { out: Arc::new(Mutex::new(Vec::new())), passthrough: true }
+        Self {
+            out: Arc::new(Mutex::new(Vec::new())),
+            passthrough: true,
+        }
     }
     pub fn text(&self) -> String {
         String::from_utf8_lossy(&self.out.lock().unwrap()).to_string()
@@ -64,7 +70,10 @@ impl TextSink {
         Self { buf, is_repl: true }
     }
     pub fn new_headless(buf: Arc<Buffered>) -> Self {
-        Self { buf, is_repl: false }
+        Self {
+            buf,
+            is_repl: false,
+        }
     }
 
     fn tool_short(tool_name: &str) -> &str {
@@ -112,10 +121,13 @@ impl zen_core::EventSink for TextSink {
                 }
             }
             AgentEvent::ToolResult {
-                tool_use_id, content, ..
+                tool_use_id,
+                content,
+                ..
             } => {
                 if self.is_repl {
-                    self.buf.write_line(&format!("  → [{}] {}", tool_use_id, content));
+                    self.buf
+                        .write_line(&format!("  → [{}] {}", tool_use_id, content));
                 }
                 // headless text: suppressed (final result only)
             }
@@ -141,7 +153,9 @@ pub struct CapturingSink {
 }
 impl CapturingSink {
     pub fn new() -> Self {
-        Self { buf: Arc::new(Buffered::new()) }
+        Self {
+            buf: Arc::new(Buffered::new()),
+        }
     }
 }
 impl Default for CapturingSink {
@@ -207,7 +221,17 @@ impl StreamJsonSink {
         permission_mode: String,
         slash_commands: Vec<String>,
     ) -> Self {
-        Self::with_partial(buf, session_id, cwd, model, tools, mcp_servers, permission_mode, slash_commands, false)
+        Self::with_partial(
+            buf,
+            session_id,
+            cwd,
+            model,
+            tools,
+            mcp_servers,
+            permission_mode,
+            slash_commands,
+            false,
+        )
     }
 
     /// Constructor with the `--include-partial-messages` flag.
@@ -306,7 +330,10 @@ impl zen_core::EventSink for StreamJsonSink {
             self.emit_init();
         }
         match ev {
-            AgentEvent::Assistant { message, parent_tool_use_id } => {
+            AgentEvent::Assistant {
+                message,
+                parent_tool_use_id,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "assistant",
@@ -316,7 +343,13 @@ impl zen_core::EventSink for StreamJsonSink {
                     "parent_tool_use_id": serde_json::to_value(&parent_tool_use_id).unwrap_or(serde_json::Value::Null),
                 }));
             }
-            AgentEvent::ToolResult { tool_use_id, content, is_error, parent_tool_use_id, parallel } => {
+            AgentEvent::ToolResult {
+                tool_use_id,
+                content,
+                is_error,
+                parent_tool_use_id,
+                parallel,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "user",
@@ -349,7 +382,11 @@ impl zen_core::EventSink for StreamJsonSink {
                     }));
                 }
             }
-            AgentEvent::ToolProgress { tool_use_id, tool_name, elapsed_ms } => {
+            AgentEvent::ToolProgress {
+                tool_use_id,
+                tool_name,
+                elapsed_ms,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "system",
@@ -361,7 +398,13 @@ impl zen_core::EventSink for StreamJsonSink {
                     "elapsed_ms": elapsed_ms,
                 }));
             }
-            AgentEvent::ApiRetry { attempt, max_retries, retry_delay_ms, error_status, error } => {
+            AgentEvent::ApiRetry {
+                attempt,
+                max_retries,
+                retry_delay_ms,
+                error_status,
+                error,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "system",
@@ -375,7 +418,10 @@ impl zen_core::EventSink for StreamJsonSink {
                     "error": error,
                 }));
             }
-            AgentEvent::CompactBoundary { trigger, pre_tokens } => {
+            AgentEvent::CompactBoundary {
+                trigger,
+                pre_tokens,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "system",
@@ -386,7 +432,10 @@ impl zen_core::EventSink for StreamJsonSink {
                     "pre_tokens": pre_tokens,
                 }));
             }
-            AgentEvent::Pruned { pruned, tokens_saved } => {
+            AgentEvent::Pruned {
+                pruned,
+                tokens_saved,
+            } => {
                 let uuid = uuid::Uuid::new_v4();
                 self.emit_line(serde_json::json!({
                     "type": "system",
@@ -428,7 +477,12 @@ impl zen_core::EventSink for StreamJsonSink {
 }
 
 /// Helper to print the final RunResult in the chosen format.
-pub fn print_result(result: &RunResult, fmt: &crate::cli::OutputFormat, buf: &Buffered, is_repl: bool) {
+pub fn print_result(
+    result: &RunResult,
+    fmt: &crate::cli::OutputFormat,
+    buf: &Buffered,
+    is_repl: bool,
+) {
     match fmt {
         crate::cli::OutputFormat::Text => {
             if is_repl {
@@ -452,8 +506,8 @@ pub fn validate_json_schema(text: &str, schema_path: &std::path::Path) -> Result
         std::fs::read_to_string(schema_path).map_err(|e| format!("cannot read schema: {}", e))?;
     let schema: serde_json::Value =
         serde_json::from_str(&schema_text).map_err(|e| format!("invalid schema JSON: {}", e))?;
-    let value: serde_json::Value =
-        serde_json::from_str(text.trim()).map_err(|e| format!("output is not valid JSON: {}", e))?;
+    let value: serde_json::Value = serde_json::from_str(text.trim())
+        .map_err(|e| format!("output is not valid JSON: {}", e))?;
 
     // Check top-level type
     if let Some(t) = schema.get("type").and_then(|v| v.as_str()) {
@@ -470,7 +524,10 @@ pub fn validate_json_schema(text: &str, schema_path: &std::path::Path) -> Result
         }
     }
     // Check required fields
-    if let (Some(obj), Some(req)) = (value.as_object(), schema.get("required").and_then(|v| v.as_array())) {
+    if let (Some(obj), Some(req)) = (
+        value.as_object(),
+        schema.get("required").and_then(|v| v.as_array()),
+    ) {
         for r in req {
             if let Some(name) = r.as_str() {
                 if !obj.contains_key(name) {
@@ -483,12 +540,19 @@ pub fn validate_json_schema(text: &str, schema_path: &std::path::Path) -> Result
 }
 
 fn json_type(v: &serde_json::Value) -> &'static str {
-    if v.is_object() { "object" }
-    else if v.is_array() { "array" }
-    else if v.is_string() { "string" }
-    else if v.is_number() { "number" }
-    else if v.is_boolean() { "boolean" }
-    else { "null" }
+    if v.is_object() {
+        "object"
+    } else if v.is_array() {
+        "array"
+    } else if v.is_string() {
+        "string"
+    } else if v.is_number() {
+        "number"
+    } else if v.is_boolean() {
+        "boolean"
+    } else {
+        "null"
+    }
 }
 
 /// The json / stream-json `result` record (SPEC C8.2): zen-core's [`RunResult`] fields plus
@@ -518,7 +582,7 @@ pub use serde_json::json;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zen_core::{ChatMessage, EventSink, PermissionDenial, ToolCall, FunctionCall};
+    use zen_core::{ChatMessage, EventSink, FunctionCall, PermissionDenial, ToolCall};
 
     #[test]
     fn stream_json_init_line_shape() {
@@ -542,7 +606,11 @@ mod tests {
         });
         let out = buf.text();
         let lines: Vec<&str> = out.lines().collect();
-        assert!(lines.len() >= 2, "expected init + assistant lines, got: {}", out);
+        assert!(
+            lines.len() >= 2,
+            "expected init + assistant lines, got: {}",
+            out
+        );
 
         // init line
         let init: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
@@ -584,7 +652,10 @@ mod tests {
                 Some(vec![ToolCall {
                     id: "call_1".into(),
                     call_type: "function".into(),
-                    function: FunctionCall { name: "Read".into(), arguments: "{\"file\":}".into() },
+                    function: FunctionCall {
+                        name: "Read".into(),
+                        arguments: "{\"file\":}".into(),
+                    },
                 }]),
             ),
             parent_tool_use_id: None,
@@ -629,7 +700,10 @@ mod tests {
             error_status: Some(429),
             error: "rate limited".into(),
         });
-        sink.emit(AgentEvent::CompactBoundary { trigger: "auto".into(), pre_tokens: 90_000 });
+        sink.emit(AgentEvent::CompactBoundary {
+            trigger: "auto".into(),
+            pre_tokens: 90_000,
+        });
         let out = buf.text();
         let lines: Vec<&str> = out.lines().filter(|l| !l.trim().is_empty()).collect();
         let init: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
@@ -662,7 +736,11 @@ mod tests {
             result: "ok".into(),
             session_id: "sid".into(),
             total_cost_usd: 0.0,
-            usage: zen_core::UsageStats { input_tokens: 5, output_tokens: 2, cache_read_input_tokens: 0 },
+            usage: zen_core::UsageStats {
+                input_tokens: 5,
+                output_tokens: 2,
+                cache_read_input_tokens: 0,
+            },
             model: "m".into(),
             permission_denials: vec![],
         };
@@ -680,8 +758,18 @@ mod tests {
         assert_eq!(v["permission_denials"], json!([]));
         // C8.2: zen's extra fields.
         assert_eq!(v["stop_reason"], "end_turn");
-        assert!(uuid::Uuid::parse_str(v["uuid"].as_str().unwrap()).is_ok(), "{}", v);
-        for key in ["duration_ms", "duration_api_ms", "num_turns", "session_id", "total_cost_usd"] {
+        assert!(
+            uuid::Uuid::parse_str(v["uuid"].as_str().unwrap()).is_ok(),
+            "{}",
+            v
+        );
+        for key in [
+            "duration_ms",
+            "duration_api_ms",
+            "num_turns",
+            "session_id",
+            "total_cost_usd",
+        ] {
             assert!(v.get(key).is_some(), "missing {}", key);
         }
     }
@@ -699,28 +787,41 @@ mod tests {
         let mk = || {
             let buf = Arc::new(Buffered::new());
             let sink = StreamJsonSink::new(
-                buf.clone(), "s".into(), "/w".into(), "m".into(), vec![], vec![],
-                "default".into(), vec![],
+                buf.clone(),
+                "s".into(),
+                "/w".into(),
+                "m".into(),
+                vec![],
+                vec![],
+                "default".into(),
+                vec![],
             );
             (buf, sink)
         };
         let (buf, sink) = mk();
         sink.init_now();
-        let init: serde_json::Value = serde_json::from_str(buf.text().lines().next().unwrap()).unwrap();
+        let init: serde_json::Value =
+            serde_json::from_str(buf.text().lines().next().unwrap()).unwrap();
         assert!(init.get("mcp_server_errors").is_none(), "{}", init);
 
         let (buf, sink) = mk();
         sink.set_mcp_errors(vec![("x".into(), "url_missing_type".into())]);
         sink.init_now();
-        let init: serde_json::Value = serde_json::from_str(buf.text().lines().next().unwrap()).unwrap();
-        assert_eq!(init["mcp_server_errors"], json!([{"name": "x", "reason": "url_missing_type"}]));
+        let init: serde_json::Value =
+            serde_json::from_str(buf.text().lines().next().unwrap()).unwrap();
+        assert_eq!(
+            init["mcp_server_errors"],
+            json!([{"name": "x", "reason": "url_missing_type"}])
+        );
     }
 
     #[test]
     fn text_sink_collects_assistant_and_result() {
         let buf = Arc::new(Buffered::new());
         let sink = TextSink::new_headless(buf.clone());
-        sink.emit(AgentEvent::TextDelta { text: "hello".into() });
+        sink.emit(AgentEvent::TextDelta {
+            text: "hello".into(),
+        });
         sink.emit(AgentEvent::Assistant {
             message: ChatMessage::assistant(None, None),
             parent_tool_use_id: None,
@@ -810,8 +911,14 @@ mod tests {
     fn stream_json_tool_progress_shape() {
         let buf = Arc::new(Buffered::new());
         let sink = StreamJsonSink::new(
-            buf.clone(), "s".into(), "/w".into(), "m".into(), vec![], vec![],
-            "default".into(), vec![],
+            buf.clone(),
+            "s".into(),
+            "/w".into(),
+            "m".into(),
+            vec![],
+            vec![],
+            "default".into(),
+            vec![],
         );
         sink.emit(AgentEvent::ToolProgress {
             tool_use_id: "call_9".into(),

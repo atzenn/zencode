@@ -159,11 +159,7 @@ fn most_recent_complete_exchange(messages: &[ChatMessage]) -> (usize, usize) {
     }
     user_starts.sort_unstable();
     for &s in user_starts.iter().rev() {
-        let end = user_starts
-            .iter()
-            .find(|&&i| i > s)
-            .copied()
-            .unwrap_or(n);
+        let end = user_starts.iter().find(|&&i| i > s).copied().unwrap_or(n);
         for e in (s + 1..=end).rev() {
             if window_is_valid(&messages[s..e]) {
                 return (s, e);
@@ -184,7 +180,9 @@ fn window_is_valid(window: &[ChatMessage]) -> bool {
                 open.extend(calls.iter().map(|c| c.id.as_str()));
             }
         } else if m.role == "tool" {
-            let Some(id) = m.tool_call_id.as_deref() else { return false };
+            let Some(id) = m.tool_call_id.as_deref() else {
+                return false;
+            };
             match open.iter().rposition(|o| *o == id) {
                 Some(pos) => {
                     open.remove(pos);
@@ -215,13 +213,10 @@ pub fn ensure_tool_responses(messages: Vec<ChatMessage>) -> Vec<ChatMessage> {
             }
         } else if m.role == "tool" {
             let owns = m.tool_call_id.as_ref().and_then(|id| {
-                open_ids
-                    .iter()
-                    .position(|o| o == id)
-                    .map(|pos| {
-                        open_ids.remove(pos);
-                        true
-                    })
+                open_ids.iter().position(|o| o == id).map(|pos| {
+                    open_ids.remove(pos);
+                    true
+                })
             });
             if owns.unwrap_or(false) {
                 out.push(m);
@@ -251,14 +246,19 @@ mod tests {
             Some(vec![ToolCall {
                 id: id.into(),
                 call_type: "function".into(),
-                function: FunctionCall { name: "Read".into(), arguments: "{}".into() },
+                function: FunctionCall {
+                    name: "Read".into(),
+                    arguments: "{}".into(),
+                },
             }]),
         )
     }
 
     #[test]
     fn safe_tail_keeps_plain_tail() {
-        let msgs: Vec<ChatMessage> = (0..6).map(|i| ChatMessage::user(format!("m{}", i))).collect();
+        let msgs: Vec<ChatMessage> = (0..6)
+            .map(|i| ChatMessage::user(format!("m{}", i)))
+            .collect();
         let tail = safe_tail(&msgs, 2);
         assert_eq!(tail.len(), 2);
         assert_eq!(tail[0].content.as_deref(), Some("m4"));
@@ -287,7 +287,11 @@ mod tests {
     #[test]
     fn safe_tail_pulls_in_owning_assistant_call() {
         // [user, assistant(tool_call c1), tool c1] with keep=1 -> keep the assistant + tool pair.
-        let msgs = vec![ChatMessage::user("u"), tool_call_msg("c1"), ChatMessage::tool("c1", "r")];
+        let msgs = vec![
+            ChatMessage::user("u"),
+            tool_call_msg("c1"),
+            ChatMessage::tool("c1", "r"),
+        ];
         let tail = safe_tail(&msgs, 1);
         assert_eq!(tail.len(), 2);
         assert_eq!(tail[0].role, "assistant");
@@ -304,16 +308,27 @@ mod tests {
                 ToolCall {
                     id: "c1".into(),
                     call_type: "function".into(),
-                    function: FunctionCall { name: "Read".into(), arguments: "{}".into() },
+                    function: FunctionCall {
+                        name: "Read".into(),
+                        arguments: "{}".into(),
+                    },
                 },
                 ToolCall {
                     id: "c2".into(),
                     call_type: "function".into(),
-                    function: FunctionCall { name: "Read".into(), arguments: "{}".into() },
+                    function: FunctionCall {
+                        name: "Read".into(),
+                        arguments: "{}".into(),
+                    },
                 },
             ]),
         );
-        let msgs = vec![ChatMessage::user("u"), assistant, ChatMessage::tool("c1", "a"), ChatMessage::tool("c2", "b")];
+        let msgs = vec![
+            ChatMessage::user("u"),
+            assistant,
+            ChatMessage::tool("c1", "a"),
+            ChatMessage::tool("c2", "b"),
+        ];
         let tail = safe_tail(&msgs, 1);
         // The very last message is a tool result, so the whole exchange must be pulled in.
         assert_eq!(tail.len(), 3);
@@ -352,7 +367,9 @@ mod tests {
 
     #[test]
     fn ensure_tool_responses_leaves_clean_history_alone() {
-        let msgs: Vec<ChatMessage> = (0..4).map(|i| ChatMessage::user(format!("m{}", i))).collect();
+        let msgs: Vec<ChatMessage> = (0..4)
+            .map(|i| ChatMessage::user(format!("m{}", i)))
+            .collect();
         assert_eq!(ensure_tool_responses(msgs.clone()), msgs);
     }
 
@@ -363,7 +380,9 @@ mod tests {
             if let Some(calls) = &m.tool_calls {
                 open.extend(calls.iter().map(|c| c.id.as_str()));
             } else if m.role == "tool" {
-                let Some(id) = m.tool_call_id.as_deref() else { return false };
+                let Some(id) = m.tool_call_id.as_deref() else {
+                    return false;
+                };
                 match open.iter().rposition(|o| *o == id) {
                     Some(p) => {
                         open.remove(p);
@@ -396,7 +415,10 @@ mod tests {
             calls.push(ToolCall {
                 id: "c2".into(),
                 call_type: "function".into(),
-                function: FunctionCall { name: "Read".into(), arguments: "{}".into() },
+                function: FunctionCall {
+                    name: "Read".into(),
+                    arguments: "{}".into(),
+                },
             });
         }
         let tail = safe_tail(&msgs, 10);
@@ -459,7 +481,10 @@ mod tests {
         assert!(p.contains("# Plan mode (active)"));
         // Idempotent.
         assert_eq!(system_prompt_for_mode(&p, PermissionMode::Plan), p);
-        assert_eq!(system_prompt_for_mode("base", PermissionMode::Default), "base");
+        assert_eq!(
+            system_prompt_for_mode("base", PermissionMode::Default),
+            "base"
+        );
     }
 
     #[test]

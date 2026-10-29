@@ -17,7 +17,11 @@ pub fn resolve_budget(
     cfg_warn_at: Option<f64>,
 ) -> Option<BudgetPolicy> {
     let max = cli_max
-        .or_else(|| std::env::var("ZEN_MAX_BUDGET_USD").ok().and_then(|v| v.parse().ok()))
+        .or_else(|| {
+            std::env::var("ZEN_MAX_BUDGET_USD")
+                .ok()
+                .and_then(|v| v.parse().ok())
+        })
         .or(cfg_max);
     let max = match max {
         Some(m) if m > 0.0 && m.is_finite() => m,
@@ -100,7 +104,7 @@ mod tests {
         // Config alone.
         let p = resolve_budget(None, None, Some(5.0), None).unwrap();
         assert_eq!(p.max_budget_usd, 3.0); // env beats config
-        // Flag beats env.
+                                           // Flag beats env.
         let p = resolve_budget(Some(7.0), None, Some(5.0), None).unwrap();
         assert_eq!(p.max_budget_usd, 7.0);
         unset_env();

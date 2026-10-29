@@ -269,7 +269,9 @@ pub fn cmd_search(query: &str, registry_override: Option<&str>) -> Result<()> {
             s.description
         );
     }
-    println!("\ndetails: zen skill info <name>   |   install: zen skill install registry:<name> --yes");
+    println!(
+        "\ndetails: zen skill info <name>   |   install: zen skill install registry:<name> --yes"
+    );
     Ok(())
 }
 
@@ -464,7 +466,10 @@ mod tests {
         assert!(text.contains("[✓ verified]"), "{text}");
         assert!(text.contains("security-review"), "{text}");
         assert!(text.contains("network: no"), "{text}");
-        assert!(text.contains("zen skill install registry:security-review --yes"), "{text}");
+        assert!(
+            text.contains("zen skill install registry:security-review --yes"),
+            "{text}"
+        );
         // The trust caveat must be present.
         assert!(text.contains("re-verifies trust"), "{text}");
     }

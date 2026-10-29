@@ -48,9 +48,16 @@ async fn sub_agent_task_tool_works() {
     let (stdout, stderr, code) = tokio::time::timeout(Duration::from_secs(90), async {
         ZenRun::new("subagent", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions",
-                "--agents", agents_json
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
+                "--agents",
+                agents_json,
             ])
             .mock("mock-model", &server)
             .arg("delegate to researcher")
@@ -65,20 +72,42 @@ async fn sub_agent_task_tool_works() {
 
     // Should have 3 requests: parent calls Task, sub-agent runs, parent receives result
     let requests = server.requests().await;
-    assert_eq!(requests.len(), 3, "expected 3 requests, got {}: {:?}", requests.len(), requests);
+    assert_eq!(
+        requests.len(),
+        3,
+        "expected 3 requests, got {}: {:?}",
+        requests.len(),
+        requests
+    );
 
     // First request: parent calls Task
     let first_tools = request_tool_names(&requests[0]);
-    assert!(first_tools.contains(&"Task".to_string()), "parent should have Task tool: {:?}", first_tools);
+    assert!(
+        first_tools.contains(&"Task".to_string()),
+        "parent should have Task tool: {:?}",
+        first_tools
+    );
 
     // Second request: sub-agent (should have the researcher's system prompt)
     let second_sys = system_message(&requests[1]);
-    assert!(second_sys.contains("You are a researcher"), "sub-agent should have custom prompt: {}", second_sys);
-    assert!(second_sys.contains("Answer concisely"), "sub-agent prompt detail missing: {}", second_sys);
+    assert!(
+        second_sys.contains("You are a researcher"),
+        "sub-agent should have custom prompt: {}",
+        second_sys
+    );
+    assert!(
+        second_sys.contains("Answer concisely"),
+        "sub-agent prompt detail missing: {}",
+        second_sys
+    );
 
     // Third request: parent receives sub-agent result
     let third_msgs = request_messages_text(&requests[2]);
-    assert!(third_msgs.contains("research result"), "parent should see sub-agent result: {}", third_msgs);
+    assert!(
+        third_msgs.contains("research result"),
+        "parent should see sub-agent result: {}",
+        third_msgs
+    );
 }
 
 /// Sub-agent inherits parent's tools when not explicitly specified.
@@ -125,9 +154,16 @@ async fn sub_agent_inherits_tools_when_not_specified() {
     let (_stdout, stderr, code) = tokio::time::timeout(Duration::from_secs(90), async {
         ZenRun::new("subagent_inherit", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions",
-                "--agents", agents_json
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
+                "--agents",
+                agents_json,
             ])
             .mock("mock-model", &server)
             .arg("delegate")
@@ -142,7 +178,11 @@ async fn sub_agent_inherits_tools_when_not_specified() {
 
     // Sub-agent request (2nd) should have Read tool available
     let second_tools = request_tool_names(&requests[1]);
-    assert!(second_tools.contains(&"Read".to_string()), "sub-agent should inherit Read: {:?}", second_tools);
+    assert!(
+        second_tools.contains(&"Read".to_string()),
+        "sub-agent should inherit Read: {:?}",
+        second_tools
+    );
 }
 
 /// Built-in general-purpose agent is always available unless overridden.
@@ -173,8 +213,13 @@ async fn builtin_general_purpose_agent_available() {
             .args([
                 // No --bare: built-in agents are part of normal discovery (--bare without
                 // --agents skips sub-agents entirely). Temp home/cwd hold no agent files.
-                "-p", "--output-format", "json", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions"
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
             ])
             .mock("mock-model", &server)
             .arg("delegate to general-purpose")
@@ -192,7 +237,11 @@ async fn builtin_general_purpose_agent_available() {
 
     // Sub-agent should have the built-in system prompt
     let second_sys = system_message(&requests[1]);
-    assert!(second_sys.contains("sub-agent") || second_sys.contains("Sub-agent"), "built-in prompt: {}", second_sys);
+    assert!(
+        second_sys.contains("sub-agent") || second_sys.contains("Sub-agent"),
+        "built-in prompt: {}",
+        second_sys
+    );
 }
 
 /// Sub-agent depth limit prevents infinite recursion.
@@ -242,9 +291,16 @@ async fn sub_agent_depth_limit() {
     let (stdout, stderr, code) = tokio::time::timeout(Duration::from_secs(90), async {
         ZenRun::new("subagent_depth", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions",
-                "--agents", agents_json
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
+                "--agents",
+                agents_json,
             ])
             .mock("mock-model", &server)
             .arg("recurse")
@@ -262,9 +318,17 @@ async fn sub_agent_depth_limit() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 4);
     let sub_tools = request_tool_names(&requests[1]);
-    assert!(!sub_tools.contains(&"Task".to_string()), "sub-agent must not get Task: {:?}", sub_tools);
+    assert!(
+        !sub_tools.contains(&"Task".to_string()),
+        "sub-agent must not get Task: {:?}",
+        sub_tools
+    );
     let third = request_messages_text(&requests[2]);
-    assert!(third.contains("Unknown tool 'Task'"), "nested Task should be refused: {}", third);
+    assert!(
+        third.contains("Unknown tool 'Task'"),
+        "nested Task should be refused: {}",
+        third
+    );
 }
 
 /// Sub-agent can use a different model if specified.
@@ -301,9 +365,16 @@ async fn sub_agent_custom_model() {
     let (_stdout, stderr, code) = tokio::time::timeout(Duration::from_secs(90), async {
         ZenRun::new("subagent_model", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions",
-                "--agents", agents_json
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
+                "--agents",
+                agents_json,
             ])
             .mock("mock-model", &server)
             .arg("use specialist")
@@ -319,5 +390,8 @@ async fn sub_agent_custom_model() {
     // Second request is from sub-agent - should have model = specialist-model
     let second_req = request_json(&requests[1]);
     let second_model = second_req["model"].as_str().unwrap();
-    assert_eq!(second_model, "specialist-model", "sub-agent should use its own model");
+    assert_eq!(
+        second_model, "specialist-model",
+        "sub-agent should use its own model"
+    );
 }

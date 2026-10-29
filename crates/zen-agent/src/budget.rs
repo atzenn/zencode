@@ -190,14 +190,20 @@ mod tests {
     fn known_models_have_prices() {
         assert_eq!(price_per_1m("gpt-4o"), Some((2.50, 10.00)));
         assert_eq!(price_per_1m("openai/gpt-4o-mini"), Some((0.15, 0.60)));
-        assert_eq!(price_per_1m("anthropic/claude-sonnet-4-5"), Some((3.00, 15.00)));
+        assert_eq!(
+            price_per_1m("anthropic/claude-sonnet-4-5"),
+            Some((3.00, 15.00))
+        );
     }
 
     #[test]
     fn unknown_models_are_none_not_guessed() {
         assert_eq!(price_per_1m("some-future-model-9000"), None);
         assert_eq!(price_per_1m(""), None);
-        assert_eq!(estimate_cost_usd("some-future-model-9000", 1000, 1000), None);
+        assert_eq!(
+            estimate_cost_usd("some-future-model-9000", 1000, 1000),
+            None
+        );
     }
 
     #[test]

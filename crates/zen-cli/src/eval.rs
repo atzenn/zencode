@@ -31,9 +31,15 @@ use zen_tools::{BashTool, EditTool, MultiEditTool, ReadTool, WriteTool};
 #[derive(Debug, Clone)]
 pub enum Check {
     /// File exists and its UTF-8 content contains `needle`.
-    FileContains { path: &'static str, needle: &'static str },
+    FileContains {
+        path: &'static str,
+        needle: &'static str,
+    },
     /// File exists and its UTF-8 content equals `content` exactly.
-    FileEquals { path: &'static str, content: &'static str },
+    FileEquals {
+        path: &'static str,
+        content: &'static str,
+    },
     /// Path does not exist.
     FileNotExists { path: &'static str },
     /// `cmd args...` exits 0 and its stdout contains `needle`.
@@ -59,17 +65,12 @@ impl Check {
                 .map(|c| c == *content)
                 .unwrap_or(false),
             Check::FileNotExists { path } => !workdir.join(path).exists(),
-            Check::CommandOutputContains { cmd, args, needle } => {
-                std::process::Command::new(cmd)
-                    .args(*args)
-                    .current_dir(workdir)
-                    .output()
-                    .map(|o| {
-                        o.status.success()
-                            && String::from_utf8_lossy(&o.stdout).contains(needle)
-                    })
-                    .unwrap_or(false)
-            }
+            Check::CommandOutputContains { cmd, args, needle } => std::process::Command::new(cmd)
+                .args(*args)
+                .current_dir(workdir)
+                .output()
+                .map(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).contains(needle))
+                .unwrap_or(false),
             Check::All(checks) => checks.iter().all(|c| c.run(workdir)),
             Check::Not(inner) => !inner.run(workdir),
         }
@@ -84,7 +85,11 @@ impl Check {
             Check::CommandOutputContains { cmd, args, needle } => {
                 format!("`{} {}` output contains {needle:?}", cmd, args.join(" "))
             }
-            Check::All(cs) => cs.iter().map(|c| c.describe()).collect::<Vec<_>>().join(" + "),
+            Check::All(cs) => cs
+                .iter()
+                .map(|c| c.describe())
+                .collect::<Vec<_>>()
+                .join(" + "),
             Check::Not(c) => format!("NOT ({})", c.describe()),
         }
     }
@@ -106,9 +111,8 @@ pub struct EvalTask {
 }
 
 /// The fixed 10-task benchmark suite (roadmap g5).
-pub static EVAL_TASKS: std::sync::LazyLock<Vec<EvalTask>> =
-    std::sync::LazyLock::new(|| {
-        vec![
+pub static EVAL_TASKS: std::sync::LazyLock<Vec<EvalTask>> = std::sync::LazyLock::new(|| {
+    vec![
     EvalTask {
         id: "create-file",
         description: "Create hello.txt with exact content",
@@ -213,7 +217,7 @@ pub static EVAL_TASKS: std::sync::LazyLock<Vec<EvalTask>> =
         ]),
     },
 ]
-    });
+});
 
 // ─── Metric collection ────────────────────────────────────────────────────
 
@@ -327,8 +331,12 @@ impl EvalReport {
             "# zencode eval - {}\n\n{}/{} tasks passed\n\n",
             self.model, self.passed_count, self.task_count
         ));
-        out.push_str("| Task | Pass | Requests | Tokens in | Tokens out | 429s | Edit fails | ms |\n");
-        out.push_str("|------|------|----------|-----------|------------|------|------------|----|\n");
+        out.push_str(
+            "| Task | Pass | Requests | Tokens in | Tokens out | 429s | Edit fails | ms |\n",
+        );
+        out.push_str(
+            "|------|------|----------|-----------|------------|------|------------|----|\n",
+        );
         for t in &self.tasks {
             out.push_str(&format!(
                 "| {} | {} | {} | {} | {} | {} | {} | {} |\n",
@@ -390,11 +398,8 @@ async fn run_one_task(
 ) -> TaskMetrics {
     let started = Instant::now();
     // Fresh hermetic workdir.
-    let workdir: PathBuf = std::env::temp_dir().join(format!(
-        "zencode-eval-{}-{}",
-        task.id,
-        uuid::Uuid::new_v4()
-    ));
+    let workdir: PathBuf =
+        std::env::temp_dir().join(format!("zencode-eval-{}-{}", task.id, uuid::Uuid::new_v4()));
     let setup_result: Result<()> = (|| {
         std::fs::create_dir_all(&workdir)?;
         for (rel, content) in task.setup {
@@ -455,19 +460,9 @@ async fn run_one_task(
     let (passed, error, input_tokens, output_tokens) = match turn {
         Ok(r) => {
             let ok = !r.is_error && task.check.run(&workdir);
-            (
-                ok,
-                None,
-                r.usage.input_tokens,
-                r.usage.output_tokens,
-            )
+            (ok, None, r.usage.input_tokens, r.usage.output_tokens)
         }
-        Err(e) => (
-            false,
-            Some(format!("{e:#}")),
-            0,
-            0,
-        ),
+        Err(e) => (false, Some(format!("{e:#}")), 0, 0),
     };
 
     // Best-effort cleanup; a leftover temp dir must not fail the eval.
@@ -536,9 +531,7 @@ pub async fn run_eval(opts: &EvalOptions) -> Result<EvalReport> {
 mod tests {
     use super::*;
     use std::sync::Mutex as StdMutex;
-    use zen_core::{
-        ChatMessage, ChatRequest, ChatResponse, FunctionCall, ToolCall, Usage,
-    };
+    use zen_core::{ChatMessage, ChatRequest, ChatResponse, FunctionCall, ToolCall, Usage};
 
     /// Scripted backend for harness tests: returns canned responses in order.
     struct ScriptedBackend {
@@ -626,7 +619,11 @@ mod tests {
         assert_eq!(ids.len(), 10);
         for t in EVAL_TASKS.iter() {
             assert!(!t.prompt.is_empty(), "task {} has empty prompt", t.id);
-            assert!(!t.description.is_empty(), "task {} has empty description", t.id);
+            assert!(
+                !t.description.is_empty(),
+                "task {} has empty description",
+                t.id
+            );
         }
     }
 
@@ -695,15 +692,37 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("a.txt"), "hello world").unwrap();
 
-        assert!(Check::FileContains { path: "a.txt", needle: "world" }.run(&dir));
-        assert!(!Check::FileContains { path: "a.txt", needle: "missing" }.run(&dir));
-        assert!(Check::FileEquals { path: "a.txt", content: "hello world" }.run(&dir));
-        assert!(!Check::FileEquals { path: "a.txt", content: "hello" }.run(&dir));
+        assert!(Check::FileContains {
+            path: "a.txt",
+            needle: "world"
+        }
+        .run(&dir));
+        assert!(!Check::FileContains {
+            path: "a.txt",
+            needle: "missing"
+        }
+        .run(&dir));
+        assert!(Check::FileEquals {
+            path: "a.txt",
+            content: "hello world"
+        }
+        .run(&dir));
+        assert!(!Check::FileEquals {
+            path: "a.txt",
+            content: "hello"
+        }
+        .run(&dir));
         assert!(Check::FileNotExists { path: "nope.txt" }.run(&dir));
         assert!(!Check::FileNotExists { path: "a.txt" }.run(&dir));
         assert!(Check::All(vec![
-            Check::FileContains { path: "a.txt", needle: "hello" },
-            Check::Not(Box::new(Check::FileContains { path: "a.txt", needle: "zzz" })),
+            Check::FileContains {
+                path: "a.txt",
+                needle: "hello"
+            },
+            Check::Not(Box::new(Check::FileContains {
+                path: "a.txt",
+                needle: "zzz"
+            })),
         ])
         .run(&dir));
         assert!(Check::CommandOutputContains {
@@ -769,7 +788,11 @@ mod tests {
     async fn run_one_task_passes_with_scripted_backend() {
         // Task: create-file. Backend: Write hello.txt, then finish with text.
         let backend = ScriptedBackend::new(vec![
-            tool_resp("Write", r#"{"path":"hello.txt","content":"Hello, eval!"}"#, "call-1"),
+            tool_resp(
+                "Write",
+                r#"{"path":"hello.txt","content":"Hello, eval!"}"#,
+                "call-1",
+            ),
             text_resp("Done."),
         ]);
         let task = &EVAL_TASKS[0];
@@ -801,7 +824,9 @@ mod tests {
             description: "probe",
             prompt: "Try to edit nope.txt.",
             setup: &[],
-            check: Check::FileNotExists { path: "never-created.txt" },
+            check: Check::FileNotExists {
+                path: "never-created.txt",
+            },
         };
         let m = run_one_task(task, backend, Arc::new(MetricSink::default()), 10).await;
         // Edit fails (no prior Read) -> edit_failures == 1; check itself passes

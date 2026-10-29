@@ -323,7 +323,14 @@ impl SessionRegistry {
 /// Short, non-reversible fingerprint of an API key (`sk-...abcd` style).
 /// Never store or log full keys.
 pub fn key_fingerprint(api_key: &str) -> String {
-    let tail: String = api_key.chars().rev().take(4).collect::<String>().chars().rev().collect();
+    let tail: String = api_key
+        .chars()
+        .rev()
+        .take(4)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect();
     let prefix: String = api_key.chars().take(3).collect();
     format!("{}-...{}", prefix, tail)
 }

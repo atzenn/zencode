@@ -335,7 +335,10 @@ mod tests {
         assert_eq!(price_per_1m("gpt-4o"), Some((2.50, 10.00)));
         // Provider prefix is stripped before lookup.
         assert_eq!(price_per_1m("openai/gpt-4o-mini"), Some((0.15, 0.60)));
-        assert_eq!(price_per_1m("anthropic/claude-sonnet-4-5"), Some((3.00, 15.00)));
+        assert_eq!(
+            price_per_1m("anthropic/claude-sonnet-4-5"),
+            Some((3.00, 15.00))
+        );
     }
 
     #[test]
@@ -354,14 +357,8 @@ mod tests {
             provider_from_base_url("https://api.openai.com/v1"),
             "openai"
         );
-        assert_eq!(
-            provider_from_base_url("http://localhost:11434/v1"),
-            "local"
-        );
-        assert_eq!(
-            provider_from_base_url("http://127.0.0.1:11434/v1"),
-            "local"
-        );
+        assert_eq!(provider_from_base_url("http://localhost:11434/v1"), "local");
+        assert_eq!(provider_from_base_url("http://127.0.0.1:11434/v1"), "local");
         assert_eq!(
             provider_from_base_url("https://api.experientiallabs.ai/api/v1"),
             "experientiallabs"
@@ -464,7 +461,14 @@ mod tests {
             200,
         );
         // Zero-token records are skipped.
-        record(Some(&home), "sess-rt", "x", "https://openrouter.ai/api/v1", 0, 0);
+        record(
+            Some(&home),
+            "sess-rt",
+            "x",
+            "https://openrouter.ai/api/v1",
+            0,
+            0,
+        );
         let loaded = load(&home, "sess-rt").expect("ledger written");
         assert_eq!(loaded.session_id, "sess-rt");
         assert_eq!(loaded.entries.len(), 1);

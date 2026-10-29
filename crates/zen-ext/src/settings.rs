@@ -77,7 +77,10 @@ fn filter_array(
     warnings: &mut Vec<String>,
 ) -> Option<Value> {
     if !fragment_ok(&wrap(Value::Array(vec![]))) {
-        warnings.push(format!("{} settings: invalid value for '{}' skipped", label, what));
+        warnings.push(format!(
+            "{} settings: invalid value for '{}' skipped",
+            label, what
+        ));
         return None;
     }
     let mut kept = Vec::new();
@@ -85,7 +88,10 @@ fn filter_array(
         if fragment_ok(&wrap(Value::Array(vec![item.clone()]))) {
             kept.push(item);
         } else {
-            warnings.push(format!("{} settings: invalid entry {} in '{}' skipped", label, item, what));
+            warnings.push(format!(
+                "{} settings: invalid entry {} in '{}' skipped",
+                label, item, what
+            ));
         }
     }
     Some(Value::Array(kept))
@@ -94,7 +100,9 @@ fn filter_array(
 /// Drop individually invalid entries (wrong type) so one bad key never discards the whole
 /// layer (SPEC C1.2). Checks top-level keys, then keys of nested objects, then array items.
 fn sanitize_layer(layer: Value, label: &str, warnings: &mut Vec<String>) -> Value {
-    let Value::Object(map) = layer else { return layer };
+    let Value::Object(map) = layer else {
+        return layer;
+    };
     let mut out = Map::new();
     for (k, v) in map {
         if fragment_ok(&single(&k, v.clone())) {
@@ -114,7 +122,10 @@ fn sanitize_layer(layer: Value, label: &str, warnings: &mut Vec<String>) -> Valu
                             kept.insert(sk.clone(), arr);
                         }
                     } else {
-                        warnings.push(format!("{} settings: invalid value for '{}.{}' skipped", label, k, sk));
+                        warnings.push(format!(
+                            "{} settings: invalid value for '{}.{}' skipped",
+                            label, k, sk
+                        ));
                     }
                 }
                 out.insert(k, Value::Object(kept));
@@ -125,7 +136,10 @@ fn sanitize_layer(layer: Value, label: &str, warnings: &mut Vec<String>) -> Valu
                     out.insert(k, arr);
                 }
             }
-            _ => warnings.push(format!("{} settings: invalid value for '{}' skipped", label, k)),
+            _ => warnings.push(format!(
+                "{} settings: invalid value for '{}' skipped",
+                label, k
+            )),
         }
     }
     Value::Object(out)
@@ -138,18 +152,32 @@ fn read_json_file(path: &Path, label: &str, warnings: &mut Vec<String>) -> Optio
     let content = match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(e) => {
-            warnings.push(format!("Failed to read {} settings {}: {}", label, path.display(), e));
+            warnings.push(format!(
+                "Failed to read {} settings {}: {}",
+                label,
+                path.display(),
+                e
+            ));
             return None;
         }
     };
     match serde_json::from_str::<Value>(&content) {
         Ok(v @ Value::Object(_)) => Some(sanitize_layer(v, label, warnings)),
         Ok(_) => {
-            warnings.push(format!("{} settings {} must be a JSON object", label, path.display()));
+            warnings.push(format!(
+                "{} settings {} must be a JSON object",
+                label,
+                path.display()
+            ));
             None
         }
         Err(e) => {
-            warnings.push(format!("Invalid JSON in {} settings {}: {}", label, path.display(), e));
+            warnings.push(format!(
+                "Invalid JSON in {} settings {}: {}",
+                label,
+                path.display(),
+                e
+            ));
             None
         }
     }
@@ -236,18 +264,32 @@ fn load_hooks_file(
     let content = match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(e) => {
-            warnings.push(format!("Failed to read {} {}: {}", label, path.display(), e));
+            warnings.push(format!(
+                "Failed to read {} {}: {}",
+                label,
+                path.display(),
+                e
+            ));
             return;
         }
     };
     let hooks: Value = match serde_json::from_str(&content) {
         Ok(v @ Value::Object(_)) => v,
         Ok(_) => {
-            warnings.push(format!("{} {} must be a JSON object", label, path.display()));
+            warnings.push(format!(
+                "{} {} must be a JSON object",
+                label,
+                path.display()
+            ));
             return;
         }
         Err(e) => {
-            warnings.push(format!("Invalid JSON in {} {}: {}", label, path.display(), e));
+            warnings.push(format!(
+                "Invalid JSON in {} {}: {}",
+                label,
+                path.display(),
+                e
+            ));
             return;
         }
     };
@@ -282,7 +324,9 @@ fn load_cli_layer(
     warnings: &mut Vec<String>,
     bypass_forbidden: &mut bool,
 ) {
-    let Some(cli_settings) = cli_settings else { return };
+    let Some(cli_settings) = cli_settings else {
+        return;
+    };
     let trimmed = cli_settings.trim();
     if trimmed.is_empty() {
         return;
@@ -297,7 +341,14 @@ fn load_cli_layer(
     };
 
     if candidate.exists() && candidate.is_file() {
-        load_file_layer(&candidate, "cli", merged, sources, warnings, bypass_forbidden);
+        load_file_layer(
+            &candidate,
+            "cli",
+            merged,
+            sources,
+            warnings,
+            bypass_forbidden,
+        );
     } else if raw_path_exists(&path) {
         load_file_layer(&path, "cli", merged, sources, warnings, bypass_forbidden);
     } else {
@@ -330,8 +381,17 @@ fn load_managed_layer(
     custom_path: Option<&Path>,
     bypass_forbidden: &mut bool,
 ) {
-    let path = custom_path.map(|p| p.to_path_buf()).unwrap_or_else(default_managed_path);
-    load_file_layer(&path, "managed", merged, sources, warnings, bypass_forbidden);
+    let path = custom_path
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(default_managed_path);
+    load_file_layer(
+        &path,
+        "managed",
+        merged,
+        sources,
+        warnings,
+        bypass_forbidden,
+    );
 }
 
 /// Load settings from all layers with precedence:
@@ -346,7 +406,14 @@ pub fn load_settings(
 ) -> LoadedSettings {
     let home_dir = home.map(|p| p.to_path_buf()).or_else(dirs::home_dir);
     let managed_path = std::env::var_os("ZEN_MANAGED_SETTINGS").map(PathBuf::from);
-    load_settings_impl(cwd, home_dir.as_deref(), cli_settings, sources, managed_path.as_deref(), true)
+    load_settings_impl(
+        cwd,
+        home_dir.as_deref(),
+        cli_settings,
+        sources,
+        managed_path.as_deref(),
+        true,
+    )
 }
 
 /// Like [`load_settings`], but with `trusted == false` the project and local layers lose the keys
@@ -362,7 +429,14 @@ pub fn load_settings_trust(
 ) -> LoadedSettings {
     let home_dir = home.map(|p| p.to_path_buf()).or_else(dirs::home_dir);
     let managed_path = std::env::var_os("ZEN_MANAGED_SETTINGS").map(PathBuf::from);
-    load_settings_impl(cwd, home_dir.as_deref(), cli_settings, sources, managed_path.as_deref(), trusted)
+    load_settings_impl(
+        cwd,
+        home_dir.as_deref(),
+        cli_settings,
+        sources,
+        managed_path.as_deref(),
+        trusted,
+    )
 }
 
 /// Variant that accepts an explicit managed settings path (for tests).
@@ -394,36 +468,96 @@ fn load_settings_impl(
     if is_enabled(sources, "user") {
         if let Some(home) = home {
             let path = home.join(".zen").join("settings.json");
-            load_file_layer(&path, "user", &mut merged, &mut loaded_sources, &mut warnings, &mut bypass_forbidden);
+            load_file_layer(
+                &path,
+                "user",
+                &mut merged,
+                &mut loaded_sources,
+                &mut warnings,
+                &mut bypass_forbidden,
+            );
             let hooks_path = home.join(".zen").join("hooks.json");
-            load_hooks_file(&hooks_path, "user-hooks", &mut merged, &mut loaded_sources, &mut warnings, true, &mut skipped);
+            load_hooks_file(
+                &hooks_path,
+                "user-hooks",
+                &mut merged,
+                &mut loaded_sources,
+                &mut warnings,
+                true,
+                &mut skipped,
+            );
         }
     }
 
     // 2. Project shared .zen/settings.json, then .zen/hooks.json (trust-gated like the hooks key).
     if is_enabled(sources, "project") {
         let path = cwd.join(".zen").join("settings.json");
-        load_file_layer_bypass(&path, "project", &mut merged, &mut loaded_sources, &mut warnings, trusted, &mut skipped);
+        load_file_layer_bypass(
+            &path,
+            "project",
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            trusted,
+            &mut skipped,
+        );
         let hooks_path = cwd.join(".zen").join("hooks.json");
-        load_hooks_file(&hooks_path, "project-hooks", &mut merged, &mut loaded_sources, &mut warnings, trusted, &mut skipped);
+        load_hooks_file(
+            &hooks_path,
+            "project-hooks",
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            trusted,
+            &mut skipped,
+        );
     }
 
     // 3. Project local .zen/settings.local.json, then .zen/hooks.local.json (trust-gated).
     if is_enabled(sources, "local") {
         let path = cwd.join(".zen").join("settings.local.json");
-        load_file_layer_bypass(&path, "local", &mut merged, &mut loaded_sources, &mut warnings, trusted, &mut skipped);
+        load_file_layer_bypass(
+            &path,
+            "local",
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            trusted,
+            &mut skipped,
+        );
         let hooks_path = cwd.join(".zen").join("hooks.local.json");
-        load_hooks_file(&hooks_path, "local-hooks", &mut merged, &mut loaded_sources, &mut warnings, trusted, &mut skipped);
+        load_hooks_file(
+            &hooks_path,
+            "local-hooks",
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            trusted,
+            &mut skipped,
+        );
     }
 
     // 4. CLI --settings <file-or-json>
     if is_enabled(sources, "cli") {
-        load_cli_layer(cli_settings, cwd, &mut merged, &mut loaded_sources, &mut warnings, &mut bypass_forbidden);
+        load_cli_layer(
+            cli_settings,
+            cwd,
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            &mut bypass_forbidden,
+        );
     }
 
     // 5. Managed /etc/zen/managed-settings.json (highest file layer)
     if is_enabled(sources, "managed") {
-        load_managed_layer(&mut merged, &mut loaded_sources, &mut warnings, managed_path, &mut bypass_forbidden);
+        load_managed_layer(
+            &mut merged,
+            &mut loaded_sources,
+            &mut warnings,
+            managed_path,
+            &mut bypass_forbidden,
+        );
     }
 
     // Deserialize into Settings (unknown keys land in extra via flatten)
@@ -447,9 +581,9 @@ fn load_settings_impl(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testutil::TempDir;
     use serde_json::json;
     use std::fs;
-    use crate::testutil::TempDir;
 
     #[test]
     fn test_merge_json_scalars() {
@@ -464,7 +598,10 @@ mod tests {
         let base = json!({"a": {"x": 1, "y": 2}, "b": 5});
         let over = json!({"a": {"y": 3, "z": 4}, "c": 6});
         let result = merge_json(base, over);
-        assert_eq!(result, json!({"a": {"x": 1, "y": 3, "z": 4}, "b": 5, "c": 6}));
+        assert_eq!(
+            result,
+            json!({"a": {"x": 1, "y": 3, "z": 4}, "b": 5, "c": 6})
+        );
     }
 
     #[test]
@@ -506,21 +643,24 @@ mod tests {
         fs::write(
             proj.join(".zen/settings.local.json"),
             r#"{"baseUrl": "local-url", "maxTurns": 10}"#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // CLI file
         let cli_file = tmp.path().join("cli.json");
         fs::write(
             &cli_file,
             r#"{"model": "cli-model", "permissions": {"allow": ["Write"]}}"#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Managed settings
         let managed_file = tmp.path().join("managed.json");
         fs::write(
             &managed_file,
             r#"{"model": "managed-model", "maxTurns": 20}"#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let loaded = load_settings_with_managed(
             &proj,
@@ -550,16 +690,19 @@ mod tests {
         fs::create_dir_all(home.join(".zen")).unwrap();
         fs::create_dir_all(proj.join(".zen")).unwrap();
 
-        fs::write(home.join(".zen/settings.json"), r#"{"model": "user-model"}"#).unwrap();
-        fs::write(proj.join(".zen/settings.json"), r#"{"model": "project-model"}"#).unwrap();
+        fs::write(
+            home.join(".zen/settings.json"),
+            r#"{"model": "user-model"}"#,
+        )
+        .unwrap();
+        fs::write(
+            proj.join(".zen/settings.json"),
+            r#"{"model": "project-model"}"#,
+        )
+        .unwrap();
 
         // Only project source enabled
-        let loaded = load_settings(
-            &proj,
-            Some(&home),
-            None,
-            Some(&["project".to_string()]),
-        );
+        let loaded = load_settings(&proj, Some(&home), None, Some(&["project".to_string()]));
 
         assert_eq!(loaded.settings.model, Some("project-model".to_string()));
         assert_eq!(loaded.sources, vec!["project"]);
@@ -573,7 +716,11 @@ mod tests {
         fs::create_dir_all(home.join(".zen")).unwrap();
         fs::create_dir_all(proj.join(".zen")).unwrap();
 
-        fs::write(home.join(".zen/settings.json"), r#"{"model": "user-model"}"#).unwrap();
+        fs::write(
+            home.join(".zen/settings.json"),
+            r#"{"model": "user-model"}"#,
+        )
+        .unwrap();
         fs::write(proj.join(".zen/settings.json"), "not valid json").unwrap();
 
         let loaded = load_settings(&proj, Some(&home), None, None);
@@ -588,12 +735,7 @@ mod tests {
         let proj = tmp.path().join("proj");
         fs::create_dir_all(proj.join(".zen")).unwrap();
 
-        let loaded = load_settings(
-            &proj,
-            None,
-            Some(r#"{"model": "inline-model"}"#),
-            None,
-        );
+        let loaded = load_settings(&proj, None, Some(r#"{"model": "inline-model"}"#), None);
 
         assert_eq!(loaded.settings.model, Some("inline-model".to_string()));
         assert!(loaded.sources.contains(&"cli".to_string()));
@@ -608,10 +750,14 @@ mod tests {
         fs::write(
             proj.join(".zen/settings.json"),
             r#"{"model": "test", "myCustomThing": {"x": 1}}"#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let loaded = load_settings(&proj, None, None, None);
-        assert_eq!(loaded.settings.extra.get("myCustomThing"), Some(&json!({"x": 1})));
+        assert_eq!(
+            loaded.settings.extra.get("myCustomThing"),
+            Some(&json!({"x": 1}))
+        );
     }
 
     #[test]
@@ -632,7 +778,12 @@ mod tests {
         ).unwrap();
 
         let loaded = load_settings(&proj, Some(&home), None, None);
-        let arr = loaded.settings.hooks.get("PreToolUse").and_then(|v| v.as_array()).unwrap();
+        let arr = loaded
+            .settings
+            .hooks
+            .get("PreToolUse")
+            .and_then(|v| v.as_array())
+            .unwrap();
         // Arrays concatenate: both layers present.
         assert_eq!(arr.len(), 2);
     }
@@ -644,7 +795,11 @@ mod tests {
         let proj = tmp.path().join("proj");
         fs::create_dir_all(home.join(".zen")).unwrap();
         fs::create_dir_all(proj.join(".zen")).unwrap();
-        fs::write(home.join(".zen/settings.json"), r#"{"model": "user-model", "maxTurns": 7}"#).unwrap();
+        fs::write(
+            home.join(".zen/settings.json"),
+            r#"{"model": "user-model", "maxTurns": 7}"#,
+        )
+        .unwrap();
         fs::write(
             proj.join(".zen/settings.json"),
             r#"{"model": 42, "maxTurns": "lots", "baseUrl": "http://p",
@@ -654,7 +809,12 @@ mod tests {
         .unwrap();
         let loaded = load_settings(&proj, Some(&home), None, None);
         let s = &loaded.settings;
-        assert_eq!(s.model.as_deref(), Some("user-model"), "{:?}", loaded.warnings); // bad project model skipped
+        assert_eq!(
+            s.model.as_deref(),
+            Some("user-model"),
+            "{:?}",
+            loaded.warnings
+        ); // bad project model skipped
         assert_eq!(s.max_turns, Some(7));
         assert_eq!(s.base_url.as_deref(), Some("http://p")); // valid sibling kept
         assert_eq!(s.permissions.allow, vec!["Read", "Edit"]);
@@ -674,8 +834,16 @@ mod tests {
         let proj = tmp.path().join("proj");
         fs::create_dir_all(home.join(".zen")).unwrap();
         fs::create_dir_all(proj.join(".zen")).unwrap();
-        fs::write(home.join(".zen/settings.json"), r#"{"model": "user-model", "maxTurns": 3}"#).unwrap();
-        fs::write(proj.join(".zen/settings.json"), r#"{"model": "project-model"}"#).unwrap();
+        fs::write(
+            home.join(".zen/settings.json"),
+            r#"{"model": "user-model", "maxTurns": 3}"#,
+        )
+        .unwrap();
+        fs::write(
+            proj.join(".zen/settings.json"),
+            r#"{"model": "project-model"}"#,
+        )
+        .unwrap();
         let managed = tmp.path().join("managed.json");
         fs::write(&managed, r#"{"maxTurns": 9}"#).unwrap();
         let loaded = load_settings_with_managed(
@@ -707,17 +875,41 @@ mod tests {
             r#"{"model": "pm", "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "echo proj"}]}]}, "permissions": {"allow": ["Bash"], "deny": ["Write"]}, "env": {"P": "1"}, "verify": {"command": "x"}}"#,
         )
         .unwrap();
-        fs::write(proj.join(".zen/settings.local.json"), r#"{"permissions": {"allow": ["Edit"]}}"#).unwrap();
+        fs::write(
+            proj.join(".zen/settings.local.json"),
+            r#"{"permissions": {"allow": ["Edit"]}}"#,
+        )
+        .unwrap();
 
         let un = load_settings_with_trust_for_test(proj, home, false);
         let s = &un.settings;
-        assert_eq!(s.model.as_deref(), Some("pm"), "non-exec project keys still load");
-        assert_eq!(s.permissions.allow, vec!["Read"], "only the user allow rule");
-        assert_eq!(s.permissions.deny, vec!["Write"], "project deny is never dropped");
+        assert_eq!(
+            s.model.as_deref(),
+            Some("pm"),
+            "non-exec project keys still load"
+        );
+        assert_eq!(
+            s.permissions.allow,
+            vec!["Read"],
+            "only the user allow rule"
+        );
+        assert_eq!(
+            s.permissions.deny,
+            vec!["Write"],
+            "project deny is never dropped"
+        );
         assert!(s.env.contains_key("U") && !s.env.contains_key("P"));
-        assert!(!s.hooks.to_string().contains("echo proj") && s.hooks.to_string().contains("echo user"));
+        assert!(
+            !s.hooks.to_string().contains("echo proj") && s.hooks.to_string().contains("echo user")
+        );
         assert!(!s.extra.contains_key("verify"));
-        assert_eq!(un.skipped, vec!["project: hooks, permissions.allow, env, verify", "local: permissions.allow"]);
+        assert_eq!(
+            un.skipped,
+            vec![
+                "project: hooks, permissions.allow, env, verify",
+                "local: permissions.allow"
+            ]
+        );
 
         let tr = load_settings_with_trust_for_test(proj, home, true);
         assert!(tr.settings.hooks.to_string().contains("echo proj"));
@@ -733,7 +925,11 @@ mod tests {
         let (home, proj) = (home_t.path(), proj_t.path());
         fs::create_dir_all(home.join(".zen")).unwrap();
         fs::create_dir_all(proj.join(".zen")).unwrap();
-        fs::write(proj.join(".zen/settings.json"), r#"{"allowPrivateNetwork": true}"#).unwrap();
+        fs::write(
+            proj.join(".zen/settings.json"),
+            r#"{"allowPrivateNetwork": true}"#,
+        )
+        .unwrap();
         let un = load_settings_with_trust_for_test(proj, home, false);
         assert!(!un.settings.allow_private_network);
         let tr = load_settings_with_trust_for_test(proj, home, true);
@@ -787,7 +983,11 @@ mod tests {
         assert!(tr.skipped.is_empty());
     }
 
-    fn load_settings_with_trust_for_test(proj: &Path, home: &Path, trusted: bool) -> LoadedSettings {
+    fn load_settings_with_trust_for_test(
+        proj: &Path,
+        home: &Path,
+        trusted: bool,
+    ) -> LoadedSettings {
         load_settings_impl(proj, Some(home), None, None, None, trusted)
     }
 
@@ -924,7 +1124,10 @@ mod tests {
         let loaded = load_settings_with_trust_for_test(&proj, &home, true);
         assert!(hooks_json_hook_names(&loaded.settings).is_empty());
         assert!(
-            loaded.warnings.iter().any(|w| w.contains("must be a JSON object")),
+            loaded
+                .warnings
+                .iter()
+                .any(|w| w.contains("must be a JSON object")),
             "warnings: {:?}",
             loaded.warnings
         );

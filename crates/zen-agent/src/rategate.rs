@@ -202,7 +202,11 @@ impl RateGate {
 
     fn used_today(&self, provider: &str) -> u64 {
         let _guard = self.io.lock().unwrap_or_else(|e| e.into_inner());
-        self.fresh_state().counts.get(provider).copied().unwrap_or(0)
+        self.fresh_state()
+            .counts
+            .get(provider)
+            .copied()
+            .unwrap_or(0)
     }
 
     fn record(&self, provider: &str) {
@@ -347,7 +351,10 @@ impl KeyQuota {
             .filter(|d| d.is_object())
             .ok_or_else(|| anyhow::anyhow!("invalid /key response: no `data` object"))?;
         let free = d.get("free_model_daily_requests");
-        let fu = |k: &str| free.and_then(|f| f.get(k)).and_then(serde_json::Value::as_u64);
+        let fu = |k: &str| {
+            free.and_then(|f| f.get(k))
+                .and_then(serde_json::Value::as_u64)
+        };
         let ff = |k: &str| d.get(k).and_then(serde_json::Value::as_f64);
         Ok(Self {
             free_used: fu("used"),
@@ -362,7 +369,10 @@ impl KeyQuota {
 
     /// Lines for `/quota`. Never prints the key or its label.
     pub fn report(&self) -> String {
-        let mut lines = vec![format!("OpenRouter quota ({} UTC, live from /api/v1/key):", today_utc())];
+        let mut lines = vec![format!(
+            "OpenRouter quota ({} UTC, live from /api/v1/key):",
+            today_utc()
+        )];
         match (self.free_used, self.free_limit, self.free_remaining) {
             (Some(u), Some(l), r) => {
                 let r = r.unwrap_or_else(|| l.saturating_sub(u));
@@ -374,7 +384,9 @@ impl KeyQuota {
             _ => lines.push("  free-model requests: not reported for this key".into()),
         }
         match (self.credit_limit, self.credit_remaining) {
-            (Some(l), Some(r)) => lines.push(format!("  key credit limit: {l:.2} (remaining {r:.2})")),
+            (Some(l), Some(r)) => {
+                lines.push(format!("  key credit limit: {l:.2} (remaining {r:.2})"))
+            }
             _ => lines.push("  key credit limit: none".into()),
         }
         if let Some(u) = self.usage_daily {
@@ -393,13 +405,20 @@ pub async fn fetch_key_quota(key_url: &str, api_key: Option<&str>) -> anyhow::Re
     if let Some(k) = api_key.filter(|k| !k.is_empty()) {
         rb = rb.header(reqwest::header::AUTHORIZATION, format!("Bearer {k}"));
     }
-    let resp = rb.send().await.map_err(|e| anyhow::anyhow!("quota lookup failed: {e}"))?;
+    let resp = rb
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!("quota lookup failed: {e}"))?;
     let status = resp.status().as_u16();
     let body = resp.text().await.unwrap_or_default();
     if !(200..300).contains(&status) {
         let msg = serde_json::from_str::<serde_json::Value>(&body)
             .ok()
-            .and_then(|v| v.pointer("/error/message").and_then(|m| m.as_str()).map(str::to_string))
+            .and_then(|v| {
+                v.pointer("/error/message")
+                    .and_then(|m| m.as_str())
+                    .map(str::to_string)
+            })
             .unwrap_or_else(|| body.chars().take(200).collect());
         return Err(anyhow::anyhow!("quota lookup failed: HTTP {status}: {msg}"));
     }
@@ -408,7 +427,11 @@ pub async fn fetch_key_quota(key_url: &str, api_key: Option<&str>) -> anyhow::Re
 
 /// The `/quota` text: the live OpenRouter numbers when `key_url` is set (see
 /// [`openrouter_key_url`]), then the local RateGate counts.
-pub async fn quota_command_report(key_url: Option<&str>, api_key: Option<&str>, store_path: Option<&Path>) -> String {
+pub async fn quota_command_report(
+    key_url: Option<&str>,
+    api_key: Option<&str>,
+    store_path: Option<&Path>,
+) -> String {
     let local = quota_report_for(store_path);
     match key_url {
         None => local,
@@ -556,13 +579,29 @@ mod tests {
     #[tokio::test]
     async fn paid_models_and_unknown_hosts_are_never_gated() {
         let inner = ScriptBackend::ok();
-        let g = gate(inner.clone(), "https://openrouter.ai/api/v1", 1, tmp_store("paid"));
+        let g = gate(
+            inner.clone(),
+            "https://openrouter.ai/api/v1",
+            1,
+            tmp_store("paid"),
+        );
         for _ in 0..3 {
-            assert!(g.chat(req_for("openai/gpt-5")).await.is_ok(), "paid model must not be gated");
+            assert!(
+                g.chat(req_for("openai/gpt-5")).await.is_ok(),
+                "paid model must not be gated"
+            );
         }
-        let g2 = gate(inner.clone(), "https://gateway.example/v1", 1, tmp_store("gw"));
+        let g2 = gate(
+            inner.clone(),
+            "https://gateway.example/v1",
+            1,
+            tmp_store("gw"),
+        );
         for _ in 0..3 {
-            assert!(g2.chat(req()).await.is_ok(), "unknown host without a limits entry must not be gated");
+            assert!(
+                g2.chat(req()).await.is_ok(),
+                "unknown host without a limits entry must not be gated"
+            );
         }
     }
 

@@ -30,10 +30,10 @@ use std::time::Instant;
 use zen_core::*;
 
 use crate::budget::{BudgetPolicy, BudgetVerdict};
-use crate::tool_bundles::ToolBundle;
 use crate::compaction;
-use crate::prune::{PruneConfig, PruneStats};
 use crate::finish;
+use crate::prune::{PruneConfig, PruneStats};
+use crate::tool_bundles::ToolBundle;
 
 /// How often one turn requeries after an empty reply before accepting it (r7 C5).
 const MAX_EMPTY_REQUERIES: usize = 2;
@@ -206,7 +206,9 @@ async fn run_tool(
     timeout: (Option<u64>, TimeoutSource),
 ) -> ToolOutput {
     let (timeout_ms, source) = timeout;
-    let Some(ms) = timeout_ms else { return tool.call(args, &ctx).await };
+    let Some(ms) = timeout_ms else {
+        return tool.call(args, &ctx).await;
+    };
     // Name the actual timeout source instead of always blaming `toolTimeouts.default`.
     let src = match source {
         TimeoutSource::PerTool => format!("settings toolTimeouts.{}", tool.name()),
@@ -400,7 +402,8 @@ impl Agent {
     /// (SPEC §5 / Appendix B4), not merely denied. The active [`ToolBundle`] decides which
     /// tools carry full schemas; the rest are name-only stubs (see `tool_bundles`).
     pub fn tools_for_request(&self) -> Vec<ToolDefinition> {
-        let defs = crate::tool_bundles::definitions_for_bundle(&self.tools, self.config.tool_bundle);
+        let defs =
+            crate::tool_bundles::definitions_for_bundle(&self.tools, self.config.tool_bundle);
         if self.config.permission_mode == PermissionMode::Plan {
             plan::plan_mode_tools(defs)
         } else {
@@ -614,7 +617,10 @@ impl Agent {
                 return self.run_result(
                     "error_max_turns",
                     true,
-                    format!("Reached maximum number of turns ({})", self.config.max_turns),
+                    format!(
+                        "Reached maximum number of turns ({})",
+                        self.config.max_turns
+                    ),
                     started.elapsed().as_millis() as u64,
                     duration_api_ms,
                     num_turns,
@@ -681,9 +687,7 @@ impl Agent {
                                 return self.run_result(
                                     "error_budget_exceeded",
                                     true,
-                                    crate::budget::block_message(
-                                        spent_usd, cap_usd, est_cost_usd,
-                                    ),
+                                    crate::budget::block_message(spent_usd, cap_usd, est_cost_usd),
                                     started.elapsed().as_millis() as u64,
                                     duration_api_ms,
                                     num_turns,
@@ -694,19 +698,21 @@ impl Agent {
                 }
             }
 
-            let (resp, api_ms, _model) = match
-                crate::client::chat_with_fallback(
-                    &self.llm,
-                    &self.config.model,
-                    &self.config.fallback_models,
-                    messages,
-                    tools,
-                    self.config.max_output_tokens,
-                )
-                .await
+            let (resp, api_ms, _model) = match crate::client::chat_with_fallback(
+                &self.llm,
+                &self.config.model,
+                &self.config.fallback_models,
+                messages,
+                tools,
+                self.config.max_output_tokens,
+            )
+            .await
             {
                 Ok(v) => v,
-                Err(e) if is_unparsed_sample(&e.to_string()) && empty_requeries < MAX_EMPTY_REQUERIES => {
+                Err(e)
+                    if is_unparsed_sample(&e.to_string())
+                        && empty_requeries < MAX_EMPTY_REQUERIES =>
+                {
                     // The server failed to parse the sampled reply (gpt-oss Harmony header) on every
                     // retry: requery with a correction instead of ending the run (r7 bench C7,
                     // same budget as the empty-reply requery).
@@ -736,7 +742,11 @@ impl Agent {
             // A content-filter stop is the provider's verdict, not an empty reply: say so and end
             // the turn after this one request instead of requerying (P0-5).
             if crate::client::is_content_filtered(resp.finish_reason.as_deref())
-                && resp.message.tool_calls.as_ref().is_none_or(|c| c.is_empty())
+                && resp
+                    .message
+                    .tool_calls
+                    .as_ref()
+                    .is_none_or(|c| c.is_empty())
             {
                 let text = resp.message.content.clone().unwrap_or_default();
                 if !text.trim().is_empty() {
@@ -760,9 +770,10 @@ impl Agent {
             }
             if is_truncated(resp.finish_reason.as_deref()) {
                 let calls = resp.message.tool_calls.clone().unwrap_or_default();
-                let broken = calls
-                    .iter()
-                    .any(|c| serde_json::from_str::<Value>(&c.function.arguments).map_or(true, |v| !v.is_object()));
+                let broken = calls.iter().any(|c| {
+                    serde_json::from_str::<Value>(&c.function.arguments)
+                        .map_or(true, |v| !v.is_object())
+                });
                 if calls.is_empty() || broken {
                     let mut msg = resp.message.clone();
                     msg.tool_calls = None;
@@ -801,10 +812,21 @@ impl Agent {
                                 continuations + 1
                             ),
                         });
-                        return self.run_result("success", false, stitched, elapsed, duration_api_ms, num_turns);
+                        return self.run_result(
+                            "success",
+                            false,
+                            stitched,
+                            elapsed,
+                            duration_api_ms,
+                            num_turns,
+                        );
                     }
                     continuations += 1;
-                    let nudge = if broken { TRUNCATED_CALL_NUDGE } else { TRUNCATION_CONTINUE_NUDGE };
+                    let nudge = if broken {
+                        TRUNCATED_CALL_NUDGE
+                    } else {
+                        TRUNCATION_CONTINUE_NUDGE
+                    };
                     self.messages.push(ChatMessage::user(nudge));
                     continue;
                 }
@@ -812,9 +834,16 @@ impl Agent {
             continuations = 0;
             // Repair (r7): a tool call written as the message text becomes a real call.
             let mut text_call_id: Option<String> = None;
-            if resp.message.tool_calls.as_ref().is_none_or(|c| c.is_empty()) {
+            if resp
+                .message
+                .tool_calls
+                .as_ref()
+                .is_none_or(|c| c.is_empty())
+            {
                 let text = resp.message.content.clone().unwrap_or_default();
-                if let Some((name, arguments)) = repair::tool_call_in_text(&text, &self.tools.names()) {
+                if let Some((name, arguments)) =
+                    repair::tool_call_in_text(&text, &self.tools.names())
+                {
                     let id = format!("zen_text_call_{}", num_turns);
                     resp.message.content = None;
                     resp.message.tool_calls = Some(vec![ToolCall {
@@ -836,7 +865,10 @@ impl Agent {
             let tool_calls = assistant.tool_calls.clone().unwrap_or_default();
             final_text = assistant.content.clone().unwrap_or_default();
 
-            if tool_calls.is_empty() && final_text.trim().is_empty() && empty_requeries < MAX_EMPTY_REQUERIES {
+            if tool_calls.is_empty()
+                && final_text.trim().is_empty()
+                && empty_requeries < MAX_EMPTY_REQUERIES
+            {
                 // An empty reply (no text, no tool call) is a malformed response, not an answer:
                 // drop it and requery with a short correction, the way SWE-agent requeries on a
                 // format error (https://swe-agent.com/latest/config/templates/) (r7 C5).
@@ -878,7 +910,9 @@ impl Agent {
                     return self.run_result(
                         "success",
                         false,
-                        stop.stop_reason.or(stop.feedback).unwrap_or_else(|| final_text.clone()),
+                        stop.stop_reason
+                            .or(stop.feedback)
+                            .unwrap_or_else(|| final_text.clone()),
                         started.elapsed().as_millis() as u64,
                         duration_api_ms,
                         num_turns,
@@ -922,7 +956,10 @@ impl Agent {
                             continue;
                         }
                         finish::Decision::FinishWithNote(text) => {
-                            self.sink.emit(AgentEvent::SystemMessage { event: "Verify".into(), text });
+                            self.sink.emit(AgentEvent::SystemMessage {
+                                event: "Verify".into(),
+                                text,
+                            });
                         }
                         _ => {}
                     }
@@ -949,7 +986,9 @@ impl Agent {
             let mut stop_run: Option<String> = None;
             let mut batch: Vec<Slot> = Vec::new();
             for tc in tool_calls {
-                let slot = self.prepare_call(&tc, text_call_id.as_deref(), plan_mode, &stop_run).await;
+                let slot = self
+                    .prepare_call(&tc, text_call_id.as_deref(), plan_mode, &stop_run)
+                    .await;
                 if let Slot::Stop(id, content, reason) = slot {
                     batch.push(Slot::Done(id, content, true));
                     stop_run = Some(reason);
@@ -958,13 +997,34 @@ impl Agent {
                 let alone = matches!(&slot, Slot::Run(p) if !p.parallel);
                 if alone {
                     let pending = std::mem::take(&mut batch);
-                    self.flush_calls(pending, &mut stop_run, &mut finish_gate, &mut turn_guard, &final_text).await;
-                    self.flush_calls(vec![slot], &mut stop_run, &mut finish_gate, &mut turn_guard, &final_text).await;
+                    self.flush_calls(
+                        pending,
+                        &mut stop_run,
+                        &mut finish_gate,
+                        &mut turn_guard,
+                        &final_text,
+                    )
+                    .await;
+                    self.flush_calls(
+                        vec![slot],
+                        &mut stop_run,
+                        &mut finish_gate,
+                        &mut turn_guard,
+                        &final_text,
+                    )
+                    .await;
                 } else {
                     batch.push(slot);
                 }
             }
-            self.flush_calls(batch, &mut stop_run, &mut finish_gate, &mut turn_guard, &final_text).await;
+            self.flush_calls(
+                batch,
+                &mut stop_run,
+                &mut finish_gate,
+                &mut turn_guard,
+                &final_text,
+            )
+            .await;
             if let Some(text) = stop_run {
                 let result_text = if plan_mode {
                     self.plan_text().unwrap_or_else(|| text.clone())
@@ -989,7 +1049,12 @@ impl Agent {
         call_ctx.current_tool_use_id = Some(tool_use_id.to_string());
         // Bash's default timeout from settings `toolTimeouts.Bash` (p0b).
         if tool_name == "Bash" {
-            call_ctx.tool_timeout_ms = self.config.tool_timeouts.get("Bash").copied().filter(|t| *t > 0);
+            call_ctx.tool_timeout_ms = self
+                .config
+                .tool_timeouts
+                .get("Bash")
+                .copied()
+                .filter(|t| *t > 0);
         }
         call_ctx
     }
@@ -1010,14 +1075,18 @@ impl Agent {
         // lists the expected fields, never a crash.
         let mut repair_notes: Vec<String> = Vec::new();
         if text_call_id == Some(tool_use_id.as_str()) {
-            repair_notes.push("the call was written as message text; it was run as a tool call".into());
+            repair_notes
+                .push("the call was written as message text; it was run as a tool call".into());
         }
         let mut tool_name = tc.function.name.clone();
         if self.tools.get(&tool_name).is_none() {
             if let Some(mapped) = repair::resolve_tool_name(&tool_name, &self.tools.names()) {
                 if repair::has_template_tokens(&tool_name) {
                     // Never echo leaked template tokens back into history (r7 C4).
-                    repair_notes.push(format!("tool name had chat-template tokens; mapped to '{}'", mapped));
+                    repair_notes.push(format!(
+                        "tool name had chat-template tokens; mapped to '{}'",
+                        mapped
+                    ));
                 } else {
                     repair_notes.push(format!("tool name '{}' mapped to '{}'", tool_name, mapped));
                 }
@@ -1043,7 +1112,11 @@ impl Agent {
 
         // A prior stop signal: still record a tool result so the exchange is valid.
         if stop_run.is_some() {
-            return Slot::Done(tool_use_id, "[tool call skipped: run stopping]".to_string(), false);
+            return Slot::Done(
+                tool_use_id,
+                "[tool call skipped: run stopping]".to_string(),
+                false,
+            );
         }
 
         // 2. PreToolUse hook.
@@ -1120,9 +1193,13 @@ impl Agent {
         // 3. Permission. The checker (rules + mode) always runs; a PreToolUse decision can
         // tighten it (deny/ask) or skip a prompt (allow), but never loosen a deny
         // (SPEC C2.13).
-        let checked = self.permissions.check(&tool_name, &args, read_only, &self.ctx);
+        let checked = self
+            .permissions
+            .check(&tool_name, &args, read_only, &self.ctx);
         let ask_rule = matches!(checked, PermissionDecision::Ask)
-            && self.permissions.ask_rule_matches(&tool_name, &args, &self.ctx);
+            && self
+                .permissions
+                .ask_rule_matches(&tool_name, &args, &self.ctx);
         let decision = combine_permission(checked, pre.permission_override.clone(), ask_rule);
         let mut allowed = true;
         let mut deny_reason = String::new();
@@ -1152,8 +1229,10 @@ impl Agent {
                 }
                 None => {
                     allowed = false;
-                    deny_reason =
-                        format!("Permission required for '{}' in non-interactive mode", tool_name);
+                    deny_reason = format!(
+                        "Permission required for '{}' in non-interactive mode",
+                        tool_name
+                    );
                 }
             },
         }
@@ -1162,7 +1241,14 @@ impl Agent {
             return Slot::Done(tool_use_id, deny_reason, true);
         }
         let parallel = read_only && is_parallel_safe(&tool_name);
-        Slot::Run(PendingCall { tool_use_id, tool_name, args, repair_notes, tool, parallel })
+        Slot::Run(PendingCall {
+            tool_use_id,
+            tool_name,
+            args,
+            repair_notes,
+            tool,
+            parallel,
+        })
     }
 
     /// Run the prepared calls of one batch and record every result in order. With more than
@@ -1211,7 +1297,17 @@ impl Agent {
                     handles.push((
                         i,
                         tokio::spawn(async move {
-                            let out = run_tool_with_heartbeat(tool, args, ctx, timeout, sink, id.clone(), tool_name, TOOL_PROGRESS_INTERVAL).await;
+                            let out = run_tool_with_heartbeat(
+                                tool,
+                                args,
+                                ctx,
+                                timeout,
+                                sink,
+                                id.clone(),
+                                tool_name,
+                                TOOL_PROGRESS_INTERVAL,
+                            )
+                            .await;
                             // Durable the moment this call finishes, not when the batch does.
                             if let Some(j) = journal {
                                 j.tool_result(&id, &out.content, out.is_error, false);
@@ -1226,10 +1322,10 @@ impl Agent {
                     }
                 }
                 for (i, h) in handles {
-                    outs[i] = Some(
-                        h.await
-                            .unwrap_or_else(|e| ToolOutput::err(format!("tool task failed: {}", e))),
-                    );
+                    outs[i] =
+                        Some(h.await.unwrap_or_else(|e| {
+                            ToolOutput::err(format!("tool task failed: {}", e))
+                        }));
                 }
             }
         }
@@ -1251,7 +1347,8 @@ impl Agent {
                         let content = "[tool call skipped: run stopping]".to_string();
                         self.journal_result(&p.tool_use_id, &content, false, true);
                         self.emit_tool_result(&p.tool_use_id, &content, false, false);
-                        self.messages.push(ChatMessage::tool(p.tool_use_id, content));
+                        self.messages
+                            .push(ChatMessage::tool(p.tool_use_id, content));
                         continue;
                     }
                     // The stream-json `parallel` flag reports actual overlap, not mere
@@ -1277,7 +1374,10 @@ impl Agent {
                             out
                         }
                     };
-                    if let Some(reason) = self.finish_call(p, out, finish_gate, turn_guard, final_text).await {
+                    if let Some(reason) = self
+                        .finish_call(p, out, finish_gate, turn_guard, final_text)
+                        .await
+                    {
                         *stop_run = Some(reason);
                         skip = true;
                     }
@@ -1296,7 +1396,14 @@ impl Agent {
         turn_guard: &mut guard::TurnGuard,
         final_text: &str,
     ) -> Option<String> {
-        let PendingCall { tool_use_id, tool_name, args, repair_notes, parallel, .. } = p;
+        let PendingCall {
+            tool_use_id,
+            tool_name,
+            args,
+            repair_notes,
+            parallel,
+            ..
+        } = p;
         // The raw output is already journaled; journal again only if the model will see more.
         let raw = (self.journal.is_some()).then(|| out.content.clone());
         // 4. PostToolUse (or PostToolUseFailure when the tool reported an error).
@@ -1331,7 +1438,11 @@ impl Agent {
             out.content.push_str("\n\n");
             out.content.push_str(note);
         }
-        finish_gate.observe(&tool_name, args.get("file_path").and_then(|v| v.as_str()), out.is_error);
+        finish_gate.observe(
+            &tool_name,
+            args.get("file_path").and_then(|v| v.as_str()),
+            out.is_error,
+        );
         if verify.is_some() {
             // The harness just checked this change; no "run your checks" reminder for it.
             finish_gate.observe("Bash", None, false);
@@ -1368,7 +1479,8 @@ impl Agent {
             }
         }
         self.emit_tool_result(&tool_use_id, &out.content, out.is_error, parallel);
-        self.messages.push(ChatMessage::tool(tool_use_id, out.content));
+        self.messages
+            .push(ChatMessage::tool(tool_use_id, out.content));
         if post.stop_run {
             Some(post.stop_reason.unwrap_or_else(|| final_text.to_string()))
         } else {
@@ -1383,8 +1495,10 @@ impl Agent {
         if is_error || !matches!(tool_name, "Edit" | "MultiEdit" | "Write") {
             return None;
         }
-        let timeout = std::time::Duration::from_secs(self.config.verify_after_edit_timeout_secs.max(1));
-        let (passed, status, tail) = finish::run_command(cmd, &self.ctx.cwd(), &self.ctx.env, timeout).await;
+        let timeout =
+            std::time::Duration::from_secs(self.config.verify_after_edit_timeout_secs.max(1));
+        let (passed, status, tail) =
+            finish::run_command(cmd, &self.ctx.cwd(), &self.ctx.env, timeout).await;
         if passed {
             return Some(None);
         }
@@ -1402,7 +1516,9 @@ impl Agent {
             return;
         }
         let todos = self.ctx.todos.lock().unwrap().clone();
-        let Some(note) = guard::todo_reminder(&todos) else { return };
+        let Some(note) = guard::todo_reminder(&todos) else {
+            return;
+        };
         if let Some(last) = self.messages.last_mut() {
             if last.role == "tool" || last.role == "user" {
                 let content = last.content.get_or_insert_with(String::new);
@@ -1415,7 +1531,14 @@ impl Agent {
 
     /// Point the stored assistant tool_call `id` at the repaired name and arguments.
     fn rewrite_tool_call(&mut self, id: &str, name: &str, args: &Value) {
-        let Some(msg) = self.messages.iter_mut().rev().find(|m| m.role == "assistant") else { return };
+        let Some(msg) = self
+            .messages
+            .iter_mut()
+            .rev()
+            .find(|m| m.role == "assistant")
+        else {
+            return;
+        };
         if let Some(call) = msg.tool_calls.iter_mut().flatten().find(|c| c.id == id) {
             call.function.name = name.to_string();
             call.function.arguments = args.to_string();
@@ -1448,10 +1571,9 @@ impl Agent {
             }
             if let Some(calls) = &m.tool_calls {
                 for c in calls {
-                    if let Some(id) = crate::prune::extract_identifier(
-                        &c.function.name,
-                        &c.function.arguments,
-                    ) {
+                    if let Some(id) =
+                        crate::prune::extract_identifier(&c.function.name, &c.function.arguments)
+                    {
                         protected.push_str(&id);
                         protected.push('\n');
                     }

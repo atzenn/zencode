@@ -64,16 +64,16 @@ impl Theme {
             return text.to_string();
         }
         let code: u8 = match (theme, role) {
-            (Theme::Dark, ColorRole::Prompt) => 36,  // cyan
-            (Theme::Dark, ColorRole::Accent) => 33,  // yellow
-            (Theme::Dark, ColorRole::Error) => 31,   // red
-            (Theme::Dark, ColorRole::Success) => 32, // green
-            (Theme::Dark, ColorRole::Dim) => 90,     // bright black
-            (Theme::Light, ColorRole::Prompt) => 34, // blue
-            (Theme::Light, ColorRole::Accent) => 35, // magenta
-            (Theme::Light, ColorRole::Error) => 31,  // red
+            (Theme::Dark, ColorRole::Prompt) => 36,   // cyan
+            (Theme::Dark, ColorRole::Accent) => 33,   // yellow
+            (Theme::Dark, ColorRole::Error) => 31,    // red
+            (Theme::Dark, ColorRole::Success) => 32,  // green
+            (Theme::Dark, ColorRole::Dim) => 90,      // bright black
+            (Theme::Light, ColorRole::Prompt) => 34,  // blue
+            (Theme::Light, ColorRole::Accent) => 35,  // magenta
+            (Theme::Light, ColorRole::Error) => 31,   // red
             (Theme::Light, ColorRole::Success) => 32, // green
-            (Theme::Light, ColorRole::Dim) => 90,    // gray
+            (Theme::Light, ColorRole::Dim) => 90,     // gray
             (Theme::None, _) => unreachable!("handled above"),
         };
         format!("\x1b[{code}m{text}\x1b[0m")
@@ -124,12 +124,16 @@ impl Personality {
     /// default prompt is byte-identical with no personality set.
     pub fn system_suffix(self) -> &'static str {
         match self {
-            Personality::Concise => "\n\n[personality: concise] Be concise: skip preamble and \
-                summaries unless asked, give the shortest correct answer, prefer code over prose.",
+            Personality::Concise => {
+                "\n\n[personality: concise] Be concise: skip preamble and \
+                summaries unless asked, give the shortest correct answer, prefer code over prose."
+            }
             Personality::Normal => "",
-            Personality::Detailed => "\n\n[personality: detailed] Be thorough: explain your \
+            Personality::Detailed => {
+                "\n\n[personality: detailed] Be thorough: explain your \
                 reasoning, mention alternatives you considered, and give detailed answers with \
-                examples where they help.",
+                examples where they help."
+            }
         }
     }
 }
@@ -212,7 +216,9 @@ mod tests {
 
     #[test]
     fn loop_args_zero_rejected() {
-        assert!(parse_loop_args("0 do x").unwrap_err().contains("at least 1"));
+        assert!(parse_loop_args("0 do x")
+            .unwrap_err()
+            .contains("at least 1"));
     }
 
     #[test]

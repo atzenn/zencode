@@ -242,9 +242,18 @@ mod tests {
         // HIGH: when canonicalize fails (missing path), both sides must still normalize
         // identically - `.`, `..` and trailing slashes must not change a trust decision.
         use std::path::Path;
-        assert_eq!(canon(Path::new("/nope/a/./b")), canon(Path::new("/nope/a/b")));
-        assert_eq!(canon(Path::new("/nope/a/b/")), canon(Path::new("/nope/a/b")));
-        assert_eq!(canon(Path::new("/nope/a/x/../b")), canon(Path::new("/nope/a/b")));
+        assert_eq!(
+            canon(Path::new("/nope/a/./b")),
+            canon(Path::new("/nope/a/b"))
+        );
+        assert_eq!(
+            canon(Path::new("/nope/a/b/")),
+            canon(Path::new("/nope/a/b"))
+        );
+        assert_eq!(
+            canon(Path::new("/nope/a/x/../b")),
+            canon(Path::new("/nope/a/b"))
+        );
     }
 
     #[test]

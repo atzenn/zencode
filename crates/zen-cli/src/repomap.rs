@@ -102,7 +102,15 @@ impl RepoMap {
 
 /// Directories never worth scanning (mirrors envsnap's list).
 const SKIP_DIRS: &[&str] = &[
-    "node_modules", "target", "dist", "build", "out", "__pycache__", "venv", "vendor", "coverage",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    "out",
+    "__pycache__",
+    "venv",
+    "vendor",
+    "coverage",
 ];
 
 /// Collect Rust source files under `cwd`, skipping hidden/build dirs. Capped at MAX_FILES.
@@ -157,8 +165,9 @@ fn strip_noise(line: &str) -> String {
             }
             if chars.get(j) == Some(&'"') {
                 let hashes = j - (i + 1);
-                let closing: Vec<char> =
-                    std::iter::once('"').chain(std::iter::repeat_n('#', hashes)).collect();
+                let closing: Vec<char> = std::iter::once('"')
+                    .chain(std::iter::repeat_n('#', hashes))
+                    .collect();
                 // Consume `r`, hashes, and the opening quote.
                 for _ in i..=j {
                     out.push(' ');
@@ -166,7 +175,9 @@ fn strip_noise(line: &str) -> String {
                 i = j + 1;
                 // Scan for the closing quote + hashes.
                 while i < chars.len() {
-                    if i + closing.len() <= chars.len() && chars[i..i + closing.len()] == closing[..] {
+                    if i + closing.len() <= chars.len()
+                        && chars[i..i + closing.len()] == closing[..]
+                    {
                         for _ in 0..closing.len() {
                             out.push(' ');
                         }
@@ -700,12 +711,12 @@ mod tests {
     fn ranking_prefers_cross_file_references() {
         let dir = unique_dir("rank");
         let _ = std::fs::remove_dir_all(&dir);
+        write_file(&dir, "lib.rs", "pub fn popular() {}\npub fn lonely() {}\n");
         write_file(
             &dir,
-            "lib.rs",
-            "pub fn popular() {}\npub fn lonely() {}\n",
+            "a.rs",
+            "use lib::popular;\nfn x() { popular(); popular(); }\n",
         );
-        write_file(&dir, "a.rs", "use lib::popular;\nfn x() { popular(); popular(); }\n");
         write_file(&dir, "b.rs", "fn y() { popular(); }\n");
         let mut entries: Vec<(PathBuf, Vec<Symbol>)> = collect_rust_files(&dir)
             .into_iter()
@@ -719,7 +730,10 @@ mod tests {
         let lib = entries.iter().find(|(p, _)| p.ends_with("lib.rs")).unwrap();
         let popular = lib.1.iter().find(|s| s.name == "popular").unwrap();
         let lonely = lib.1.iter().find(|s| s.name == "lonely").unwrap();
-        assert!(popular.score > lonely.score, "popular should outrank lonely");
+        assert!(
+            popular.score > lonely.score,
+            "popular should outrank lonely"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -761,9 +775,15 @@ mod tests {
             .iter()
             .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
             .collect();
-        assert!(names.contains(&".hidden.rs".to_string()), "dotfile kept: {names:?}");
+        assert!(
+            names.contains(&".hidden.rs".to_string()),
+            "dotfile kept: {names:?}"
+        );
         assert!(names.contains(&"visible.rs".to_string()));
-        assert!(!names.contains(&"x.rs".to_string()), "hiddendir skipped: {names:?}");
+        assert!(
+            !names.contains(&"x.rs".to_string()),
+            "hiddendir skipped: {names:?}"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -809,11 +829,7 @@ mod tests {
     fn mod_tests_declaration_without_braces_is_safe() {
         let dir = unique_dir("moddecl");
         let _ = std::fs::remove_dir_all(&dir);
-        let p = write_file(
-            &dir,
-            "e.rs",
-            "mod tests;\npub fn after_decl() {}\n",
-        );
+        let p = write_file(&dir, "e.rs", "mod tests;\npub fn after_decl() {}\n");
         let syms = extract_symbols(&p);
         assert!(
             syms.iter().any(|s| s.name == "after_decl"),
