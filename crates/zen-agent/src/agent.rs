@@ -31,6 +31,7 @@ use zen_core::*;
 
 use crate::budget::{BudgetPolicy, BudgetVerdict};
 use crate::compaction;
+use crate::env_context;
 use crate::finish;
 use crate::prune::{PruneConfig, PruneStats};
 use crate::tool_bundles::ToolBundle;
@@ -145,6 +146,10 @@ pub struct AgentConfig {
     /// guard nudges the model to confirm with the user before mutating files outside it.
     /// Empty = no declared scope (the CLI seeds it from `/scope` or the first prompt).
     pub done_scope: Vec<String>,
+    /// Send per-request environment context as deltas (Viec 5): full
+    /// snapshot on the first request, only changed fields afterwards,
+    /// full again every 10 turns. Off by default; the CLI enables it.
+    pub env_context_deltas: bool,
 }
 
 /// Timeout for a tool call when settings `toolTimeouts` has no entry for it (p0b).
@@ -289,6 +294,7 @@ impl Default for AgentConfig {
             tool_bundle: ToolBundle::All,
             max_parallel_tool_calls: DEFAULT_MAX_PARALLEL_TOOL_CALLS,
             done_scope: vec![],
+            env_context_deltas: false,
         }
     }
 }
@@ -341,6 +347,8 @@ pub struct Agent {
     pub prune_turn_starts: Vec<usize>,
     /// Tokens saved by tool-result pruning (observability).
     pub prune_stats: PruneStats,
+    /// Per-session env-context delta state (Viec 5).
+    pub env_deltas: env_context::DeltaStore,
 }
 
 impl Agent {
@@ -376,12 +384,16 @@ impl Agent {
             journal: None,
             prune_turn_starts: vec![0],
             prune_stats: PruneStats::default(),
+            env_deltas: env_context::DeltaStore::new(),
         }
     }
 
     /// Replace the conversation history (used by `--resume`/`--continue` and `/clear`).
     pub fn set_messages(&mut self, messages: Vec<ChatMessage>) {
         self.messages = messages;
+        // A resumed/reset session restarts env-context deltas from a full
+        // snapshot (Viec 5).
+        self.env_deltas.reset();
         // A new history invalidates the API-reported context size.
         self.last_prompt_tokens = 0;
         // …and the turn boundaries used for pruning.
@@ -414,10 +426,20 @@ impl Agent {
     /// Full message list for the request: system prompt prepended, history sanitized so any
     /// orphaned/dangling tool-call exchange from a resumed transcript can't make the API reject
     /// the request.
-    fn request_messages(&self) -> Vec<ChatMessage> {
+    fn request_messages(&mut self) -> Vec<ChatMessage> {
         let mut msgs: Vec<ChatMessage> = Vec::with_capacity(self.messages.len() + 1);
-        if !self.config.system_prompt.is_empty() {
-            msgs.push(ChatMessage::system(self.config.system_prompt.clone()));
+        let mut prompt = self.config.system_prompt.clone();
+        if self.config.env_context_deltas {
+            // Viec 5: append this request's env payload (full snapshot on
+            // the first request, changed fields only afterwards) after the
+            // stable prompt text, i.e. inside the cache-volatile tail.
+            let cwd = self.ctx.cwd.lock().unwrap().clone();
+            let snap = env_context::EnvSnapshot::collect(&cwd);
+            let delta = self.env_deltas.diff(&snap);
+            prompt.push_str(&env_context::render_delta(&delta));
+        }
+        if !prompt.is_empty() {
+            msgs.push(ChatMessage::system(prompt));
         }
         msgs.extend(self.messages.iter().cloned());
         crate::plan::ensure_tool_responses(msgs)

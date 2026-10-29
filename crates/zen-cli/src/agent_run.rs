@@ -577,6 +577,9 @@ pub fn base_agent_config(
         cfg.max_budget_usd,
         cfg.budget_warn_at,
     );
+    // Viec 5: env-context deltas on for real runs (tests build their own
+    // configs and keep the default off).
+    config.env_context_deltas = true;
     config
 }
 

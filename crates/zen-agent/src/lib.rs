@@ -44,6 +44,7 @@
 pub mod budget;
 mod client;
 pub mod compaction;
+pub mod env_context;
 pub mod finish;
 pub mod guard;
 pub mod plan;
