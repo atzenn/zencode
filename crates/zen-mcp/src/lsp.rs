@@ -291,8 +291,7 @@ where
             }
         }
     }
-    let len =
-        content_length.ok_or_else(|| anyhow::anyhow!("LSP frame without Content-Length"))?;
+    let len = content_length.ok_or_else(|| anyhow::anyhow!("LSP frame without Content-Length"))?;
     let mut body = vec![0u8; len];
     r.read_exact(&mut body).await?;
     Ok(serde_json::from_slice(&body)?)
@@ -549,7 +548,11 @@ impl LspConnection {
                 None => {
                     docs.insert(
                         path.to_path_buf(),
-                        OpenDoc { version: 1, mtime, text: text.clone() },
+                        OpenDoc {
+                            version: 1,
+                            mtime,
+                            text: text.clone(),
+                        },
                     );
                     (Action::Open, text.clone())
                 }
@@ -604,16 +607,13 @@ impl LspConnection {
     ) -> anyhow::Result<Value> {
         let text = self.ensure_open(path).await?;
         let position = self.position(&text, line1, col1)?;
-        let mut params =
-            json!({"textDocument": {"uri": path_to_uri(path)}, "position": position});
+        let mut params = json!({"textDocument": {"uri": path_to_uri(path)}, "position": position});
         if let Value::Object(map) = extra {
             if let Value::Object(p) = &mut params {
                 p.extend(map);
             }
         }
-        self.client
-            .request(method, params, REQUEST_TIMEOUT)
-            .await
+        self.client.request(method, params, REQUEST_TIMEOUT).await
     }
 
     pub(crate) async fn definition(
@@ -715,7 +715,10 @@ fn parse_location_like(v: &Value) -> Option<LspLocation> {
 
 fn range_pos(range: &Value, key: &str) -> Option<(usize, u32)> {
     let p = range.get(key)?;
-    Some((p.get("line")?.as_u64()? as usize, p.get("character")?.as_u64()? as u32))
+    Some((
+        p.get("line")?.as_u64()? as usize,
+        p.get("character")?.as_u64()? as u32,
+    ))
 }
 
 /// 1-based Unicode-scalar column for display. Reads the target file when it is
@@ -806,7 +809,10 @@ impl LspManager {
             )
         })?;
         let root = find_project_root(path, lang);
-        let key = ServerKey { language: lang, root: root.clone() };
+        let key = ServerKey {
+            language: lang,
+            root: root.clone(),
+        };
         if let Some(conn) = self.servers.lock().unwrap().get(&key).cloned() {
             return Ok(conn);
         }
@@ -844,12 +850,7 @@ impl LspManager {
     }
 
     /// Hover documentation for the symbol at 1-based `line`/`col`, as markdown.
-    pub async fn hover(
-        &self,
-        path: &Path,
-        line: usize,
-        col: usize,
-    ) -> anyhow::Result<String> {
+    pub async fn hover(&self, path: &Path, line: usize, col: usize) -> anyhow::Result<String> {
         let conn = self.connection_for(path).await?;
         Ok(render_hover(&conn.hover(path, line, col).await?))
     }
@@ -864,7 +865,9 @@ impl LspManager {
     ) -> anyhow::Result<Vec<LspLocation>> {
         let conn = self.connection_for(path).await?;
         Ok(parse_locations(
-            &conn.references(path, line, col, include_declaration).await?,
+            &conn
+                .references(path, line, col, include_declaration)
+                .await?,
         ))
     }
 }

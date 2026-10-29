@@ -100,7 +100,10 @@ fn parse_autocompact(s: &str) -> Result<String, String> {
     match s {
         "auto" | "off" => Ok(s.to_string()),
         n if n.parse::<u64>().map(|v| v > 0).unwrap_or(false) => Ok(n.to_string()),
-        _ => Err(format!("invalid --autocompact '{}': use auto, off or a token count", s)),
+        _ => Err(format!(
+            "invalid --autocompact '{}': use auto, off or a token count",
+            s
+        )),
     }
 }
 
@@ -424,7 +427,6 @@ pub struct ContextArgs {
     pub session: Option<String>,
 }
 
-
 /// Arguments for `zen export`.
 #[derive(Args, Debug, Clone)]
 pub struct ExportArgs {
@@ -448,7 +450,6 @@ pub struct ImportArgs {
     /// JSON export file produced by `zen export --format json`
     pub file: PathBuf,
 }
-
 
 #[derive(Args, Debug, Clone)]
 pub struct SessionsArgs {
@@ -483,7 +484,6 @@ pub enum SessionSubcommand {
         id: String,
     },
 }
-
 
 #[derive(Args, Debug, Clone)]
 pub struct EvalArgs {
@@ -705,14 +705,24 @@ mod tests {
 
     #[test]
     fn c2_11_permission_mode_aliases() {
-        assert_eq!(parse(&["--permission-mode", "manual"]).permission_mode, Some(PermissionMode::Default));
-        assert_eq!(parse(&["--permission-mode", "auto"]).permission_mode, Some(PermissionMode::Default));
+        assert_eq!(
+            parse(&["--permission-mode", "manual"]).permission_mode,
+            Some(PermissionMode::Default)
+        );
+        assert_eq!(
+            parse(&["--permission-mode", "auto"]).permission_mode,
+            Some(PermissionMode::Default)
+        );
         assert_eq!(
             parse(&["--permission-mode", "dontAsk"]).permission_mode,
             Some(PermissionMode::DontAsk)
         );
         let err = Cli::try_parse_from(["zen", "--permission-mode", "yolo"]).unwrap_err();
-        assert!(err.to_string().contains("invalid permission mode 'yolo'"), "{}", err);
+        assert!(
+            err.to_string().contains("invalid permission mode 'yolo'"),
+            "{}",
+            err
+        );
     }
 
     #[test]
@@ -748,7 +758,7 @@ mod tests {
         let cli = parse(&["mcp", "remove", "-s", "user", "foo"]);
         match &cli.subcommand {
             Some(Commands::Mcp(m)) => {
-                assert!(matches!(m.command, McpSubcommand::Remove{..}));
+                assert!(matches!(m.command, McpSubcommand::Remove { .. }));
             }
             _ => panic!("expected Mcp Remove"),
         }
@@ -756,10 +766,21 @@ mod tests {
 
     #[test]
     fn parse_mcp_subcommand_add_http() {
-        let cli = parse(&["mcp", "add", "--transport", "http", "-s", "project", "myserver", "http://localhost:3000"]);
+        let cli = parse(&[
+            "mcp",
+            "add",
+            "--transport",
+            "http",
+            "-s",
+            "project",
+            "myserver",
+            "http://localhost:3000",
+        ]);
         match &cli.subcommand {
             Some(Commands::Mcp(m)) => {
-                assert!(matches!(&m.command, McpSubcommand::Add{transport,..} if transport == "http"));
+                assert!(
+                    matches!(&m.command, McpSubcommand::Add{transport,..} if transport == "http")
+                );
             }
             _ => panic!("expected Mcp Add"),
         }
@@ -839,7 +860,11 @@ mod tests {
         let cli = parse(&["skill", "install", "builtin:tdd", "--yes"]);
         match cli.subcommand {
             Some(Commands::Skill(s)) => match s.command {
-                SkillSubcommand::Install { source, yes, registry } => {
+                SkillSubcommand::Install {
+                    source,
+                    yes,
+                    registry,
+                } => {
                     assert_eq!(source, "builtin:tdd");
                     assert!(yes);
                     assert!(registry.is_none());
@@ -991,7 +1016,10 @@ mod tests {
         }
         // Normalised to the canonical lowercase hyphenated form.
         let cli = parse(&["--session-id", "123E4567E89B12D3A456426614174000"]);
-        assert_eq!(cli.session_id.as_deref(), Some("123e4567-e89b-12d3-a456-426614174000"));
+        assert_eq!(
+            cli.session_id.as_deref(),
+            Some("123e4567-e89b-12d3-a456-426614174000")
+        );
     }
 
     #[test]
@@ -1018,7 +1046,14 @@ mod tests {
         assert_eq!(cli.until.as_deref(), Some("cargo test -q"));
         // Default is 3 retries.
         assert_eq!(cli.max_verify_retries, 3);
-        let cli = parse(&["-p", "--until", "make check", "--max-verify-retries", "0", "go"]);
+        let cli = parse(&[
+            "-p",
+            "--until",
+            "make check",
+            "--max-verify-retries",
+            "0",
+            "go",
+        ]);
         assert_eq!(cli.max_verify_retries, 0);
     }
 
@@ -1035,7 +1070,14 @@ mod tests {
 
     #[test]
     fn flags_after_prompt_are_parsed() {
-        let cli = parse(&["-p", "list files", "--output-format", "json", "--model", "m:free"]);
+        let cli = parse(&[
+            "-p",
+            "list files",
+            "--output-format",
+            "json",
+            "--model",
+            "m:free",
+        ]);
         assert!(cli.print);
         assert_eq!(cli.prompt, vec!["list files".to_string()]);
         assert!(matches!(cli.output_format, OutputFormat::Json));
@@ -1062,7 +1104,13 @@ mod tests {
 
     #[test]
     fn parse_allowed_disallowed() {
-        let cli = parse(&["--allowedTools", "Read", "Bash(git status)", "--disallowedTools", "Write"]);
+        let cli = parse(&[
+            "--allowedTools",
+            "Read",
+            "Bash(git status)",
+            "--disallowedTools",
+            "Write",
+        ]);
         assert_eq!(cli.allowed_tools, vec!["Read", "Bash(git status)"]);
         assert_eq!(cli.disallowed_tools, vec!["Write"]);
     }

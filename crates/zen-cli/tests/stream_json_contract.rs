@@ -29,14 +29,19 @@ fn cut(mut reply: Reply) -> Reply {
     reply.body = reply
         .body
         .replace(r#""finish_reason":"stop""#, r#""finish_reason":"length""#)
-        .replace(r#""finish_reason":"tool_calls""#, r#""finish_reason":"length""#);
+        .replace(
+            r#""finish_reason":"tool_calls""#,
+            r#""finish_reason":"length""#,
+        );
     reply
 }
 
 fn tool_call(id: &str, name: &str, args: Value) -> Reply {
     Reply::with_tool_calls(
         "",
-        Some(json!([{"id": id, "type": "function", "function": {"name": name, "arguments": args.to_string()}}])),
+        Some(
+            json!([{"id": id, "type": "function", "function": {"name": name, "arguments": args.to_string()}}]),
+        ),
     )
 }
 
@@ -50,9 +55,14 @@ fn normalise(stdout: &str, subs: &[(String, &str)]) -> String {
                 l = l.replace(from.as_str(), to);
             }
         }
-        let mut v: Value = serde_json::from_str(&l).unwrap_or_else(|e| panic!("not JSON ({e}): {line}"));
+        let mut v: Value =
+            serde_json::from_str(&l).unwrap_or_else(|e| panic!("not JSON ({e}): {line}"));
         if let Some(o) = v.as_object_mut() {
-            for (k, placeholder) in [("uuid", json!("<uuid>")), ("duration_ms", json!(0)), ("duration_api_ms", json!(0))] {
+            for (k, placeholder) in [
+                ("uuid", json!("<uuid>")),
+                ("duration_ms", json!(0)),
+                ("duration_api_ms", json!(0)),
+            ] {
                 if o.contains_key(k) {
                     o.insert(k.into(), placeholder);
                 }
@@ -84,7 +94,13 @@ async fn check_with_prompt(
     let addr = server.addr().to_string();
     let (stdout, stderr, _code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new(name, &home, &cwd)
-            .args(["-p", "--output-format", "stream-json", "--session-id", SESSION])
+            .args([
+                "-p",
+                "--output-format",
+                "stream-json",
+                "--session-id",
+                SESSION,
+            ])
             .args(extra_args.iter().copied())
             .mock("mock-model", &server)
             .arg(prompt)
@@ -100,17 +116,25 @@ async fn check_with_prompt(
             (addr, "<mock>"),
         ],
     );
-    assert!(got.contains(r#""type":"result""#), "{name}: no result line\nstdout: {stdout}\nstderr: {stderr}");
+    assert!(
+        got.contains(r#""type":"result""#),
+        "{name}: no result line\nstdout: {stdout}\nstderr: {stderr}"
+    );
     let path = fixtures_dir().join(format!("{name}.ndjson"));
     if std::env::var_os("ZEN_UPDATE_FIXTURES").is_some() {
         std::fs::create_dir_all(fixtures_dir()).unwrap();
         std::fs::write(&path, &got).unwrap();
         return;
     }
-    let want = std::fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("{}: {e} (run with ZEN_UPDATE_FIXTURES=1 to create it)", path.display()));
+    let want = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+        panic!(
+            "{}: {e} (run with ZEN_UPDATE_FIXTURES=1 to create it)",
+            path.display()
+        )
+    });
     assert_eq!(
-        got, want,
+        got,
+        want,
         "{name}: stream-json output differs from {}. If the change is intended, update \
          docs/stream-json-v1.md and rerun with ZEN_UPDATE_FIXTURES=1.",
         path.display()
@@ -121,14 +145,23 @@ const BARE: &[&str] = &["--bare", "--setting-sources", ""];
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fixture_plain_text() {
-    check("plain_text", vec![Reply::text("Hello from zen.")], BARE, |_| {}).await;
+    check(
+        "plain_text",
+        vec![Reply::text("Hello from zen.")],
+        BARE,
+        |_| {},
+    )
+    .await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fixture_tool_call() {
     check(
         "tool_call",
-        vec![tool_call("call_read_1", "Read", json!({"file_path": "notes.txt"})), Reply::text("The file says hi.")],
+        vec![
+            tool_call("call_read_1", "Read", json!({"file_path": "notes.txt"})),
+            Reply::text("The file says hi."),
+        ],
         BARE,
         |cwd| {
             cwd.write("notes.txt", "hi\n");
@@ -165,7 +198,10 @@ async fn fixture_api_retry() {
     std::env::set_var("ZEN_JITTER_SEED", "42");
     check(
         "api_retry",
-        vec![Reply::status(500, "upstream overloaded"), Reply::text("Answer after one retry.")],
+        vec![
+            Reply::status(500, "upstream overloaded"),
+            Reply::text("Answer after one retry."),
+        ],
         BARE,
         |_| {},
     )
@@ -177,7 +213,11 @@ async fn fixture_permission_denied() {
     check(
         "permission_denied",
         vec![
-            tool_call("call_write_1", "Write", json!({"file_path": "out.txt", "content": "x"})),
+            tool_call(
+                "call_write_1",
+                "Write",
+                json!({"file_path": "out.txt", "content": "x"}),
+            ),
             Reply::text("I was not allowed to write the file."),
         ],
         BARE,
@@ -195,7 +235,10 @@ async fn fixture_compact_boundary() {
     args.extend(["--autocompact", "1"]);
     check_with_prompt(
         "compact_boundary",
-        vec![Reply::text("SUMMARY: user asked to be greeted."), Reply::text("Hello after compaction.")],
+        vec![
+            Reply::text("SUMMARY: user asked to be greeted."),
+            Reply::text("Hello after compaction."),
+        ],
         &args,
         |_| {},
         "hello, please greet me warmly and at length",
@@ -229,7 +272,11 @@ async fn fixture_hook_message() {
 async fn fixture_truncation_note() {
     check(
         "truncation_note",
-        vec![cut(Reply::text("First part, ")), cut(Reply::text("second part")), Reply::text("never sent")],
+        vec![
+            cut(Reply::text("First part, ")),
+            cut(Reply::text("second part")),
+            Reply::text("never sent"),
+        ],
         &["--setting-sources", "project"],
         |cwd| {
             cwd.write(".zen/settings.json", r#"{"maxContinuations": 1}"#);
@@ -241,7 +288,10 @@ async fn fixture_truncation_note() {
 /// A 200 completion whose `finish_reason` is `reason` (P0-5 scenarios).
 fn finished(content: &str, reason: &str) -> Reply {
     let mut r = Reply::text(content);
-    r.body = r.body.replace(r#""finish_reason":"stop""#, &format!(r#""finish_reason":"{reason}""#));
+    r.body = r.body.replace(
+        r#""finish_reason":"stop""#,
+        &format!(r#""finish_reason":"{reason}""#),
+    );
     r
 }
 
@@ -266,7 +316,13 @@ fn mid_response_error(code: u16, error_type: &str, message: &str) -> Reply {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fixture_content_filter() {
-    check("content_filter", vec![finished("", "content_filter"), Reply::text("never sent")], BARE, |_| {}).await;
+    check(
+        "content_filter",
+        vec![finished("", "content_filter"), Reply::text("never sent")],
+        BARE,
+        |_| {},
+    )
+    .await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -274,7 +330,10 @@ async fn fixture_mid_response_retry() {
     std::env::set_var("ZEN_JITTER_SEED", "42");
     check(
         "mid_response_retry",
-        vec![mid_response_error(429, "rate_limit_exceeded", "Rate limit exceeded"), Reply::text("Answer after a mid-response 429.")],
+        vec![
+            mid_response_error(429, "rate_limit_exceeded", "Rate limit exceeded"),
+            Reply::text("Answer after a mid-response 429."),
+        ],
         BARE,
         |_| {},
     )
@@ -286,7 +345,11 @@ async fn fixture_mid_response_error() {
     std::env::set_var("ZEN_JITTER_SEED", "42");
     check(
         "mid_response_error",
-        vec![mid_response_error(502, "provider_unavailable", "Provider disconnected mid-stream")],
+        vec![mid_response_error(
+            502,
+            "provider_unavailable",
+            "Provider disconnected mid-stream",
+        )],
         BARE,
         |_| {},
     )
@@ -323,5 +386,8 @@ fn doc_names_every_field_in_the_fixtures() {
         }
     }
     assert_eq!(seen, 11, "expected 11 fixture streams");
-    assert!(missing.is_empty(), "docs/stream-json-v1.md does not mention: {missing:?}");
+    assert!(
+        missing.is_empty(),
+        "docs/stream-json-v1.md does not mention: {missing:?}"
+    );
 }

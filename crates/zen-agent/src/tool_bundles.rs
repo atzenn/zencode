@@ -20,7 +20,9 @@ use zen_core::{FunctionDefinition, ToolDefinition, ToolRegistry};
 /// Uses chars/4, the same heuristic as [`zen_core::estimate_tokens`], so the
 /// audit numbers match what `zen context` reports.
 pub fn estimate_schema_tokens(def: &ToolDefinition) -> u64 {
-    serde_json::to_string(def).map(|s| s.len() as u64 / 4).unwrap_or(0)
+    serde_json::to_string(def)
+        .map(|s| s.len() as u64 / 4)
+        .unwrap_or(0)
 }
 
 /// Total estimated schema tokens for a slice of definitions.
@@ -167,10 +169,7 @@ pub fn deferred_stub(name: &str) -> ToolDefinition {
 /// Stable ordering keeps the prompt prefix byte-identical across requests,
 /// which is what provider prompt caches key on. Unclassified tools
 /// (`Task`, `mcp__*`, ...) always keep their full schema.
-pub fn definitions_for_bundle(
-    registry: &ToolRegistry,
-    bundle: ToolBundle,
-) -> Vec<ToolDefinition> {
+pub fn definitions_for_bundle(registry: &ToolRegistry, bundle: ToolBundle) -> Vec<ToolDefinition> {
     let mut defs: Vec<ToolDefinition> = registry
         .definitions()
         .into_iter()

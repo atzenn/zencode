@@ -58,16 +58,34 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     pub fn system(c: impl Into<String>) -> Self {
-        Self { role: "system".into(), content: Some(c.into()), ..Default::default() }
+        Self {
+            role: "system".into(),
+            content: Some(c.into()),
+            ..Default::default()
+        }
     }
     pub fn user(c: impl Into<String>) -> Self {
-        Self { role: "user".into(), content: Some(c.into()), ..Default::default() }
+        Self {
+            role: "user".into(),
+            content: Some(c.into()),
+            ..Default::default()
+        }
     }
     pub fn assistant(c: Option<String>, calls: Option<Vec<ToolCall>>) -> Self {
-        Self { role: "assistant".into(), content: c, tool_calls: calls, ..Default::default() }
+        Self {
+            role: "assistant".into(),
+            content: c,
+            tool_calls: calls,
+            ..Default::default()
+        }
     }
     pub fn tool(id: impl Into<String>, c: impl Into<String>) -> Self {
-        Self { role: "tool".into(), content: Some(c.into()), tool_call_id: Some(id.into()), ..Default::default() }
+        Self {
+            role: "tool".into(),
+            content: Some(c.into()),
+            tool_call_id: Some(id.into()),
+            ..Default::default()
+        }
     }
 }
 
@@ -173,10 +191,16 @@ pub struct ToolOutput {
 }
 impl ToolOutput {
     pub fn ok(c: impl Into<String>) -> Self {
-        Self { content: c.into(), is_error: false }
+        Self {
+            content: c.into(),
+            is_error: false,
+        }
     }
     pub fn err(c: impl Into<String>) -> Self {
-        Self { content: c.into(), is_error: true }
+        Self {
+            content: c.into(),
+            is_error: true,
+        }
     }
 }
 
@@ -255,9 +279,18 @@ impl ToolContext {
                 let id: String = self
                     .session_id
                     .chars()
-                    .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+                    .map(|c| {
+                        if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                            c
+                        } else {
+                            '_'
+                        }
+                    })
                     .collect();
-                std::env::temp_dir().join(format!("zen-{}", if id.is_empty() { "session".into() } else { id }))
+                std::env::temp_dir().join(format!(
+                    "zen-{}",
+                    if id.is_empty() { "session".into() } else { id }
+                ))
             }
         }
     }
@@ -267,7 +300,11 @@ impl ToolContext {
 pub struct TodoItem {
     pub content: String,
     pub status: String, // pending | in_progress | completed
-    #[serde(default, rename = "activeForm", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "activeForm",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub active_form: Option<String>,
 }
 
@@ -318,7 +355,14 @@ impl ToolRegistry {
     }
     /// Keep only tools whose name is in `allowed` (used for sub-agents / --tools).
     pub fn filtered(&self, allowed: &[String]) -> Self {
-        Self { tools: self.tools.iter().filter(|t| allowed.iter().any(|a| a == t.name())).cloned().collect() }
+        Self {
+            tools: self
+                .tools
+                .iter()
+                .filter(|t| allowed.iter().any(|a| a == t.name()))
+                .cloned()
+                .collect(),
+        }
     }
 }
 
@@ -333,7 +377,13 @@ pub enum PermissionDecision {
 }
 
 pub trait PermissionChecker: Send + Sync {
-    fn check(&self, tool_name: &str, input: &Value, read_only: bool, ctx: &ToolContext) -> PermissionDecision;
+    fn check(
+        &self,
+        tool_name: &str,
+        input: &Value,
+        read_only: bool,
+        ctx: &ToolContext,
+    ) -> PermissionDecision;
     /// Persist an "always allow" rule (REPL answer "a").
     fn add_allow_rule(&self, _rule: &str) {}
     /// True when an explicit `ask` rule matches this call. A PreToolUse hook `allow` may skip
@@ -452,25 +502,55 @@ impl HookRunner for NoHooks {
 #[non_exhaustive]
 pub enum AgentEvent {
     /// Assistant message (text and/or tool calls). parent = Task tool_call id for sub-agents.
-    Assistant { message: ChatMessage, parent_tool_use_id: Option<String> },
+    Assistant {
+        message: ChatMessage,
+        parent_tool_use_id: Option<String>,
+    },
     /// One tool result. `parallel` is true when the call actually executed concurrently with
     /// another call of the same turn (multi-tool-call batching); additive for stream-json
     /// consumers.
-    ToolResult { tool_use_id: String, content: String, is_error: bool, parent_tool_use_id: Option<String>, parallel: bool },
+    ToolResult {
+        tool_use_id: String,
+        content: String,
+        is_error: bool,
+        parent_tool_use_id: Option<String>,
+        parallel: bool,
+    },
     /// Partial assistant text delta (when streaming is on).
-    TextDelta { text: String },
+    TextDelta {
+        text: String,
+    },
     /// Periodic heartbeat while a tool call runs (issue #21). Emitted every few
     /// seconds while a tool is still running, so stream-json consumers can
     /// distinguish "tool still working" from stalled.
-    ToolProgress { tool_use_id: String, tool_name: String, elapsed_ms: u64 },
-    ApiRetry { attempt: u32, max_retries: u32, retry_delay_ms: u64, error_status: Option<u16>, error: String },
-    CompactBoundary { trigger: String, pre_tokens: u64 },
+    ToolProgress {
+        tool_use_id: String,
+        tool_name: String,
+        elapsed_ms: u64,
+    },
+    ApiRetry {
+        attempt: u32,
+        max_retries: u32,
+        retry_delay_ms: u64,
+        error_status: Option<u16>,
+        error: String,
+    },
+    CompactBoundary {
+        trigger: String,
+        pre_tokens: u64,
+    },
     /// Tool-result pruning replaced old results with extractive summaries.
-    Pruned { pruned: usize, tokens_saved: u64 },
+    Pruned {
+        pruned: usize,
+        tokens_saved: u64,
+    },
     PermissionDenied(PermissionDenial),
     /// A hook's `systemMessage` (or a non-fatal hook warning) meant for the user, not the model.
     /// `event` is the hook event name that produced it.
-    SystemMessage { event: String, text: String },
+    SystemMessage {
+        event: String,
+        text: String,
+    },
 }
 
 pub trait EventSink: Send + Sync {
@@ -535,7 +615,7 @@ impl UsageStats {
 pub struct RunResult {
     #[serde(rename = "type")]
     pub record_type: String, // "result"
-    pub subtype: String,     // success | error_max_turns | error_during_execution
+    pub subtype: String, // success | error_max_turns | error_during_execution
     pub is_error: bool,
     pub duration_ms: u64,
     pub duration_api_ms: u64,
@@ -607,7 +687,8 @@ pub struct RateGateFileConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct PermissionSettings {    #[serde(default)]
+pub struct PermissionSettings {
+    #[serde(default)]
     pub allow: Vec<String>,
     #[serde(default)]
     pub ask: Vec<String>,
@@ -663,7 +744,14 @@ pub fn estimate_tokens(messages: &[ChatMessage]) -> u64 {
         .iter()
         .map(|m| {
             m.content.as_deref().map(|c| c.len()).unwrap_or(0)
-                + m.tool_calls.as_ref().map(|v| v.iter().map(|c| c.function.arguments.len() + c.function.name.len()).sum()).unwrap_or(0)
+                + m.tool_calls
+                    .as_ref()
+                    .map(|v| {
+                        v.iter()
+                            .map(|c| c.function.arguments.len() + c.function.name.len())
+                            .sum()
+                    })
+                    .unwrap_or(0)
         })
         .sum::<usize>() as u64
         / 4
@@ -702,7 +790,12 @@ impl ShellSpec {
         match self.kind {
             ShellKind::Posix => vec!["-c".into(), script.into()],
             ShellKind::PowerShell => {
-                vec!["-NoProfile".into(), "-NonInteractive".into(), "-Command".into(), script.into()]
+                vec![
+                    "-NoProfile".into(),
+                    "-NonInteractive".into(),
+                    "-Command".into(),
+                    script.into(),
+                ]
             }
             ShellKind::Cmd => vec!["/C".into(), script.into()],
         }
@@ -719,13 +812,20 @@ pub fn pick_shell(
     zen_shell: Option<&str>,
     on_path: &dyn Fn(&str) -> bool,
 ) -> ShellSpec {
-    let posix = |p: &str| ShellSpec { program: p.to_string(), kind: ShellKind::Posix };
+    let posix = |p: &str| ShellSpec {
+        program: p.to_string(),
+        kind: ShellKind::Posix,
+    };
     if !windows {
         return posix(preferred);
     }
     let kind_of = |p: &str| {
         // Split on both separators so a Windows path classifies the same on any host.
-        let file = p.rsplit(['/', '\\']).next().unwrap_or(p).to_ascii_lowercase();
+        let file = p
+            .rsplit(['/', '\\'])
+            .next()
+            .unwrap_or(p)
+            .to_ascii_lowercase();
         let base = file.strip_suffix(".exe").unwrap_or(&file).to_string();
         match base.as_str() {
             "pwsh" | "powershell" => ShellKind::PowerShell,
@@ -734,14 +834,23 @@ pub fn pick_shell(
         }
     };
     if let Some(z) = zen_shell.map(str::trim).filter(|z| !z.is_empty()) {
-        return ShellSpec { program: z.to_string(), kind: kind_of(z) };
+        return ShellSpec {
+            program: z.to_string(),
+            kind: kind_of(z),
+        };
     }
     for cand in [preferred, "bash", "pwsh", "powershell"] {
         if on_path(cand) {
-            return ShellSpec { program: cand.to_string(), kind: kind_of(cand) };
+            return ShellSpec {
+                program: cand.to_string(),
+                kind: kind_of(cand),
+            };
         }
     }
-    ShellSpec { program: "cmd".into(), kind: ShellKind::Cmd }
+    ShellSpec {
+        program: "cmd".into(),
+        kind: ShellKind::Cmd,
+    }
 }
 
 /// True when `name` (plus `.exe` on Windows) is a file in some PATH directory.
@@ -755,7 +864,9 @@ pub fn program_on_path(name: &str) -> bool {
 /// launcher, which fails with "no installed distributions" on machines without WSL. When no other
 /// one is on PATH, Git for Windows' `%ProgramFiles%\Git\bin\<name>.exe` is used if it exists.
 pub fn find_program(name: &str) -> Option<PathBuf> {
-    let system_root = std::env::var("SystemRoot").or_else(|_| std::env::var("WINDIR")).ok();
+    let system_root = std::env::var("SystemRoot")
+        .or_else(|_| std::env::var("WINDIR"))
+        .ok();
     let found = std::env::var_os("PATH").and_then(|path| {
         std::env::split_paths(&path).find_map(|dir| {
             let mut cands = vec![dir.join(name)];
@@ -773,15 +884,26 @@ pub fn find_program(name: &str) -> Option<PathBuf> {
     ["ProgramFiles", "ProgramW6432"]
         .iter()
         .filter_map(|k| std::env::var(k).ok())
-        .map(|pf| PathBuf::from(pf).join("Git").join("bin").join(format!("{}.exe", name)))
+        .map(|pf| {
+            PathBuf::from(pf)
+                .join("Git")
+                .join("bin")
+                .join(format!("{}.exe", name))
+        })
         .find(|p| p.is_file())
 }
 
 /// True for a `bash`/`sh` executable under the Windows directory (the WSL launcher shim).
 /// Compared case-insensitively on both separators so the check is testable on any host.
 pub fn is_wsl_launcher(path: &Path, system_root: Option<&str>) -> bool {
-    let Some(root) = system_root.map(str::trim).filter(|r| !r.is_empty()) else { return false };
-    let norm = |s: &str| s.replace('/', "\\").trim_end_matches('\\').to_ascii_lowercase();
+    let Some(root) = system_root.map(str::trim).filter(|r| !r.is_empty()) else {
+        return false;
+    };
+    let norm = |s: &str| {
+        s.replace('/', "\\")
+            .trim_end_matches('\\')
+            .to_ascii_lowercase()
+    };
     let p = norm(&path.to_string_lossy());
     let file = p.rsplit('\\').next().unwrap_or(&p);
     let base = file.strip_suffix(".exe").unwrap_or(file);
@@ -813,15 +935,28 @@ pub fn resolve_shell(preferred: &str) -> ShellSpec {
         return s.clone();
     }
     let zen_shell = std::env::var("ZEN_SHELL").ok();
-    let mut spec = pick_shell(preferred, cfg!(windows), zen_shell.as_deref(), &program_on_path);
+    let mut spec = pick_shell(
+        preferred,
+        cfg!(windows),
+        zen_shell.as_deref(),
+        &program_on_path,
+    );
     // Spawn by full path on Windows: process creation searches System32 before PATH, so a bare
     // `bash` would start the WSL launcher even when Git Bash is on PATH.
-    if cfg!(windows) && zen_shell.as_deref().map(str::trim).is_none_or(str::is_empty) {
+    if cfg!(windows)
+        && zen_shell
+            .as_deref()
+            .map(str::trim)
+            .is_none_or(str::is_empty)
+    {
         if let Some(p) = find_program(&spec.program) {
             spec.program = p.to_string_lossy().into_owned();
         }
     }
-    cache.lock().unwrap().insert(preferred.to_string(), spec.clone());
+    cache
+        .lock()
+        .unwrap()
+        .insert(preferred.to_string(), spec.clone());
     spec
 }
 
@@ -842,7 +977,13 @@ mod tests {
     }
     #[test]
     fn mode_roundtrip() {
-        for m in ["default", "acceptEdits", "plan", "bypassPermissions", "dontAsk"] {
+        for m in [
+            "default",
+            "acceptEdits",
+            "plan",
+            "bypassPermissions",
+            "dontAsk",
+        ] {
             assert_eq!(PermissionMode::parse(m).unwrap().as_str(), m);
         }
     }
@@ -850,34 +991,89 @@ mod tests {
     #[test]
     fn p0_7_shell_unix_is_unchanged() {
         let none = |_: &str| false;
-        assert_eq!(pick_shell("bash", false, Some("pwsh"), &none), ShellSpec { program: "bash".into(), kind: ShellKind::Posix });
+        assert_eq!(
+            pick_shell("bash", false, Some("pwsh"), &none),
+            ShellSpec {
+                program: "bash".into(),
+                kind: ShellKind::Posix
+            }
+        );
         assert_eq!(pick_shell("sh", false, None, &none).program, "sh");
     }
     #[test]
     fn p0_7_shell_windows_fallback_order() {
         let only = |names: &'static [&'static str]| move |n: &str| names.contains(&n);
-        assert_eq!(pick_shell("bash", true, None, &only(&["bash", "pwsh"])).kind, ShellKind::Posix);
+        assert_eq!(
+            pick_shell("bash", true, None, &only(&["bash", "pwsh"])).kind,
+            ShellKind::Posix
+        );
         let s = pick_shell("bash", true, None, &only(&["pwsh", "powershell"]));
-        assert_eq!((s.program.as_str(), s.kind), ("pwsh", ShellKind::PowerShell));
+        assert_eq!(
+            (s.program.as_str(), s.kind),
+            ("pwsh", ShellKind::PowerShell)
+        );
         let s = pick_shell("bash", true, None, &only(&["powershell"]));
-        assert_eq!((s.program.as_str(), s.kind), ("powershell", ShellKind::PowerShell));
+        assert_eq!(
+            (s.program.as_str(), s.kind),
+            ("powershell", ShellKind::PowerShell)
+        );
         let s = pick_shell("sh", true, None, &only(&[]));
         assert_eq!((s.program.as_str(), s.kind), ("cmd", ShellKind::Cmd));
-        let s = pick_shell("bash", true, Some(r"C:\Program Files\PowerShell\7\pwsh.exe"), &only(&["bash"]));
+        let s = pick_shell(
+            "bash",
+            true,
+            Some(r"C:\Program Files\PowerShell\7\pwsh.exe"),
+            &only(&["bash"]),
+        );
         assert_eq!(s.kind, ShellKind::PowerShell);
-        assert_eq!(ShellSpec { program: "cmd".into(), kind: ShellKind::Cmd }.args("dir"), vec!["/C", "dir"]);
-        assert_eq!(ShellSpec { program: "bash".into(), kind: ShellKind::Posix }.args("ls"), vec!["-c", "ls"]);
+        assert_eq!(
+            ShellSpec {
+                program: "cmd".into(),
+                kind: ShellKind::Cmd
+            }
+            .args("dir"),
+            vec!["/C", "dir"]
+        );
+        assert_eq!(
+            ShellSpec {
+                program: "bash".into(),
+                kind: ShellKind::Posix
+            }
+            .args("ls"),
+            vec!["-c", "ls"]
+        );
     }
     #[test]
     fn windows_bash_skips_wsl_launcher() {
         let root = Some(r"C:\Windows");
-        assert!(is_wsl_launcher(Path::new(r"C:\Windows\System32\bash.exe"), root));
-        assert!(is_wsl_launcher(Path::new(r"c:/windows/system32/BASH.EXE"), root));
-        assert!(is_wsl_launcher(Path::new(r"C:\WINDOWS\system32\sh.exe"), Some(r"C:\Windows\")));
-        assert!(!is_wsl_launcher(Path::new(r"C:\Program Files\Git\bin\bash.exe"), root));
-        assert!(!is_wsl_launcher(Path::new(r"C:\Windows\System32\cmd.exe"), root));
-        assert!(!is_wsl_launcher(Path::new(r"C:\WindowsApps\bash.exe"), root));
-        assert!(!is_wsl_launcher(Path::new(r"C:\Windows\System32\bash.exe"), None));
+        assert!(is_wsl_launcher(
+            Path::new(r"C:\Windows\System32\bash.exe"),
+            root
+        ));
+        assert!(is_wsl_launcher(
+            Path::new(r"c:/windows/system32/BASH.EXE"),
+            root
+        ));
+        assert!(is_wsl_launcher(
+            Path::new(r"C:\WINDOWS\system32\sh.exe"),
+            Some(r"C:\Windows\")
+        ));
+        assert!(!is_wsl_launcher(
+            Path::new(r"C:\Program Files\Git\bin\bash.exe"),
+            root
+        ));
+        assert!(!is_wsl_launcher(
+            Path::new(r"C:\Windows\System32\cmd.exe"),
+            root
+        ));
+        assert!(!is_wsl_launcher(
+            Path::new(r"C:\WindowsApps\bash.exe"),
+            root
+        ));
+        assert!(!is_wsl_launcher(
+            Path::new(r"C:\Windows\System32\bash.exe"),
+            None
+        ));
     }
 }
 
@@ -911,7 +1107,11 @@ mod cache_tests {
 
     #[test]
     fn usage_stats_cache_hit_rate() {
-        let u = UsageStats { input_tokens: 1000, output_tokens: 10, cache_read_input_tokens: 900 };
+        let u = UsageStats {
+            input_tokens: 1000,
+            output_tokens: 10,
+            cache_read_input_tokens: 900,
+        };
         assert!((u.cache_hit_rate() - 0.9).abs() < 1e-9);
         assert_eq!(UsageStats::default().cache_hit_rate(), 0.0);
     }
@@ -920,10 +1120,13 @@ mod cache_tests {
     fn usage_deserializes_old_json_without_cache_fields() {
         // Additive change: transcripts/usage records written before caching
         // existed must still load (fields default to 0).
-        let u: Usage = serde_json::from_str(r#"{"prompt_tokens":5,"completion_tokens":2,"total_tokens":7}"#).unwrap();
+        let u: Usage =
+            serde_json::from_str(r#"{"prompt_tokens":5,"completion_tokens":2,"total_tokens":7}"#)
+                .unwrap();
         assert_eq!(u.cache_read_input_tokens, 0);
         assert_eq!(u.cache_creation_input_tokens, 0);
-        let s: UsageStats = serde_json::from_str(r#"{"input_tokens":5,"output_tokens":2}"#).unwrap();
+        let s: UsageStats =
+            serde_json::from_str(r#"{"input_tokens":5,"output_tokens":2}"#).unwrap();
         assert_eq!(s.cache_read_input_tokens, 0);
     }
 }

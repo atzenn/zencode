@@ -10,13 +10,22 @@ async fn zen_md_project_memory_in_system_prompt() {
     let home = TempDir::new("zen_md_home");
     let cwd = TempDir::new("zen_md_cwd");
 
-    cwd.write("ZEN.md", "PROJECT MEMORY: Always use tabs for indentation.\n- Rule 1\n- Rule 2");
+    cwd.write(
+        "ZEN.md",
+        "PROJECT MEMORY: Always use tabs for indentation.\n- Rule 1\n- Rule 2",
+    );
 
     let server = MockServer::single_text("ok").await;
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("zen_md", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("what are the rules?")
             .run_output()
@@ -28,8 +37,16 @@ async fn zen_md_project_memory_in_system_prompt() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let sys_msg = system_message(&requests[0]);
-    assert!(sys_msg.contains("PROJECT MEMORY"), "ZEN.md content missing from system prompt: {}", sys_msg);
-    assert!(sys_msg.contains("Always use tabs"), "ZEN.md detail missing: {}", sys_msg);
+    assert!(
+        sys_msg.contains("PROJECT MEMORY"),
+        "ZEN.md content missing from system prompt: {}",
+        sys_msg
+    );
+    assert!(
+        sys_msg.contains("Always use tabs"),
+        "ZEN.md detail missing: {}",
+        sys_msg
+    );
 }
 
 /// ZEN.md from user home directory also appears in system message (project overrides user).
@@ -45,7 +62,13 @@ async fn zen_md_user_and_project_both_loaded() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("zen_user_project", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "user,project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "user,project",
+            ])
             .mock("mock-model", &server)
             .arg("what style?")
             .run_output()
@@ -58,8 +81,16 @@ async fn zen_md_user_and_project_both_loaded() {
     assert_eq!(requests.len(), 1);
     let sys_msg = system_message(&requests[0]);
     // Both should appear; project typically listed after user
-    assert!(sys_msg.contains("USER MEMORY"), "user ZEN.md missing: {}", sys_msg);
-    assert!(sys_msg.contains("PROJECT MEMORY"), "project ZEN.md missing: {}", sys_msg);
+    assert!(
+        sys_msg.contains("USER MEMORY"),
+        "user ZEN.md missing: {}",
+        sys_msg
+    );
+    assert!(
+        sys_msg.contains("PROJECT MEMORY"),
+        "project ZEN.md missing: {}",
+        sys_msg
+    );
 }
 
 /// `--bare` flag excludes ZEN.md, skills, hooks, and custom commands from the system prompt.
@@ -70,13 +101,23 @@ async fn bare_excludes_memory_and_skills() {
 
     cwd.write("ZEN.md", "BARE SHOULD NOT SEE THIS");
     // Also add a skill to verify it's excluded
-    cwd.write(".zen/skills/testskill/SKILL.md", "---\nname: testskill\ndescription: Test skill\n---\nSkill body content");
+    cwd.write(
+        ".zen/skills/testskill/SKILL.md",
+        "---\nname: testskill\ndescription: Test skill\n---\nSkill body content",
+    );
 
     let server = MockServer::single_text("ok").await;
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("bare", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
             .mock("mock-model", &server)
             .arg("hi")
             .run_output()
@@ -88,8 +129,16 @@ async fn bare_excludes_memory_and_skills() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let sys_msg = system_message(&requests[0]);
-    assert!(!sys_msg.contains("BARE SHOULD NOT SEE THIS"), "bare should exclude ZEN.md: {}", sys_msg);
-    assert!(!sys_msg.contains("testskill"), "bare should exclude skills: {}", sys_msg);
+    assert!(
+        !sys_msg.contains("BARE SHOULD NOT SEE THIS"),
+        "bare should exclude ZEN.md: {}",
+        sys_msg
+    );
+    assert!(
+        !sys_msg.contains("testskill"),
+        "bare should exclude skills: {}",
+        sys_msg
+    );
 }
 
 /// Custom slash command in .zen/commands/hello.md is expanded with $ARGUMENTS in -p mode.
@@ -105,7 +154,13 @@ async fn custom_slash_command_expands_arguments() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("slash", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("/hello world from test")
             .run_output()
@@ -117,7 +172,11 @@ async fn custom_slash_command_expands_arguments() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let msgs_text = request_messages_text(&requests[0]);
-    assert!(msgs_text.contains("You said: world from test"), "slash command not expanded: {}", msgs_text);
+    assert!(
+        msgs_text.contains("You said: world from test"),
+        "slash command not expanded: {}",
+        msgs_text
+    );
 }
 
 /// Custom slash command supports positional $1, $2 placeholders.
@@ -133,7 +192,13 @@ async fn custom_slash_command_positional_args() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("slash_pos", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("/greet Alice Bob")
             .run_output()
@@ -145,7 +210,11 @@ async fn custom_slash_command_positional_args() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let msgs_text = request_messages_text(&requests[0]);
-    assert!(msgs_text.contains("Hello Alice and Bob!"), "positional args not expanded: {}", msgs_text);
+    assert!(
+        msgs_text.contains("Hello Alice and Bob!"),
+        "positional args not expanded: {}",
+        msgs_text
+    );
 }
 
 /// Project custom commands override user custom commands with same name.
@@ -161,7 +230,13 @@ async fn project_custom_command_overrides_user() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("slash_override", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "user,project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "user,project",
+            ])
             .mock("mock-model", &server)
             .arg("/hello test")
             .run_output()
@@ -173,8 +248,16 @@ async fn project_custom_command_overrides_user() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let msgs_text = request_messages_text(&requests[0]);
-    assert!(msgs_text.contains("PROJECT: test"), "project command should override: {}", msgs_text);
-    assert!(!msgs_text.contains("USER: test"), "user command should not appear: {}", msgs_text);
+    assert!(
+        msgs_text.contains("PROJECT: test"),
+        "project command should override: {}",
+        msgs_text
+    );
+    assert!(
+        !msgs_text.contains("USER: test"),
+        "user command should not appear: {}",
+        msgs_text
+    );
 }
 
 /// Skills from .zen/skills/ are listed in the system prompt and Skill tool returns body.
@@ -196,11 +279,18 @@ async fn skills_listed_and_tool_works() {
             }])),
         ),
         Reply::text("skill loaded"),
-    ]).await;
+    ])
+    .await;
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("skills", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("use the skill")
             .run_output()
@@ -216,8 +306,16 @@ async fn skills_listed_and_tool_works() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
     let second_req = request_messages_text(&requests[1]);
-    assert!(second_req.contains("SKILL ACTIVE"), "skill body not returned: {}", second_req);
-    assert!(second_req.contains("Skill directory:"), "skill dir path missing: {}", second_req);
+    assert!(
+        second_req.contains("SKILL ACTIVE"),
+        "skill body not returned: {}",
+        second_req
+    );
+    assert!(
+        second_req.contains("Skill directory:"),
+        "skill dir path missing: {}",
+        second_req
+    );
 }
 
 /// Skill tool returns error for unknown skill name.
@@ -226,7 +324,10 @@ async fn skill_tool_unknown_returns_error() {
     let home = TempDir::new("skill_unknown_home");
     let cwd = TempDir::new("skill_unknown_cwd");
 
-    cwd.write(".zen/skills/known/SKILL.md", "---\nname: known\ndescription: Known skill\n---\nKnown skill body");
+    cwd.write(
+        ".zen/skills/known/SKILL.md",
+        "---\nname: known\ndescription: Known skill\n---\nKnown skill body",
+    );
 
     let server = MockServer::start(vec![
         Reply::with_tool_calls(
@@ -238,11 +339,18 @@ async fn skill_tool_unknown_returns_error() {
             }])),
         ),
         Reply::text("handled error"),
-    ]).await;
+    ])
+    .await;
 
     let (_stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("skill_unknown", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("use unknown skill")
             .run_output()
@@ -254,8 +362,16 @@ async fn skill_tool_unknown_returns_error() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
     let second_req = request_messages_text(&requests[1]);
-    assert!(second_req.contains("Unknown skill"), "should error for unknown skill: {}", second_req);
-    assert!(second_req.contains("Available: known"), "should list available skills: {}", second_req);
+    assert!(
+        second_req.contains("Unknown skill"),
+        "should error for unknown skill: {}",
+        second_req
+    );
+    assert!(
+        second_req.contains("Available: known"),
+        "should list available skills: {}",
+        second_req
+    );
 }
 
 /// Multiple skills from user and project directories (project overrides by name).
@@ -264,15 +380,30 @@ async fn multiple_skills_user_and_project() {
     let home = TempDir::new("multi_skill_home");
     let cwd = TempDir::new("multi_skill_cwd");
 
-    home.write(".zen/skills/shared/SKILL.md", "---\nname: shared\ndescription: User shared\n---\nUser version");
-    cwd.write(".zen/skills/shared/SKILL.md", "---\nname: shared\ndescription: Project shared\n---\nProject version");
-    cwd.write(".zen/skills/project_only/SKILL.md", "---\nname: project_only\ndescription: Project only\n---\nProject only body");
+    home.write(
+        ".zen/skills/shared/SKILL.md",
+        "---\nname: shared\ndescription: User shared\n---\nUser version",
+    );
+    cwd.write(
+        ".zen/skills/shared/SKILL.md",
+        "---\nname: shared\ndescription: Project shared\n---\nProject version",
+    );
+    cwd.write(
+        ".zen/skills/project_only/SKILL.md",
+        "---\nname: project_only\ndescription: Project only\n---\nProject only body",
+    );
 
     let server = MockServer::single_text("ok").await;
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("multi_skill", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "user,project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "user,project",
+            ])
             .mock("mock-model", &server)
             .arg("list skills")
             .run_output()
@@ -285,7 +416,19 @@ async fn multiple_skills_user_and_project() {
     assert_eq!(requests.len(), 1);
     let sys_msg = system_message(&requests[0]);
     // Project version should appear (overrides user)
-    assert!(sys_msg.contains("Project version") || sys_msg.contains("Project shared"), "project skill should override: {}", sys_msg);
-    assert!(sys_msg.contains("project_only"), "project-only skill should appear: {}", sys_msg);
-    assert!(!sys_msg.contains("User version"), "user version should be overridden: {}", sys_msg);
+    assert!(
+        sys_msg.contains("Project version") || sys_msg.contains("Project shared"),
+        "project skill should override: {}",
+        sys_msg
+    );
+    assert!(
+        sys_msg.contains("project_only"),
+        "project-only skill should appear: {}",
+        sys_msg
+    );
+    assert!(
+        !sys_msg.contains("User version"),
+        "user version should be overridden: {}",
+        sys_msg
+    );
 }

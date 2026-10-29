@@ -43,7 +43,13 @@ async fn pre_tool_use_exit_2_blocks_tool() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_pre2", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("write a file")
             .run_output()
@@ -59,9 +65,16 @@ async fn pre_tool_use_exit_2_blocks_tool() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
     let second_req = request_messages_text(&requests[1]);
-    assert!(second_req.contains("BLOCKED by hook"), "hook stderr should be in tool result: {}", second_req);
+    assert!(
+        second_req.contains("BLOCKED by hook"),
+        "hook stderr should be in tool result: {}",
+        second_req
+    );
     // The blocked tool never ran: the file keeps its original content.
-    assert_eq!(std::fs::read_to_string(cwd.path().join("test.txt")).unwrap(), "existing");
+    assert_eq!(
+        std::fs::read_to_string(cwd.path().join("test.txt")).unwrap(),
+        "existing"
+    );
 }
 
 /// PreToolUse hook with exit code 0 allows the tool to proceed.
@@ -98,7 +111,15 @@ async fn pre_tool_use_exit_0_allows_tool() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_pre0", &home, &cwd)
             // acceptEdits so Write is allowed by permissions; only the hook could block it.
-            .args(["-p", "--output-format", "json", "--setting-sources", "project", "--permission-mode", "acceptEdits"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+                "--permission-mode",
+                "acceptEdits",
+            ])
             .mock("mock-model", &server)
             .arg("write a file")
             .run_output()
@@ -109,9 +130,18 @@ async fn pre_tool_use_exit_0_allows_tool() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["result"], "tool allowed");
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
-    assert!(denials.is_empty(), "exit 0 hook should not cause denial: {:?}", denials);
-    assert_eq!(std::fs::read_to_string(cwd.path().join("out.txt")).unwrap(), "hello");
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
+    assert!(
+        denials.is_empty(),
+        "exit 0 hook should not cause denial: {:?}",
+        denials
+    );
+    assert_eq!(
+        std::fs::read_to_string(cwd.path().join("out.txt")).unwrap(),
+        "hello"
+    );
 }
 
 /// PreToolUse hook with other exit code (e.g., 3) logs error but doesn't block.
@@ -147,7 +177,13 @@ async fn pre_tool_use_other_exit_logs_but_allows() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_pre3", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("write a file")
             .run_output()
@@ -159,7 +195,11 @@ async fn pre_tool_use_other_exit_logs_but_allows() {
     let v = last_result(&stdout);
     assert_eq!(v["result"], "tool proceeded despite hook error");
     // Hook error should be logged to stderr (not block)
-    assert!(stderr.contains("hook error") || stderr.contains("exit code 3"), "hook error should be logged: {}", stderr);
+    assert!(
+        stderr.contains("hook error") || stderr.contains("exit code 3"),
+        "hook error should be logged: {}",
+        stderr
+    );
 }
 
 /// UserPromptSubmit hook adds context (stdout) to the user prompt.
@@ -181,7 +221,13 @@ async fn user_prompt_submit_hook_adds_context() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_ups", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("user prompt")
             .run_output()
@@ -193,7 +239,11 @@ async fn user_prompt_submit_hook_adds_context() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let msgs_text = request_messages_text(&requests[0]);
-    assert!(msgs_text.contains("EXTRA CONTEXT FROM HOOK"), "hook stdout should be added to prompt: {}", msgs_text);
+    assert!(
+        msgs_text.contains("EXTRA CONTEXT FROM HOOK"),
+        "hook stdout should be added to prompt: {}",
+        msgs_text
+    );
 }
 
 /// UserPromptSubmit hook with exit 2 blocks the prompt entirely (stop_run).
@@ -215,7 +265,13 @@ async fn user_prompt_submit_exit_2_blocks_prompt() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_ups2", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("user prompt")
             .run_output()
@@ -228,11 +284,19 @@ async fn user_prompt_submit_exit_2_blocks_prompt() {
     assert_eq!(code, 1, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["is_error"], true, "{}", v);
-    assert!(v["result"].as_str().unwrap_or("").contains("REJECTED") || stderr.contains("REJECTED"),
-        "hook stderr should be surfaced: {} / {}", v, stderr);
+    assert!(
+        v["result"].as_str().unwrap_or("").contains("REJECTED") || stderr.contains("REJECTED"),
+        "hook stderr should be surfaced: {} / {}",
+        v,
+        stderr
+    );
     // No request should reach the model
     let requests = server.requests().await;
-    assert_eq!(requests.len(), 0, "model should not be called when prompt blocked");
+    assert_eq!(
+        requests.len(),
+        0,
+        "model should not be called when prompt blocked"
+    );
 }
 
 /// Stop hook exiting 2 prevents stopping: its stderr becomes the model's next instruction
@@ -254,11 +318,20 @@ async fn stop_hook_feedback_continues_loop() {
     let server = MockServer::start(vec![
         Reply::text("first answer"),
         Reply::text("done after stop hook"),
-    ]).await;
+    ])
+    .await;
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_stop", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project", "--permission-mode", "bypassPermissions"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+                "--permission-mode",
+                "bypassPermissions",
+            ])
             .mock("mock-model", &server)
             .arg("start")
             .run_output()
@@ -271,9 +344,17 @@ async fn stop_hook_feedback_continues_loop() {
     assert_eq!(v["result"], "done after stop hook");
     // 2 requests: the first answer was not allowed to stop; the hook's feedback drove a second.
     let requests = server.requests().await;
-    assert_eq!(requests.len(), 2, "expected 2 model requests with Stop hook feedback");
+    assert_eq!(
+        requests.len(),
+        2,
+        "expected 2 model requests with Stop hook feedback"
+    );
     let second = request_messages_text(&requests[1]);
-    assert!(second.contains("CONTINUE: do one more thing"), "stop feedback missing: {}", second);
+    assert!(
+        second.contains("CONTINUE: do one more thing"),
+        "stop feedback missing: {}",
+        second
+    );
 }
 
 /// SessionStart hook runs at session start.
@@ -295,7 +376,13 @@ async fn session_start_hook_runs() {
 
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_sess", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("hi")
             .run_output()
@@ -308,7 +395,11 @@ async fn session_start_hook_runs() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1);
     let text = request_messages_text(&requests[0]);
-    assert!(text.contains("SESSION STARTED"), "SessionStart context missing: {}", text);
+    assert!(
+        text.contains("SESSION STARTED"),
+        "SessionStart context missing: {}",
+        text
+    );
 }
 
 /// Multiple PreToolUse hooks for same matcher run concurrently; one blocking wins.
@@ -347,7 +438,13 @@ async fn multiple_pre_tool_use_hooks_one_blocks() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("hook_multi", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("write a file")
             .run_output()
@@ -361,5 +458,9 @@ async fn multiple_pre_tool_use_hooks_one_blocks() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
     let second_req = request_messages_text(&requests[1]);
-    assert!(second_req.contains("SECOND BLOCKS"), "blocking hook stderr should be in result: {}", second_req);
+    assert!(
+        second_req.contains("SECOND BLOCKS"),
+        "blocking hook stderr should be in result: {}",
+        second_req
+    );
 }

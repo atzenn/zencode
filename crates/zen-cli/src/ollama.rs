@@ -142,16 +142,11 @@ async fn fetch_tags(base_url: &str) -> Result<Vec<String>, reqwest::Error> {
     let resp = tags_client(&origin)?.get(&url).send().await?;
     let resp = resp.error_for_status()?;
     let v: serde_json::Value = resp.json().await?;
-    Ok(v
-        .get("models")
+    Ok(v.get("models")
         .and_then(|m| m.as_array())
         .map(|arr| {
             arr.iter()
-                .filter_map(|m| {
-                    m.get("name")
-                        .and_then(|n| n.as_str())
-                        .map(str::to_string)
-                })
+                .filter_map(|m| m.get("name").and_then(|n| n.as_str()).map(str::to_string))
                 .collect()
         })
         .unwrap_or_default())
@@ -193,7 +188,10 @@ mod tests {
 
     #[test]
     fn strip_prefix_cases() {
-        assert_eq!(strip_ollama_prefix("ollama/qwen3-coder:30b"), Some("qwen3-coder:30b"));
+        assert_eq!(
+            strip_ollama_prefix("ollama/qwen3-coder:30b"),
+            Some("qwen3-coder:30b")
+        );
         assert_eq!(strip_ollama_prefix("ollama/llama3.1"), Some("llama3.1"));
         assert_eq!(strip_ollama_prefix("ollama/"), Some(""));
         assert_eq!(strip_ollama_prefix("qwen3-coder:30b"), None);
@@ -212,7 +210,10 @@ mod tests {
     fn normalize_host_cases() {
         assert_eq!(normalize_ollama_host(None), "http://localhost:11434/v1");
         assert_eq!(normalize_ollama_host(Some("")), "http://localhost:11434/v1");
-        assert_eq!(normalize_ollama_host(Some("   ")), "http://localhost:11434/v1");
+        assert_eq!(
+            normalize_ollama_host(Some("   ")),
+            "http://localhost:11434/v1"
+        );
         assert_eq!(
             normalize_ollama_host(Some("192.168.1.5:11434")),
             "http://192.168.1.5:11434/v1"
@@ -237,9 +238,18 @@ mod tests {
 
     #[test]
     fn api_origin_cases() {
-        assert_eq!(api_origin("http://localhost:11434/v1"), "http://localhost:11434");
-        assert_eq!(api_origin("http://localhost:11434/v1/"), "http://localhost:11434");
-        assert_eq!(api_origin("http://localhost:11434"), "http://localhost:11434");
+        assert_eq!(
+            api_origin("http://localhost:11434/v1"),
+            "http://localhost:11434"
+        );
+        assert_eq!(
+            api_origin("http://localhost:11434/v1/"),
+            "http://localhost:11434"
+        );
+        assert_eq!(
+            api_origin("http://localhost:11434"),
+            "http://localhost:11434"
+        );
         assert_eq!(api_origin("https://x.example/v1"), "https://x.example");
     }
 

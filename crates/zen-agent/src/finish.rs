@@ -49,7 +49,10 @@ impl FinishGate {
         match tool {
             "Edit" | "MultiEdit" | "Write" if !is_error => {
                 if let Some(f) = file_path {
-                    for list in [&mut self.changed_since_command, &mut self.changed_since_verify] {
+                    for list in [
+                        &mut self.changed_since_command,
+                        &mut self.changed_since_verify,
+                    ] {
                         if !list.iter().any(|x| x == f) {
                             list.push(f.to_string());
                         }
@@ -117,10 +120,17 @@ pub(crate) async fn run_command(
     // `sh` on Unix; on Windows without sh, pwsh/powershell/cmd (perf p0, item 7).
     let shell = zen_core::resolve_shell("sh");
     let mut c = tokio::process::Command::new(&shell.program);
-    c.args(shell.args(cmd)).current_dir(cwd).envs(env).kill_on_drop(true);
+    c.args(shell.args(cmd))
+        .current_dir(cwd)
+        .envs(env)
+        .kill_on_drop(true);
     c.stdin(std::process::Stdio::null());
     match tokio::time::timeout(timeout, c.output()).await {
-        Err(_) => (false, format!("timed out after {}s", timeout.as_secs()), String::new()),
+        Err(_) => (
+            false,
+            format!("timed out after {}s", timeout.as_secs()),
+            String::new(),
+        ),
         Ok(Err(e)) => (false, format!("could not start: {}", e), String::new()),
         Ok(Ok(out)) => {
             let mut text = String::from_utf8_lossy(&out.stdout).to_string();
@@ -128,7 +138,14 @@ pub(crate) async fn run_command(
             let lines: Vec<&str> = text.lines().collect();
             let mut tail = lines[lines.len().saturating_sub(TAIL_LINES)..].join("\n");
             if tail.chars().count() > TAIL_CHARS {
-                tail = tail.chars().rev().take(TAIL_CHARS).collect::<Vec<_>>().into_iter().rev().collect();
+                tail = tail
+                    .chars()
+                    .rev()
+                    .take(TAIL_CHARS)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
             }
             let status = match out.status.code() {
                 Some(c) => format!("exit {}", c),
@@ -145,13 +162,24 @@ mod tests {
     use std::collections::HashMap;
 
     async fn decide(g: &mut FinishGate, reminder: bool, cmd: Option<&str>) -> Decision {
-        g.decide(reminder, cmd, Duration::from_secs(10), &std::env::temp_dir(), &HashMap::new()).await
+        g.decide(
+            reminder,
+            cmd,
+            Duration::from_secs(10),
+            &std::env::temp_dir(),
+            &HashMap::new(),
+        )
+        .await
     }
 
     #[tokio::test]
     async fn one_reminder_after_edits_without_a_command() {
         let mut g = FinishGate::default();
-        assert_eq!(decide(&mut g, true, None).await, Decision::Finish, "no edits, no reminder");
+        assert_eq!(
+            decide(&mut g, true, None).await,
+            Decision::Finish,
+            "no edits, no reminder"
+        );
         g.observe("Edit", Some("a.rs"), false);
         g.observe("Write", Some("b.rs"), false);
         g.observe("Edit", Some("a.rs"), false);
@@ -160,7 +188,11 @@ mod tests {
             d => panic!("expected a reminder, got {:?}", d),
         }
         g.observe("Edit", Some("c.rs"), false);
-        assert_eq!(decide(&mut g, true, None).await, Decision::Finish, "only one reminder per turn");
+        assert_eq!(
+            decide(&mut g, true, None).await,
+            Decision::Finish,
+            "only one reminder per turn"
+        );
     }
 
     #[tokio::test]
@@ -174,7 +206,11 @@ mod tests {
         assert_eq!(decide(&mut g, true, None).await, Decision::Finish);
         let mut g = FinishGate::default();
         g.observe("Edit", Some("a.rs"), false);
-        assert_eq!(decide(&mut g, false, None).await, Decision::Finish, "reminder disabled");
+        assert_eq!(
+            decide(&mut g, false, None).await,
+            Decision::Finish,
+            "reminder disabled"
+        );
     }
 
     #[tokio::test]
@@ -183,16 +219,25 @@ mod tests {
         g.observe("Edit", Some("a.rs"), false);
         match decide(&mut g, true, Some("echo first; echo boom >&2; exit 3")).await {
             Decision::Continue(t) => {
-                assert!(t.contains("check 1 of 2") && t.contains("exit 3") && t.contains("boom"), "{}", t)
+                assert!(
+                    t.contains("check 1 of 2") && t.contains("exit 3") && t.contains("boom"),
+                    "{}",
+                    t
+                )
             }
             d => panic!("{:?}", d),
         }
         // No new edits since the last run → nothing to verify.
         assert_eq!(decide(&mut g, true, Some("exit 3")).await, Decision::Finish);
         g.observe("Edit", Some("a.rs"), false);
-        assert!(matches!(decide(&mut g, true, Some("exit 3")).await, Decision::Continue(t) if t.contains("check 2 of 2")));
+        assert!(
+            matches!(decide(&mut g, true, Some("exit 3")).await, Decision::Continue(t) if t.contains("check 2 of 2"))
+        );
         g.observe("Edit", Some("a.rs"), false);
-        assert!(matches!(decide(&mut g, true, Some("exit 3")).await, Decision::FinishWithNote(_)));
+        assert!(matches!(
+            decide(&mut g, true, Some("exit 3")).await,
+            Decision::FinishWithNote(_)
+        ));
     }
 
     #[tokio::test]

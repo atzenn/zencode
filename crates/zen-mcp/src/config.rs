@@ -1,10 +1,10 @@
 //! MCP server configuration loading, expansion, and editing utilities (SPEC §8).
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use regex::Regex;
 
 pub use crate::manager::SkipReason;
 
@@ -27,7 +27,10 @@ pub struct McpServerConfig {
 
 impl McpServerConfig {
     pub fn is_http(&self) -> bool {
-        self.kind.as_deref().map(|k| k.eq_ignore_ascii_case("http")).unwrap_or(false)
+        self.kind
+            .as_deref()
+            .map(|k| k.eq_ignore_ascii_case("http"))
+            .unwrap_or(false)
             || (self.command.is_none() && self.url.is_some())
     }
 
@@ -146,10 +149,7 @@ fn parse_servers(text: &str) -> anyhow::Result<BTreeMap<String, McpServerConfig>
     Ok(out)
 }
 
-fn merge_file(
-    into: &mut BTreeMap<String, McpServerConfig>,
-    path: &Path,
-) -> anyhow::Result<()> {
+fn merge_file(into: &mut BTreeMap<String, McpServerConfig>, path: &Path) -> anyhow::Result<()> {
     if !path.exists() {
         return Ok(());
     }
@@ -161,10 +161,7 @@ fn merge_file(
     Ok(())
 }
 
-fn load_cli_entry(
-    into: &mut BTreeMap<String, McpServerConfig>,
-    entry: &str,
-) -> anyhow::Result<()> {
+fn load_cli_entry(into: &mut BTreeMap<String, McpServerConfig>, entry: &str) -> anyhow::Result<()> {
     let trimmed = entry.trim();
     if trimmed.is_empty() {
         return Ok(());
@@ -198,7 +195,10 @@ pub fn load_mcp_config_file(path: &Path) -> anyhow::Result<BTreeMap<String, McpS
 }
 
 /// Save MCP config to a specific file path.
-pub fn save_mcp_config_file(path: &Path, configs: &BTreeMap<String, McpServerConfig>) -> anyhow::Result<()> {
+pub fn save_mcp_config_file(
+    path: &Path,
+    configs: &BTreeMap<String, McpServerConfig>,
+) -> anyhow::Result<()> {
     // Create parent directories if they don't exist
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -209,7 +209,10 @@ pub fn save_mcp_config_file(path: &Path, configs: &BTreeMap<String, McpServerCon
     for (name, cfg) in configs {
         servers_map.insert(name.clone(), serde_json::to_value(cfg)?);
     }
-    map.insert("mcpServers".to_string(), serde_json::Value::Object(servers_map));
+    map.insert(
+        "mcpServers".to_string(),
+        serde_json::Value::Object(servers_map),
+    );
 
     let json = serde_json::to_string_pretty(&serde_json::Value::Object(map))?;
     std::fs::write(path, json)?;
@@ -259,7 +262,8 @@ fn merge_file_with_skips(
     }
     let text = std::fs::read_to_string(&path)
         .map_err(|e| anyhow::anyhow!("failed to read config '{}': {}", path.display(), e))?;
-    let servers = parse_servers(&text).map_err(|e| anyhow::anyhow!("invalid MCP config '{}': {}", path.display(), e))?;
+    let servers = parse_servers(&text)
+        .map_err(|e| anyhow::anyhow!("invalid MCP config '{}': {}", path.display(), e))?;
     for (name, cfg) in servers {
         into.insert(name, cfg);
     }
@@ -281,7 +285,8 @@ fn load_cli_entry_with_skips(
         std::fs::read_to_string(PathBuf::from(trimmed))
             .map_err(|e| anyhow::anyhow!("failed to read CLI config '{}': {}", trimmed, e))?
     };
-    let servers = parse_servers(&text).map_err(|e| anyhow::anyhow!("invalid CLI config '{}': {}", trimmed, e))?;
+    let servers = parse_servers(&text)
+        .map_err(|e| anyhow::anyhow!("invalid CLI config '{}': {}", trimmed, e))?;
     for (name, cfg) in servers {
         into.insert(name, cfg);
     }
@@ -301,7 +306,10 @@ pub fn scope_path(scope: &str, cwd: &Path, home: Option<&Path>) -> anyhow::Resul
         "user" => home_dir(home)
             .ok_or_else(|| anyhow::anyhow!("home directory not available"))
             .map(|h| h.join(".zen").join("mcp.json")),
-        _ => Err(anyhow::anyhow!("unknown scope '{}' (expected local, project or user)", scope)),
+        _ => Err(anyhow::anyhow!(
+            "unknown scope '{}' (expected local, project or user)",
+            scope
+        )),
     }
 }
 

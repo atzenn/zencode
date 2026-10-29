@@ -155,10 +155,7 @@ pub async fn run_check_command(label: &str, argv: &[String], cwd: &Path) -> (boo
         Some(code) => format!("exit {code}"),
         None => "killed by signal".to_string(),
     };
-    (
-        out.status.success(),
-        format!("{label}: {status}\n{tail}"),
-    )
+    (out.status.success(), format!("{label}: {status}\n{tail}"))
 }
 
 /// Outcome of one checklist item.
@@ -392,7 +389,6 @@ impl ScopeGuard {
         }
     }
 }
-
 
 /// A newly added public API item with no callers anywhere else in the repo -
 /// possibly speculative surface nobody asked for. Advisory only: the scan is a
@@ -648,10 +644,7 @@ pub fn format_report(cwd: &Path, r: &DoneReport) -> String {
             ));
         }
     }
-    let failed = r
-        .checks
-        .iter()
-        .any(|c| c.status == CheckStatus::Fail);
+    let failed = r.checks.iter().any(|c| c.status == CheckStatus::Fail);
     s.push_str(if failed {
         "verdict: NOT DONE - fix the failures above\n"
     } else {
@@ -667,7 +660,8 @@ mod tests {
     use std::path::PathBuf;
 
     fn tmpdir(tag: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("zen-doneguard-test-{tag}-{}", std::process::id()));
+        let d =
+            std::env::temp_dir().join(format!("zen-doneguard-test-{tag}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&d);
         fs::create_dir_all(&d).unwrap();
         d
@@ -723,12 +717,15 @@ mod tests {
     #[test]
     fn scope_guard_violations_and_empty_scope() {
         let mut g = ScopeGuard::default();
-        assert!(g
-            .violations(&["src/a.rs".to_string()])
-            .is_empty(), "empty scope => no violations");
+        assert!(
+            g.violations(&["src/a.rs".to_string()]).is_empty(),
+            "empty scope => no violations"
+        );
         g.set(vec!["src/**".into(), "README.md".into(), "  ".into()]);
         assert_eq!(g.declared, vec!["src/**", "README.md"], "blanks dropped");
-        assert!(g.violations(&["src/a/b.rs".to_string(), "README.md".to_string()]).is_empty());
+        assert!(g
+            .violations(&["src/a/b.rs".to_string(), "README.md".to_string()])
+            .is_empty());
         assert_eq!(
             g.violations(&["src/a.rs".to_string(), "other/b.rs".to_string()]),
             vec!["other/b.rs"]
@@ -761,10 +758,7 @@ mod tests {
 
     #[test]
     fn parse_pub_item_shapes() {
-        assert_eq!(
-            parse_pub_item("+pub fn foo("),
-            Some(("fn", "foo".into()))
-        );
+        assert_eq!(parse_pub_item("+pub fn foo("), Some(("fn", "foo".into())));
         assert_eq!(
             parse_pub_item("+    pub async fn bar<T>("),
             Some(("fn", "bar".into()))
@@ -784,7 +778,10 @@ mod tests {
         assert!(parse_pub_item("+fn private(").is_none());
         assert!(parse_pub_item("+pub use foo::bar;").is_none());
         assert!(parse_pub_item("+// pub fn not_code(").is_none());
-        assert!(parse_pub_item(" pub fn context_line(").is_none(), "needs leading +");
+        assert!(
+            parse_pub_item(" pub fn context_line(").is_none(),
+            "needs leading +"
+        );
     }
 
     #[test]
@@ -813,7 +810,13 @@ mod tests {
         git(&["init", "-q"]).unwrap();
         git(&["-c", "user.name=t", "-c", "user.email=t@t", "add", "-A"]).unwrap();
         git(&[
-            "-c", "user.name=t", "-c", "user.email=t", "commit", "-qm", "base",
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t",
+            "commit",
+            "-qm",
+            "base",
             "--allow-empty",
         ])
         .unwrap();
@@ -840,7 +843,11 @@ mod tests {
         let d = init_repo("yagni");
         fs::create_dir_all(d.join("src")).unwrap();
         fs::write(d.join("src").join("lib.rs"), "pub fn used() {}\n").unwrap();
-        fs::write(d.join("src").join("main.rs"), "fn main() { lib::used(); }\n").unwrap();
+        fs::write(
+            d.join("src").join("main.rs"),
+            "fn main() { lib::used(); }\n",
+        )
+        .unwrap();
         // Unstaged new file with one speculative and one used item.
         fs::write(
             d.join("src").join("extra.rs"),
@@ -878,7 +885,11 @@ mod tests {
 
     #[cfg(windows)]
     fn sleep_cmd() -> Vec<String> {
-        vec!["cmd".into(), "/c".into(), "ping -n 30 127.0.0.1 >nul".into()]
+        vec![
+            "cmd".into(),
+            "/c".into(),
+            "ping -n 30 127.0.0.1 >nul".into(),
+        ]
     }
 
     #[tokio::test]
@@ -887,7 +898,10 @@ mod tests {
         let (ok, detail) = run_check_command("t", &sh("exit 0"), &d).await;
         assert!(ok, "{detail}");
         let (ok, detail) = run_check_command("t", &sh("echo boom; exit 3"), &d).await;
-        assert!(!ok && detail.contains("exit 3") && detail.contains("boom"), "{detail}");
+        assert!(
+            !ok && detail.contains("exit 3") && detail.contains("boom"),
+            "{detail}"
+        );
         let (ok, detail) = run_check_command("t", &sh("no-such-command-xyz"), &d).await;
         assert!(!ok, "{detail}");
     }
@@ -899,7 +913,9 @@ mod tests {
         let d = tmpdir("checkto");
         let mut c = tokio::process::Command::new(&sleep_cmd()[0]);
         c.args(&sleep_cmd()[1..]).current_dir(&d);
-        c.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        c.stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
         c.kill_on_drop(true);
         let timed_out = tokio::time::timeout(Duration::from_millis(200), c.output())
             .await
@@ -931,21 +947,25 @@ mod tests {
         // Open todos fail the acceptance check.
         let checks = run_done_checks_with(
             &d,
-            &[todo("write code", "completed"), todo("write tests", "in_progress")],
+            &[
+                todo("write code", "completed"),
+                todo("write tests", "in_progress"),
+            ],
             &no_cmds(),
         )
         .await;
-        let acc = checks.iter().find(|c| c.name == "acceptance criteria").unwrap();
+        let acc = checks
+            .iter()
+            .find(|c| c.name == "acceptance criteria")
+            .unwrap();
         assert_eq!(acc.status, CheckStatus::Fail);
         assert!(acc.detail.contains("write tests"), "{}", acc.detail);
         // All completed => pass.
-        let checks = run_done_checks_with(
-            &d,
-            &[todo("write code", "completed")],
-            &no_cmds(),
-        )
-        .await;
-        let acc = checks.iter().find(|c| c.name == "acceptance criteria").unwrap();
+        let checks = run_done_checks_with(&d, &[todo("write code", "completed")], &no_cmds()).await;
+        let acc = checks
+            .iter()
+            .find(|c| c.name == "acceptance criteria")
+            .unwrap();
         assert_eq!(acc.status, CheckStatus::Pass);
     }
 
@@ -988,7 +1008,10 @@ mod tests {
         let text = format_report(Path::new("/repo"), &r);
         assert!(text.contains("[PASS] tests"), "{text}");
         assert!(text.contains("[FAIL] lint"), "{text}");
-        assert!(text.contains("warning: unused"), "failure detail included: {text}");
+        assert!(
+            text.contains("warning: unused"),
+            "failure detail included: {text}"
+        );
         assert!(text.contains("! other/b.rs"), "{text}");
         assert!(text.contains("`pub fn mystery` has no callers"), "{text}");
         assert!(text.contains("verdict: NOT DONE"), "{text}");

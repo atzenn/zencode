@@ -92,8 +92,7 @@ impl ProviderInfo {
                 return Some((ApiStandard::Anthropic, url));
             }
         }
-        self.openai_base_url
-            .map(|url| (ApiStandard::OpenAi, url))
+        self.openai_base_url.map(|url| (ApiStandard::OpenAi, url))
     }
 
     /// Verified price for a model: (USD per 1M input tokens, USD per 1M output).
@@ -111,10 +110,7 @@ impl ProviderInfo {
     /// template placeholder cannot be resolved (e.g. Cloudflare without
     /// `CLOUDFLARE_ACCOUNT_ID` set) - callers then fall back to the default
     /// endpoint, mirroring the Anthropic-only-provider path.
-    pub fn endpoint_resolved(
-        &self,
-        anthropic_available: bool,
-    ) -> Option<(ApiStandard, String)> {
+    pub fn endpoint_resolved(&self, anthropic_available: bool) -> Option<(ApiStandard, String)> {
         let (standard, url) = self.endpoint(anthropic_available)?;
         Some((standard, resolve_url_template(url)?))
     }
@@ -155,7 +151,8 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             model_ids: &[],
             pricing: &[],
             featured: &["qwen/qwen3-coder:free"],
-            rate_limit_notes: "Rate limits vary by model and tier; free models are heavily throttled.",
+            rate_limit_notes:
+                "Rate limits vary by model and tier; free models are heavily throttled.",
         },
         ProviderInfo {
             key: "groq",
@@ -179,7 +176,8 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             model_ids: &["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"],
             pricing: &[],
             featured: &[],
-            rate_limit_notes: "Tiered RPM/TPM; 429 = backoff, 529 = overloaded (retry with backoff).",
+            rate_limit_notes:
+                "Tiered RPM/TPM; 429 = backoff, 529 = overloaded (retry with backoff).",
         },
         ProviderInfo {
             key: "openai",
@@ -230,7 +228,8 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             // Per zencode-chinese-competitors.md (256K ctx tier).
             pricing: &[("kimi-k2.7", 0.95, 4.00), ("kimi-k3", 3.00, 15.00)],
             featured: &["kimi-k2.7"],
-            rate_limit_notes: "Tiered limits; Kimi For Coding plan users route via the same endpoint.",
+            rate_limit_notes:
+                "Tiered limits; Kimi For Coding plan users route via the same endpoint.",
         },
         ProviderInfo {
             key: "deepseek",
@@ -258,7 +257,10 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             anthropic_base_url: None,
             api_key_env: Some("CLOUDFLARE_API_TOKEN"),
             docs_url: "https://developers.cloudflare.com/workers-ai/",
-            model_ids: &["@cf/meta/llama-3.1-8b-instruct", "@cf/cloudflare/clef-flash"],
+            model_ids: &[
+                "@cf/meta/llama-3.1-8b-instruct",
+                "@cf/cloudflare/clef-flash",
+            ],
             // Verified paid pricing per zencode-cloudflare-research-2026-10-17.md
             // (08/2026). clef-flash output is genuinely free ($0). The free
             // tier (10,000 Neurons/day, resets 00:00 UTC) makes usage $0
@@ -266,7 +268,10 @@ pub fn provider_registry() -> Vec<ProviderInfo> {
             pricing: &[("@cf/cloudflare/clef-flash", 0.09, 0.0)],
             // clef-flash first: free output = the most free-first option in
             // the registry. Feeds `zen models` discovery (PR #41).
-            featured: &["@cf/cloudflare/clef-flash", "@cf/meta/llama-3.1-8b-instruct"],
+            featured: &[
+                "@cf/cloudflare/clef-flash",
+                "@cf/meta/llama-3.1-8b-instruct",
+            ],
             rate_limit_notes: "Free tier: 10,000 Neurons/day (resets 00:00 UTC), \
                 then $0.011/1K Neurons. Best for small tasks (classification, \
                 routing, summarisation) - not a coding-model replacement.",
@@ -459,8 +464,19 @@ pub fn featured_models() -> Vec<(String, String)> {
 /// per the price-floor strategy, then the usual suspects).
 pub fn authable_providers() -> Vec<ProviderInfo> {
     let preferred_order = [
-        "deepseek", "zai", "moonshot", "cloudflare", "openrouter", "groq", "anthropic",
-        "openai", "google", "together", "mistral", "cerebras", "fireworks",
+        "deepseek",
+        "zai",
+        "moonshot",
+        "cloudflare",
+        "openrouter",
+        "groq",
+        "anthropic",
+        "openai",
+        "google",
+        "together",
+        "mistral",
+        "cerebras",
+        "fireworks",
     ];
     let reg: HashMap<&str, ProviderInfo> = provider_registry()
         .into_iter()
@@ -479,9 +495,13 @@ pub fn cheap_first_order() -> Vec<String> {
     let mut priced: Vec<(&str, f64)> = Vec::new();
     let mut unpriced: Vec<&str> = Vec::new();
     for info in provider_registry() {
-        let cheapest = info.pricing.iter().map(|(_, i, _)| *i).fold(None, |a: Option<f64>, b| {
-            Some(a.map_or(b, |x: f64| x.min(b)))
-        });
+        let cheapest = info
+            .pricing
+            .iter()
+            .map(|(_, i, _)| *i)
+            .fold(None, |a: Option<f64>, b| {
+                Some(a.map_or(b, |x: f64| x.min(b)))
+            });
         match cheapest {
             Some(p) => priced.push((info.key, p)),
             None => unpriced.push(info.key),
@@ -659,7 +679,10 @@ mod tests {
         assert!(f.contains(&("deepseek".to_string(), "deepseek-v4-flash".to_string())));
         // Qwen3-Coder via Ollama (permissively licensed, local) and OpenRouter.
         assert!(f.contains(&("ollama".to_string(), "qwen3-coder".to_string())));
-        assert!(f.contains(&("openrouter".to_string(), "qwen/qwen3-coder:free".to_string())));
+        assert!(f.contains(&(
+            "openrouter".to_string(),
+            "qwen/qwen3-coder:free".to_string()
+        )));
     }
 
     #[test]
@@ -677,7 +700,7 @@ mod tests {
         // is genuinely free, and the 10K Neurons/day free tier is $0 anyway.
         assert_eq!(order[0], "cloudflare");
         assert_eq!(order[1], "deepseek"); // $0.14/1M - the old price floor
-        // moonshot's cheapest ($0.95) sorts before zai's ($1.40).
+                                          // moonshot's cheapest ($0.95) sorts before zai's ($1.40).
         let zi = order.iter().position(|k| k == "zai").unwrap();
         let mi = order.iter().position(|k| k == "moonshot").unwrap();
         assert!(mi < zi, "moonshot ($0.95) should sort before zai ($1.40)");
@@ -687,7 +710,10 @@ mod tests {
     fn api_key_prefers_provider_env_then_ambient() {
         let s = ModelSpec::parse("zai/glm-5.2", "http://default/v1", false);
         // ZAI_API_KEY is (almost certainly) unset in test envs.
-        assert_eq!(s.api_key(Some("ambient-key")), Some("ambient-key".to_string()));
+        assert_eq!(
+            s.api_key(Some("ambient-key")),
+            Some("ambient-key".to_string())
+        );
         assert_eq!(s.api_key(None), None);
     }
 

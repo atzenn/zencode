@@ -8,11 +8,16 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use zen_core::{PermissionChecker, PermissionDecision, PermissionMode, PermissionSettings, ToolContext};
+use zen_core::{
+    PermissionChecker, PermissionDecision, PermissionMode, PermissionSettings, ToolContext,
+};
 
 /// Tools that are always read-only regardless of arguments.
 pub fn tool_is_read_only(name: &str) -> bool {
-    matches!(name, "Read" | "Glob" | "Grep" | "TodoWrite" | "Task" | "Skill")
+    matches!(
+        name,
+        "Read" | "Glob" | "Grep" | "TodoWrite" | "Task" | "Skill"
+    )
 }
 
 /// Split a rule into `(tool, specifier)`; `None` specifier means bare `Tool`.
@@ -116,7 +121,8 @@ fn bash_rule_matches(spec: &str, command: &str) -> bool {
     }
     if let Some(prefix) = spec.strip_suffix(" *") {
         let prefix = prefix.trim_end();
-        return wildcard_match(prefix, command) || wildcard_match(&format!("{} *", prefix), command);
+        return wildcard_match(prefix, command)
+            || wildcard_match(&format!("{} *", prefix), command);
     }
     wildcard_match(&spec, command)
 }
@@ -204,7 +210,13 @@ pub fn rule_matches(rule: &str, tool_name: &str, input: &Value, cwd: &Path) -> b
     rule_matches_kind(rule, tool_name, input, cwd, RuleKind::Allow)
 }
 
-fn rule_matches_kind(rule: &str, tool_name: &str, input: &Value, cwd: &Path, kind: RuleKind) -> bool {
+fn rule_matches_kind(
+    rule: &str,
+    tool_name: &str,
+    input: &Value,
+    cwd: &Path,
+    kind: RuleKind,
+) -> bool {
     let rule = rule.trim();
     if rule.is_empty() {
         return false;
@@ -276,14 +288,26 @@ fn domain_matches(domain: &str, url: &str) -> bool {
 pub fn rule_removes_tool(rule: &str, tool_name: &str) -> bool {
     let rule = rule.trim();
     let (rule_tool, spec) = split_rule(rule);
-    let tool_level = spec.map(|s| s.trim().is_empty() || s.trim() == "*").unwrap_or(true);
-    tool_level && rule_matches_kind(rule_tool, tool_name, &Value::Null, Path::new("/"), RuleKind::Deny)
+    let tool_level = spec
+        .map(|s| s.trim().is_empty() || s.trim() == "*")
+        .unwrap_or(true);
+    tool_level
+        && rule_matches_kind(
+            rule_tool,
+            tool_name,
+            &Value::Null,
+            Path::new("/"),
+            RuleKind::Deny,
+        )
 }
 
 fn host_raw(url: &str) -> String {
     let after_scheme = url.split("://").nth(1).unwrap_or(url);
     let host_and_path = after_scheme.split(['/', '?', '#']).next().unwrap_or("");
-    let host = host_and_path.split('@').next_back().unwrap_or(host_and_path);
+    let host = host_and_path
+        .split('@')
+        .next_back()
+        .unwrap_or(host_and_path);
     let host = host.split(':').next().unwrap_or(host);
     host.to_lowercase()
 }
@@ -316,14 +340,17 @@ fn any_rule<'a>(
     kind: RuleKind,
 ) -> Option<&'a String> {
     let subs: Vec<Value> = match bash_parts(tool_name, input) {
-        Some(Some(parts)) if parts.len() > 1 => {
-            parts.into_iter().map(|p| serde_json::json!({ "command": p })).collect()
-        }
+        Some(Some(parts)) if parts.len() > 1 => parts
+            .into_iter()
+            .map(|p| serde_json::json!({ "command": p }))
+            .collect(),
         _ => Vec::new(),
     };
     rules.iter().find(|r| {
         rule_matches_kind(r, tool_name, input, cwd, kind)
-            || subs.iter().any(|sub| rule_matches_kind(r, tool_name, sub, cwd, kind))
+            || subs
+                .iter()
+                .any(|sub| rule_matches_kind(r, tool_name, sub, cwd, kind))
     })
 }
 
@@ -332,19 +359,24 @@ fn any_rule<'a>(
 fn allow_covers(rules: &[String], tool_name: &str, input: &Value, cwd: &Path) -> bool {
     let tool_level = |r: &String| {
         let (_, spec) = split_rule(r.trim());
-        spec.map(|s| s.trim().is_empty() || s.trim() == "*").unwrap_or(true)
+        spec.map(|s| s.trim().is_empty() || s.trim() == "*")
+            .unwrap_or(true)
     };
     match bash_parts(tool_name, input) {
-        None => rules.iter().any(|r| rule_matches_kind(r, tool_name, input, cwd, RuleKind::Allow)),
+        None => rules
+            .iter()
+            .any(|r| rule_matches_kind(r, tool_name, input, cwd, RuleKind::Allow)),
         Some(None) => rules
             .iter()
             .any(|r| tool_level(r) && rule_matches_kind(r, tool_name, input, cwd, RuleKind::Allow)),
-        Some(Some(parts)) if parts.len() <= 1 => {
-            rules.iter().any(|r| rule_matches_kind(r, tool_name, input, cwd, RuleKind::Allow))
-        }
+        Some(Some(parts)) if parts.len() <= 1 => rules
+            .iter()
+            .any(|r| rule_matches_kind(r, tool_name, input, cwd, RuleKind::Allow)),
         Some(Some(parts)) => parts.iter().all(|p| {
             let sub = serde_json::json!({ "command": p });
-            rules.iter().any(|r| rule_matches_kind(r, tool_name, &sub, cwd, RuleKind::Allow))
+            rules
+                .iter()
+                .any(|r| rule_matches_kind(r, tool_name, &sub, cwd, RuleKind::Allow))
         }),
     }
 }
@@ -538,7 +570,9 @@ impl RulePermissions {
 
     /// Write/Edit inside cwd or an --add-dir directory (symlinks resolved, MEDIUM-2).
     fn path_inside_workdir(&self, input: &Value, ctx: &ToolContext) -> bool {
-        let Some(fp) = path_arg(input) else { return false };
+        let Some(fp) = path_arg(input) else {
+            return false;
+        };
         let target = canonicalize_lenient(&resolve_path(&ctx.cwd(), fp));
         self.working_dirs(ctx).iter().any(|d| target.starts_with(d))
     }
@@ -551,17 +585,29 @@ impl RulePermissions {
         }
         let cwd = ctx.cwd();
         let dirs = self.working_dirs(ctx);
-        split_compound(command).unwrap_or_default().iter().all(|part| {
-            part.split_whitespace().skip(1).filter(|a| !a.starts_with('-')).all(|arg| {
-                let arg = arg.trim_matches(|c| c == '"' || c == '\'');
-                // Resolve symlinks like the file tools do (MEDIUM-2).
-                let target = canonicalize_lenient(&resolve_path(&cwd, arg));
-                dirs.iter().any(|d| target.starts_with(d))
+        split_compound(command)
+            .unwrap_or_default()
+            .iter()
+            .all(|part| {
+                part.split_whitespace()
+                    .skip(1)
+                    .filter(|a| !a.starts_with('-'))
+                    .all(|arg| {
+                        let arg = arg.trim_matches(|c| c == '"' || c == '\'');
+                        // Resolve symlinks like the file tools do (MEDIUM-2).
+                        let target = canonicalize_lenient(&resolve_path(&cwd, arg));
+                        dirs.iter().any(|d| target.starts_with(d))
+                    })
             })
-        })
     }
 
-    fn evaluate(&self, tool_name: &str, input: &Value, read_only: bool, ctx: &ToolContext) -> PermissionDecision {
+    fn evaluate(
+        &self,
+        tool_name: &str,
+        input: &Value,
+        read_only: bool,
+        ctx: &ToolContext,
+    ) -> PermissionDecision {
         let cwd = ctx.cwd();
 
         // 1. deny always wins, even in bypassPermissions.
@@ -571,7 +617,9 @@ impl RulePermissions {
 
         // 2. plan mode blocks every mutating tool up front.
         if self.mode == PermissionMode::Plan && !read_only {
-            return PermissionDecision::Deny("plan mode: only read-only tools are available".into());
+            return PermissionDecision::Deny(
+                "plan mode: only read-only tools are available".into(),
+            );
         }
 
         // 3. explicit ask rules.
@@ -632,7 +680,13 @@ impl RulePermissions {
 }
 
 impl PermissionChecker for RulePermissions {
-    fn check(&self, tool_name: &str, input: &Value, read_only: bool, ctx: &ToolContext) -> PermissionDecision {
+    fn check(
+        &self,
+        tool_name: &str,
+        input: &Value,
+        read_only: bool,
+        ctx: &ToolContext,
+    ) -> PermissionDecision {
         self.evaluate(tool_name, input, read_only, ctx)
     }
 
@@ -653,7 +707,12 @@ impl PermissionChecker for RulePermissions {
         }
         if let Some(path) = &self.local_settings_path {
             if let Err(e) = persist_allow_rule(path, rule) {
-                eprintln!("warning: could not save rule '{}' to {}: {}", rule, path.display(), e);
+                eprintln!(
+                    "warning: could not save rule '{}' to {}: {}",
+                    rule,
+                    path.display(),
+                    e
+                );
             }
         }
     }
@@ -662,7 +721,9 @@ impl PermissionChecker for RulePermissions {
 /// Append `rule` to `permissions.allow` in a settings JSON file, preserving other keys.
 pub fn persist_allow_rule(path: &Path, rule: &str) -> anyhow::Result<()> {
     let mut root: Value = match std::fs::read_to_string(path) {
-        Ok(text) if !text.trim().is_empty() => serde_json::from_str(&text).unwrap_or_else(|_| Value::Object(Default::default())),
+        Ok(text) if !text.trim().is_empty() => {
+            serde_json::from_str(&text).unwrap_or_else(|_| Value::Object(Default::default()))
+        }
         _ => Value::Object(Default::default()),
     };
     if !root.is_object() {
@@ -676,9 +737,7 @@ pub fn persist_allow_rule(path: &Path, rule: &str) -> anyhow::Result<()> {
         *perms = Value::Object(Default::default());
     }
     let perms = perms.as_object_mut().unwrap();
-    let allow = perms
-        .entry("allow")
-        .or_insert_with(|| Value::Array(vec![]));
+    let allow = perms.entry("allow").or_insert_with(|| Value::Array(vec![]));
     if !allow.is_array() {
         *allow = Value::Array(vec![]);
     }
@@ -702,18 +761,17 @@ pub fn suggested_rule(tool_name: &str, input: &Value) -> Option<String> {
             .get("command")
             .and_then(|v| v.as_str())
             .map(|c| format!("Bash({})", c)),
-        "Read" | "Edit" | "MultiEdit" | "Write" => path_arg(input).map(|p| format!("{}({})", tool_name, p)),
-        "WebFetch" => input
-            .get("url")
-            .and_then(|v| v.as_str())
-            .and_then(|u| {
-                let h = host_of(u);
-                if h.is_empty() {
-                    None
-                } else {
-                    Some(format!("WebFetch(domain:{})", h))
-                }
-            }),
+        "Read" | "Edit" | "MultiEdit" | "Write" => {
+            path_arg(input).map(|p| format!("{}({})", tool_name, p))
+        }
+        "WebFetch" => input.get("url").and_then(|v| v.as_str()).and_then(|u| {
+            let h = host_of(u);
+            if h.is_empty() {
+                None
+            } else {
+                Some(format!("WebFetch(domain:{})", h))
+            }
+        }),
         other => Some(other.to_string()),
     }
 }
@@ -774,10 +832,22 @@ mod tests {
     #[test]
     fn substitution_deny_bypass_blocked() {
         let perms = test_perms(&["Bash(rm *)"], &["Bash(echo *)"]);
-        assert!(is_deny(&check_bash(&perms, "echo $(rm -rf ~)")), "$() bypass not blocked");
-        assert!(is_deny(&check_bash(&perms, "echo `rm -rf ~`")), "backtick bypass not blocked");
-        assert!(is_deny(&check_bash(&perms, "echo $(echo $(rm -rf ~))")), "nested bypass not blocked");
-        assert!(is_deny(&check_bash(&perms, "echo ${X:-$(rm -rf ~)}")), "${{}} bypass not blocked");
+        assert!(
+            is_deny(&check_bash(&perms, "echo $(rm -rf ~)")),
+            "$() bypass not blocked"
+        );
+        assert!(
+            is_deny(&check_bash(&perms, "echo `rm -rf ~`")),
+            "backtick bypass not blocked"
+        );
+        assert!(
+            is_deny(&check_bash(&perms, "echo $(echo $(rm -rf ~))")),
+            "nested bypass not blocked"
+        );
+        assert!(
+            is_deny(&check_bash(&perms, "echo ${X:-$(rm -rf ~)}")),
+            "${{}} bypass not blocked"
+        );
         assert!(is_deny(&check_bash(&perms, "rm -rf /tmp/x")));
     }
 
@@ -786,18 +856,33 @@ mod tests {
     #[test]
     fn substitution_allow_fails_closed() {
         let perms = test_perms(&[], &["Bash(echo *)", "Bash(date *)"]);
-        assert!(matches!(check_bash(&perms, "echo $(date)"), PermissionDecision::Allow));
+        assert!(matches!(
+            check_bash(&perms, "echo $(date)"),
+            PermissionDecision::Allow
+        ));
         let perms2 = test_perms(&[], &["Bash(echo *)"]);
-        assert!(matches!(check_bash(&perms2, "echo $(date)"), PermissionDecision::Ask));
+        assert!(matches!(
+            check_bash(&perms2, "echo $(date)"),
+            PermissionDecision::Ask
+        ));
     }
 
     /// HIGH-1: bash expands `$(...)` and backticks inside double quotes too.
     #[test]
     fn substitution_inside_double_quotes_blocked() {
         let perms = test_perms(&["Bash(rm *)"], &["Bash(echo *)"]);
-        assert!(is_deny(&check_bash(&perms, "echo \"$(rm -rf ~)\"")), "dq $() bypass not blocked");
-        assert!(is_deny(&check_bash(&perms, "echo \"x `rm -rf ~` y\"")), "dq backtick bypass not blocked");
-        assert!(is_deny(&check_bash(&perms, "echo \"${X:-$(rm -rf ~)}\"")), "dq ${{}} bypass not blocked");
+        assert!(
+            is_deny(&check_bash(&perms, "echo \"$(rm -rf ~)\"")),
+            "dq $() bypass not blocked"
+        );
+        assert!(
+            is_deny(&check_bash(&perms, "echo \"x `rm -rf ~` y\"")),
+            "dq backtick bypass not blocked"
+        );
+        assert!(
+            is_deny(&check_bash(&perms, "echo \"${X:-$(rm -rf ~)}\"")),
+            "dq ${{}} bypass not blocked"
+        );
     }
 
     /// Single quotes prevent substitution - the inner text is inert.
@@ -823,8 +908,14 @@ mod tests {
     #[test]
     fn compound_without_substitution_unchanged() {
         let perms = test_perms(&[], &["Bash(echo *)", "Bash(ls *)"]);
-        assert!(matches!(check_bash(&perms, "echo hi && ls /tmp"), PermissionDecision::Allow));
-        assert!(matches!(check_bash(&perms, "echo hi && rm -rf /"), PermissionDecision::Ask));
+        assert!(matches!(
+            check_bash(&perms, "echo hi && ls /tmp"),
+            PermissionDecision::Allow
+        ));
+        assert!(matches!(
+            check_bash(&perms, "echo hi && rm -rf /"),
+            PermissionDecision::Ask
+        ));
     }
 
     /// MEDIUM-2: a symlink inside the workdir pointing outside must not pass the
@@ -846,7 +937,10 @@ mod tests {
         #[cfg(unix)]
         {
             let evil = serde_json::json!({ "file_path": "link/secret.txt" });
-            assert!(!perms.path_inside_workdir(&evil, &ctx), "symlink escape passed the workdir check");
+            assert!(
+                !perms.path_inside_workdir(&evil, &ctx),
+                "symlink escape passed the workdir check"
+            );
         }
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -854,7 +948,10 @@ mod tests {
     #[test]
     fn host_parsing() {
         assert_eq!(host_of("https://www.example.com/a/b?x=1"), "example.com");
-        assert_eq!(host_of("http://user:pw@api.example.com:8443/x"), "api.example.com");
+        assert_eq!(
+            host_of("http://user:pw@api.example.com:8443/x"),
+            "api.example.com"
+        );
         assert_eq!(host_of("example.com/x"), "example.com");
     }
 
@@ -925,15 +1022,55 @@ mod permission_tests {
     #[test]
     fn rule_bare_tool_names() {
         let cwd = PathBuf::from("/tmp/work");
-        assert!(rule_matches("Bash", "Bash", &json!({"command": "ls"}), &cwd));
-        assert!(rule_matches("Read", "Read", &json!({"file_path": "x"}), &cwd));
-        assert!(!rule_matches("Read", "Write", &json!({"file_path": "x"}), &cwd));
-        assert!(rule_matches("Bash(*)", "Bash", &json!({"command": "anything"}), &cwd));
-        assert!(rule_matches("mcp__files", "mcp__files__read", &json!({}), &cwd));
+        assert!(rule_matches(
+            "Bash",
+            "Bash",
+            &json!({"command": "ls"}),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Read",
+            "Read",
+            &json!({"file_path": "x"}),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Read",
+            "Write",
+            &json!({"file_path": "x"}),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Bash(*)",
+            "Bash",
+            &json!({"command": "anything"}),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "mcp__files",
+            "mcp__files__read",
+            &json!({}),
+            &cwd
+        ));
         assert!(rule_matches("mcp__files", "mcp__files", &json!({}), &cwd));
-        assert!(!rule_matches("mcp__files", "mcp__other__read", &json!({}), &cwd));
-        assert!(rule_matches("mcp__files__read", "mcp__files__read", &json!({}), &cwd));
-        assert!(!rule_matches("mcp__files__read", "mcp__files__write", &json!({}), &cwd));
+        assert!(!rule_matches(
+            "mcp__files",
+            "mcp__other__read",
+            &json!({}),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "mcp__files__read",
+            "mcp__files__read",
+            &json!({}),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "mcp__files__read",
+            "mcp__files__write",
+            &json!({}),
+            &cwd
+        ));
     }
 
     #[test]
@@ -941,16 +1078,56 @@ mod permission_tests {
         let cwd = PathBuf::from("/tmp/work");
         let cmd = |c: &str| json!({"command": c});
         // exact
-        assert!(rule_matches("Bash(npm run test)", "Bash", &cmd("npm run test"), &cwd));
-        assert!(!rule_matches("Bash(npm run test)", "Bash", &cmd("npm run test --watch"), &cwd));
+        assert!(rule_matches(
+            "Bash(npm run test)",
+            "Bash",
+            &cmd("npm run test"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Bash(npm run test)",
+            "Bash",
+            &cmd("npm run test --watch"),
+            &cwd
+        ));
         // prefix with a space: whole-word boundary
-        assert!(rule_matches("Bash(git diff *)", "Bash", &cmd("git diff HEAD"), &cwd));
-        assert!(rule_matches("Bash(git diff *)", "Bash", &cmd("git diff"), &cwd));
-        assert!(!rule_matches("Bash(git diff *)", "Bash", &cmd("git diff-index"), &cwd));
+        assert!(rule_matches(
+            "Bash(git diff *)",
+            "Bash",
+            &cmd("git diff HEAD"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Bash(git diff *)",
+            "Bash",
+            &cmd("git diff"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Bash(git diff *)",
+            "Bash",
+            &cmd("git diff-index"),
+            &cwd
+        ));
         // prefix without a space: raw prefix, so `git diff-index` matches
-        assert!(rule_matches("Bash(git diff*)", "Bash", &cmd("git diff-index --cached"), &cwd));
-        assert!(rule_matches("Bash(git diff*)", "Bash", &cmd("git diff"), &cwd));
-        assert!(!rule_matches("Bash(git diff*)", "Bash", &cmd("git status"), &cwd));
+        assert!(rule_matches(
+            "Bash(git diff*)",
+            "Bash",
+            &cmd("git diff-index --cached"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Bash(git diff*)",
+            "Bash",
+            &cmd("git diff"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Bash(git diff*)",
+            "Bash",
+            &cmd("git status"),
+            &cwd
+        ));
     }
 
     #[test]
@@ -960,13 +1137,48 @@ mod permission_tests {
         assert!(rule_matches("Read(./.env)", "Read", &f(".env"), &cwd));
         assert!(rule_matches("Read(./.env)", "Read", &f("./.env"), &cwd));
         assert!(!rule_matches("Read(./.env)", "Read", &f("src/.env"), &cwd));
-        assert!(rule_matches("Edit(src/**)", "Edit", &f("src/main.rs"), &cwd));
-        assert!(rule_matches("Edit(src/**)", "Edit", &f("src/deep/a/b.rs"), &cwd));
-        assert!(!rule_matches("Edit(src/**)", "Edit", &f("tests/a.rs"), &cwd));
-        assert!(rule_matches("Write(//etc/hosts)", "Write", &f("/etc/hosts"), &cwd));
-        assert!(!rule_matches("Write(//etc/hosts)", "Write", &f("etc/hosts"), &cwd));
-        assert!(rule_matches("Read(~/notes.txt)", "Read", &f("~/notes.txt"), &cwd));
-        assert!(!rule_matches("Read(src/**, tests/**)", "Read", &f("src/x"), &cwd));
+        assert!(rule_matches(
+            "Edit(src/**)",
+            "Edit",
+            &f("src/main.rs"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Edit(src/**)",
+            "Edit",
+            &f("src/deep/a/b.rs"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Edit(src/**)",
+            "Edit",
+            &f("tests/a.rs"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Write(//etc/hosts)",
+            "Write",
+            &f("/etc/hosts"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Write(//etc/hosts)",
+            "Write",
+            &f("etc/hosts"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Read(~/notes.txt)",
+            "Read",
+            &f("~/notes.txt"),
+            &cwd
+        ));
+        assert!(!rule_matches(
+            "Read(src/**, tests/**)",
+            "Read",
+            &f("src/x"),
+            &cwd
+        ));
     }
 
     #[test]
@@ -1004,7 +1216,12 @@ mod permission_tests {
     fn rule_empty_and_unknown_forms_do_not_match() {
         let cwd = PathBuf::from("/work");
         assert!(!rule_matches("", "Bash", &json!({"command": "ls"}), &cwd));
-        assert!(!rule_matches("Bash", "Read", &json!({"file_path": "x"}), &cwd));
+        assert!(!rule_matches(
+            "Bash",
+            "Read",
+            &json!({"file_path": "x"}),
+            &cwd
+        ));
         assert!(!rule_matches("Bash(ls)", "Bash", &json!({}), &cwd));
     }
 
@@ -1015,11 +1232,36 @@ mod permission_tests {
         let dir = tmpdir("default");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::Default, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Read", &json!({"file_path": "a"}), true, &ctx)));
-        assert!(is_allow(&p.check("Grep", &json!({"pattern": "x"}), true, &ctx)));
-        assert!(is_ask(&p.check("Write", &json!({"file_path": "a"}), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &json!({"command": "ls"}), false, &ctx)));
-        assert!(is_ask(&p.check("WebFetch", &json!({"url": "https://x.test"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Read",
+            &json!({"file_path": "a"}),
+            true,
+            &ctx
+        )));
+        assert!(is_allow(&p.check(
+            "Grep",
+            &json!({"pattern": "x"}),
+            true,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Write",
+            &json!({"file_path": "a"}),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &json!({"command": "ls"}),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "WebFetch",
+            &json!({"url": "https://x.test"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1028,12 +1270,42 @@ mod permission_tests {
         let dir = tmpdir("accept");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::AcceptEdits, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Write", &json!({"file_path": "src/a.rs"}), false, &ctx)));
-        assert!(is_allow(&p.check("Edit", &json!({"file_path": "./a.rs"}), false, &ctx)));
-        assert!(is_allow(&p.check("Bash", &json!({"command": "mkdir -p a/b"}), false, &ctx)));
-        assert!(is_allow(&p.check("Bash", &json!({"command": "cp a b"}), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &json!({"command": "rm -rf /"}), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &json!({"command": "cargo test"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Write",
+            &json!({"file_path": "src/a.rs"}),
+            false,
+            &ctx
+        )));
+        assert!(is_allow(&p.check(
+            "Edit",
+            &json!({"file_path": "./a.rs"}),
+            false,
+            &ctx
+        )));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &json!({"command": "mkdir -p a/b"}),
+            false,
+            &ctx
+        )));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &json!({"command": "cp a b"}),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &json!({"command": "rm -rf /"}),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &json!({"command": "cargo test"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1068,7 +1340,12 @@ mod permission_tests {
         let dir = tmpdir("plan");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::Plan, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Read", &json!({"file_path": "a"}), true, &ctx)));
+        assert!(is_allow(&p.check(
+            "Read",
+            &json!({"file_path": "a"}),
+            true,
+            &ctx
+        )));
         for (tool, input) in [
             ("Write", json!({"file_path": "a", "content": "x"})),
             ("Edit", json!({"file_path": "a"})),
@@ -1076,7 +1353,10 @@ mod permission_tests {
             ("WebFetch", json!({"url": "https://x.test"})),
         ] {
             let d = p.check(tool, &input, false, &ctx);
-            assert_eq!(deny_reason(&d), "plan mode: only read-only tools are available");
+            assert_eq!(
+                deny_reason(&d),
+                "plan mode: only read-only tools are available"
+            );
         }
         // even an explicit allow rule cannot unlock plan mode
         let p2 = perms(PermissionMode::Plan, &["Write"], &[], &[], None);
@@ -1092,13 +1372,34 @@ mod permission_tests {
         let dir = tmpdir("bypass");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::BypassPermissions, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Bash", &json!({"command": "rm -rf /"}), false, &ctx)));
-        assert!(is_allow(&p.check("Write", &json!({"file_path": "/etc/x"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &json!({"command": "rm -rf /"}),
+            false,
+            &ctx
+        )));
+        assert!(is_allow(&p.check(
+            "Write",
+            &json!({"file_path": "/etc/x"}),
+            false,
+            &ctx
+        )));
         // ask rules are also bypassed
         let p2 = perms(PermissionMode::BypassPermissions, &[], &["Bash"], &[], None);
-        assert!(is_allow(&p2.check("Bash", &json!({"command": "ls"}), false, &ctx)));
+        assert!(is_allow(&p2.check(
+            "Bash",
+            &json!({"command": "ls"}),
+            false,
+            &ctx
+        )));
         // deny still wins (zen choice, SPEC §5)
-        let p3 = perms(PermissionMode::BypassPermissions, &[], &[], &["Bash(rm *)"], None);
+        let p3 = perms(
+            PermissionMode::BypassPermissions,
+            &[],
+            &[],
+            &["Bash(rm *)"],
+            None,
+        );
         assert!(matches!(
             p3.check("Bash", &json!({"command": "rm -rf /"}), false, &ctx),
             PermissionDecision::Deny(_)
@@ -1111,7 +1412,12 @@ mod permission_tests {
         let dir = tmpdir("dontask");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::DontAsk, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Read", &json!({"file_path": "a"}), true, &ctx)));
+        assert!(is_allow(&p.check(
+            "Read",
+            &json!({"file_path": "a"}),
+            true,
+            &ctx
+        )));
         assert!(matches!(
             p.check("Write", &json!({"file_path": "a"}), false, &ctx),
             PermissionDecision::Deny(_)
@@ -1127,8 +1433,19 @@ mod permission_tests {
             PermissionDecision::Deny(_)
         ));
         // allow rules still apply
-        let p3 = perms(PermissionMode::DontAsk, &["Bash(cargo test)"], &[], &[], None);
-        assert!(is_allow(&p3.check("Bash", &json!({"command": "cargo test"}), false, &ctx)));
+        let p3 = perms(
+            PermissionMode::DontAsk,
+            &["Bash(cargo test)"],
+            &[],
+            &[],
+            None,
+        );
+        assert!(is_allow(&p3.check(
+            "Bash",
+            &json!({"command": "cargo test"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1143,7 +1460,12 @@ mod permission_tests {
             &["Bash(rm *)"],
             None,
         );
-        assert!(is_allow(&p.check("Bash", &json!({"command": "ls"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &json!({"command": "ls"}),
+            false,
+            &ctx
+        )));
         assert!(matches!(
             p.check("Bash", &json!({"command": "rm -rf /"}), false, &ctx),
             PermissionDecision::Deny(_)
@@ -1161,9 +1483,25 @@ mod permission_tests {
             PermissionDecision::Deny(_)
         ));
         // ask beats allow
-        let p3 = perms(PermissionMode::Default, &["Bash"], &["Bash(git push *)"], &[], None);
-        assert!(is_ask(&p3.check("Bash", &json!({"command": "git push origin main"}), false, &ctx)));
-        assert!(is_allow(&p3.check("Bash", &json!({"command": "git status"}), false, &ctx)));
+        let p3 = perms(
+            PermissionMode::Default,
+            &["Bash"],
+            &["Bash(git push *)"],
+            &[],
+            None,
+        );
+        assert!(is_ask(&p3.check(
+            "Bash",
+            &json!({"command": "git push origin main"}),
+            false,
+            &ctx
+        )));
+        assert!(is_allow(&p3.check(
+            "Bash",
+            &json!({"command": "git status"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1171,7 +1509,11 @@ mod permission_tests {
     fn read_only_tools_allowed_in_default_and_accept_edits() {
         let dir = tmpdir("readonly-tools");
         let ctx = ctx_for(&dir);
-        for mode in [PermissionMode::Default, PermissionMode::AcceptEdits, PermissionMode::DontAsk] {
+        for mode in [
+            PermissionMode::Default,
+            PermissionMode::AcceptEdits,
+            PermissionMode::DontAsk,
+        ] {
             let p = perms(mode, &[], &[], &[], None);
             for tool in ["Read", "Glob", "Grep", "TodoWrite", "Task", "Skill"] {
                 assert!(
@@ -1206,11 +1548,22 @@ mod permission_tests {
             &[],
             Some(settings_path.clone()),
         );
-        assert!(is_ask(&p.check("Write", &json!({"file_path": "a"}), false, &ctx)));
+        assert!(is_ask(&p.check(
+            "Write",
+            &json!({"file_path": "a"}),
+            false,
+            &ctx
+        )));
         p.add_allow_rule("Write");
-        assert!(is_allow(&p.check("Write", &json!({"file_path": "a"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Write",
+            &json!({"file_path": "a"}),
+            false,
+            &ctx
+        )));
 
-        let saved: Value = serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
         assert_eq!(saved["model"], json!("keep-me"));
         assert_eq!(saved["permissions"]["deny"], json!(["Bash(rm *)"]));
         let allow = saved["permissions"]["allow"].as_array().unwrap();
@@ -1219,7 +1572,8 @@ mod permission_tests {
 
         // Adding the same rule twice does not duplicate it.
         p.add_allow_rule("Write");
-        let saved2: Value = serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+        let saved2: Value =
+            serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
         assert_eq!(saved2["permissions"]["allow"].as_array().unwrap().len(), 2);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -1229,13 +1583,23 @@ mod permission_tests {
         let dir = tmpdir("always-new");
         let settings_path = dir.join("nested/deeper/settings.local.json");
         let ctx = ctx_for(&dir);
-        let p = perms(PermissionMode::Default, &[], &[], &[], Some(settings_path.clone()));
+        let p = perms(
+            PermissionMode::Default,
+            &[],
+            &[],
+            &[],
+            Some(settings_path.clone()),
+        );
         p.add_allow_rule("Bash(cargo test)");
-        let saved: Value = serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
         assert_eq!(saved["permissions"]["allow"], json!(["Bash(cargo test)"]));
-        assert!(is_allow(
-            &p.check("Bash", &json!({"command": "cargo test"}), false, &ctx)
-        ));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &json!({"command": "cargo test"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1245,7 +1609,12 @@ mod permission_tests {
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::Default, &[], &[], &[], None);
         p.add_allow_rule("Edit");
-        assert!(is_allow(&p.check("Edit", &json!({"file_path": "a"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Edit",
+            &json!({"file_path": "a"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1255,12 +1624,18 @@ mod permission_tests {
             suggested_rule("Bash", &json!({"command": "ls -la"})).unwrap(),
             "Bash(ls -la)"
         );
-        assert_eq!(suggested_rule("Read", &json!({"file_path": "a.txt"})).unwrap(), "Read(a.txt)");
+        assert_eq!(
+            suggested_rule("Read", &json!({"file_path": "a.txt"})).unwrap(),
+            "Read(a.txt)"
+        );
         assert_eq!(
             suggested_rule("WebFetch", &json!({"url": "https://www.example.com/x"})).unwrap(),
             "WebFetch(domain:example.com)"
         );
-        assert_eq!(suggested_rule("TodoWrite", &json!({})).unwrap(), "TodoWrite");
+        assert_eq!(
+            suggested_rule("TodoWrite", &json!({})).unwrap(),
+            "TodoWrite"
+        );
     }
 
     // ───────── SPEC Appendix C2 parity ─────────
@@ -1274,10 +1649,30 @@ mod permission_tests {
         let dir = tmpdir("c21");
         let ctx = ctx_for(&dir);
         // A very specific allow does not beat a broad ask; a broad allow loses to a narrow deny.
-        let p = perms(PermissionMode::Default, &["Bash(git push origin main)"], &["Bash(git *)"], &[], None);
-        assert!(is_ask(&p.check("Bash", &bash("git push origin main"), false, &ctx)));
-        let p2 = perms(PermissionMode::Default, &["Bash(*)"], &[], &["Bash(curl *)"], None);
-        assert!(matches!(p2.check("Bash", &bash("curl x"), false, &ctx), PermissionDecision::Deny(_)));
+        let p = perms(
+            PermissionMode::Default,
+            &["Bash(git push origin main)"],
+            &["Bash(git *)"],
+            &[],
+            None,
+        );
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("git push origin main"),
+            false,
+            &ctx
+        )));
+        let p2 = perms(
+            PermissionMode::Default,
+            &["Bash(*)"],
+            &[],
+            &["Bash(curl *)"],
+            None,
+        );
+        assert!(matches!(
+            p2.check("Bash", &bash("curl x"), false, &ctx),
+            PermissionDecision::Deny(_)
+        ));
         assert!(is_allow(&p2.check("Bash", &bash("ls"), false, &ctx)));
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -1319,23 +1714,61 @@ mod permission_tests {
             vec!["a", "b", "c", "d", "e", "f", "g", "h"]
         );
         assert_eq!(split_compound("echo 'a && b' \"c;d\"").unwrap().len(), 1);
-        assert_eq!(split_compound("cargo test 2>&1 | tail").unwrap(), vec!["cargo test 2>&1", "tail"]);
+        assert_eq!(
+            split_compound("cargo test 2>&1 | tail").unwrap(),
+            vec!["cargo test 2>&1", "tail"]
+        );
         assert_eq!(split_compound("ls;").unwrap(), vec!["ls"]);
         assert!(split_compound("ls &&").is_none());
 
         let dir = tmpdir("c24");
         let ctx = ctx_for(&dir);
-        let p = perms(PermissionMode::Default, &["Bash(git status)", "Bash(ls *)"], &[], &["Bash(rm *)"], None);
+        let p = perms(
+            PermissionMode::Default,
+            &["Bash(git status)", "Bash(ls *)"],
+            &[],
+            &["Bash(rm *)"],
+            None,
+        );
         // allow must cover every part
-        assert!(is_allow(&p.check("Bash", &bash("git status && ls -la"), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("git status && curl x"), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &bash("git status && ls -la"),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("git status && curl x"),
+            false,
+            &ctx
+        )));
         // deny applies if any part matches
-        assert!(matches!(p.check("Bash", &bash("ls && rm -rf x"), false, &ctx), PermissionDecision::Deny(_)));
+        assert!(matches!(
+            p.check("Bash", &bash("ls && rm -rf x"), false, &ctx),
+            PermissionDecision::Deny(_)
+        ));
         // ask applies if any part matches
-        let p2 = perms(PermissionMode::Default, &["Bash"], &["Bash(git push *)"], &[], None);
-        assert!(is_ask(&p2.check("Bash", &bash("git add . && git push origin"), false, &ctx)));
+        let p2 = perms(
+            PermissionMode::Default,
+            &["Bash"],
+            &["Bash(git push *)"],
+            &[],
+            None,
+        );
+        assert!(is_ask(&p2.check(
+            "Bash",
+            &bash("git add . && git push origin"),
+            false,
+            &ctx
+        )));
         // dangling operator: not split, scoped allow cannot match
-        assert!(is_ask(&p.check("Bash", &bash("git status &&"), false, &ctx)));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("git status &&"),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1345,15 +1778,30 @@ mod permission_tests {
         let f = |p: &str| json!({ "file_path": p });
         // `/x` is relative to the settings root (cwd), `//x` absolute
         assert!(rule_matches("Read(/src/**)", "Read", &f("src/a.rs"), &cwd));
-        assert!(!rule_matches("Read(/src/**)", "Read", &f("/src/a.rs"), &cwd));
-        assert!(rule_matches("Read(//src/**)", "Read", &f("/src/a.rs"), &cwd));
+        assert!(!rule_matches(
+            "Read(/src/**)",
+            "Read",
+            &f("/src/a.rs"),
+            &cwd
+        ));
+        assert!(rule_matches(
+            "Read(//src/**)",
+            "Read",
+            &f("/src/a.rs"),
+            &cwd
+        ));
         // bare filename matches at any depth below cwd
         assert!(rule_matches("Read(.env)", "Read", &f(".env"), &cwd));
         assert!(rule_matches("Read(.env)", "Read", &f("a/b/.env"), &cwd));
         assert!(rule_matches("Read(*.log)", "Read", &f("logs/x.log"), &cwd));
         assert!(!rule_matches("Read(.env)", "Read", &f("a/.envrc"), &cwd));
         // Edit rules cover Write
-        assert!(rule_matches("Edit(src/**)", "Write", &f("src/new.rs"), &cwd));
+        assert!(rule_matches(
+            "Edit(src/**)",
+            "Write",
+            &f("src/new.rs"),
+            &cwd
+        ));
         assert!(rule_matches("Edit", "Write", &f("x"), &cwd));
     }
 
@@ -1361,7 +1809,13 @@ mod permission_tests {
     fn c2_7_read_deny_guards_edit_write_grep_glob() {
         let dir = tmpdir("c27");
         let ctx = ctx_for(&dir);
-        let p = perms(PermissionMode::BypassPermissions, &[], &[], &["Read(./secrets/**)"], None);
+        let p = perms(
+            PermissionMode::BypassPermissions,
+            &[],
+            &[],
+            &["Read(./secrets/**)"],
+            None,
+        );
         for (tool, input) in [
             ("Read", json!({"file_path": "secrets/k"})),
             ("Edit", json!({"file_path": "secrets/k"})),
@@ -1370,15 +1824,28 @@ mod permission_tests {
             ("Glob", json!({"pattern": "*", "path": "secrets/sub"})),
         ] {
             assert!(
-                matches!(p.check(tool, &input, false, &ctx), PermissionDecision::Deny(_)),
+                matches!(
+                    p.check(tool, &input, false, &ctx),
+                    PermissionDecision::Deny(_)
+                ),
                 "{} should be denied",
                 tool
             );
         }
-        assert!(is_allow(&p.check("Write", &json!({"file_path": "src/k"}), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Write",
+            &json!({"file_path": "src/k"}),
+            false,
+            &ctx
+        )));
         // A Read *allow* does not grant Write.
         let p2 = perms(PermissionMode::Default, &["Read(./src/**)"], &[], &[], None);
-        assert!(is_ask(&p2.check("Write", &json!({"file_path": "src/k"}), false, &ctx)));
+        assert!(is_ask(&p2.check(
+            "Write",
+            &json!({"file_path": "src/k"}),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1387,10 +1854,22 @@ mod permission_tests {
         let cwd = PathBuf::from("/w");
         let m = |r: &str, u: &str| rule_matches(r, "WebFetch", &json!({ "url": u }), &cwd);
         assert!(m("WebFetch(domain:Example.COM)", "https://EXAMPLE.com/x"));
-        assert!(m("WebFetch(domain:*.example.com)", "https://api.example.com/x"));
-        assert!(m("WebFetch(domain:*.example.com)", "https://a.b.example.com/x"));
-        assert!(!m("WebFetch(domain:*.example.com)", "https://example.com/x"));
-        assert!(!m("WebFetch(domain:*.example.com)", "https://badexample.com/x"));
+        assert!(m(
+            "WebFetch(domain:*.example.com)",
+            "https://api.example.com/x"
+        ));
+        assert!(m(
+            "WebFetch(domain:*.example.com)",
+            "https://a.b.example.com/x"
+        ));
+        assert!(!m(
+            "WebFetch(domain:*.example.com)",
+            "https://example.com/x"
+        ));
+        assert!(!m(
+            "WebFetch(domain:*.example.com)",
+            "https://badexample.com/x"
+        ));
         assert!(m("WebFetch(domain:*)", "https://anything.test/"));
         assert!(!m("WebFetch(domain:*)", ""));
     }
@@ -1406,9 +1885,15 @@ mod permission_tests {
         // generic globs are honoured in deny/ask, not in allow
         let p = perms(PermissionMode::Default, &["*"], &["mcp__*"], &[], None);
         assert!(is_ask(&p.check("mcp__srv__q", &v, false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("ls"), false, &ctx)), "allow `*` must not match");
+        assert!(
+            is_ask(&p.check("Bash", &bash("ls"), false, &ctx)),
+            "allow `*` must not match"
+        );
         let p2 = perms(PermissionMode::BypassPermissions, &[], &[], &["*"], None);
-        assert!(matches!(p2.check("Bash", &bash("ls"), false, &ctx), PermissionDecision::Deny(_)));
+        assert!(matches!(
+            p2.check("Bash", &bash("ls"), false, &ctx),
+            PermissionDecision::Deny(_)
+        ));
         let p3 = perms(PermissionMode::Default, &["mcp__srv__*"], &[], &[], None);
         assert!(is_allow(&p3.check("mcp__srv__q", &v, false, &ctx)));
         let _ = std::fs::remove_dir_all(&dir);
@@ -1416,16 +1901,44 @@ mod permission_tests {
 
     #[test]
     fn c2_11_mode_aliases_and_accept_edits_fs_scope() {
-        assert_eq!(PermissionMode::parse("manual"), Some(PermissionMode::Default));
+        assert_eq!(
+            PermissionMode::parse("manual"),
+            Some(PermissionMode::Default)
+        );
         assert_eq!(PermissionMode::parse("auto"), Some(PermissionMode::Default));
         let dir = tmpdir("c211");
         let ctx = ctx_for(&dir);
         let p = perms(PermissionMode::AcceptEdits, &[], &[], &[], None);
-        assert!(is_allow(&p.check("Bash", &bash("mkdir -p a/b && touch a/b/c"), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("cp a /etc/passwd"), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("mv a ../outside"), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("mkdir a && rm -rf b"), false, &ctx)));
-        assert!(is_ask(&p.check("Bash", &bash("touch $(whoami)"), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &bash("mkdir -p a/b && touch a/b/c"),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("cp a /etc/passwd"),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("mv a ../outside"),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("mkdir a && rm -rf b"),
+            false,
+            &ctx
+        )));
+        assert!(is_ask(&p.check(
+            "Bash",
+            &bash("touch $(whoami)"),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1437,7 +1950,10 @@ mod permission_tests {
         );
         assert_eq!(suggested_rules("Bash", &bash("a;b;c;d;e;f;g")).len(), 5);
         assert_eq!(suggested_rules("Bash", &bash("ls")), vec!["Bash(ls)"]);
-        assert_eq!(suggested_rules("Write", &json!({"file_path": "a"})), vec!["Write(a)"]);
+        assert_eq!(
+            suggested_rules("Write", &json!({"file_path": "a"})),
+            vec!["Write(a)"]
+        );
         // Each saved rule lands in settings.local.json and the compound is then allowed.
         let dir = tmpdir("c212");
         let path = dir.join(".zen/settings.local.json");
@@ -1448,7 +1964,12 @@ mod permission_tests {
         }
         let saved: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(saved["permissions"]["allow"].as_array().unwrap().len(), 2);
-        assert!(is_allow(&p.check("Bash", &bash("git add . && git commit -m x"), false, &ctx)));
+        assert!(is_allow(&p.check(
+            "Bash",
+            &bash("git add . && git commit -m x"),
+            false,
+            &ctx
+        )));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1456,7 +1977,13 @@ mod permission_tests {
     fn c2_13_ask_rule_detection() {
         let dir = tmpdir("c213");
         let ctx = ctx_for(&dir);
-        let p = perms(PermissionMode::Default, &[], &["Bash(git push *)"], &[], None);
+        let p = perms(
+            PermissionMode::Default,
+            &[],
+            &["Bash(git push *)"],
+            &[],
+            None,
+        );
         assert!(p.ask_rule_matches("Bash", &bash("git push"), &ctx));
         assert!(p.ask_rule_matches("Bash", &bash("ls && git push x"), &ctx));
         assert!(!p.ask_rule_matches("Bash", &bash("ls"), &ctx));

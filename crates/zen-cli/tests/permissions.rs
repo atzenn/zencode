@@ -30,7 +30,14 @@ async fn default_headless_denies_write_tool() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("perm_write", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
             .mock("mock-model", &server)
             .arg("write a file")
             .run_output()
@@ -41,10 +48,16 @@ async fn default_headless_denies_write_tool() {
     assert_eq!(code, 0, "stderr: {}", stderr); // process succeeds, but tool denied
     let v = last_result(&stdout);
     assert_eq!(v["is_error"], false); // tool denial is not a process error
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
     assert!(!denials.is_empty(), "expected Write denial, got: {}", v);
     let denied_tool = denials[0]["tool_name"].as_str().expect("tool_name string");
-    assert_eq!(denied_tool, "Write", "expected Write tool denied, got: {}", denied_tool);
+    assert_eq!(
+        denied_tool, "Write",
+        "expected Write tool denied, got: {}",
+        denied_tool
+    );
 }
 
 /// `--permission-mode bypassPermissions` allows all tools (except those in deny rules).
@@ -69,8 +82,14 @@ async fn bypass_permissions_allows_write() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("bypass", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "bypassPermissions"
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "bypassPermissions",
             ])
             .mock("mock-model", &server)
             .arg("write a file")
@@ -82,8 +101,14 @@ async fn bypass_permissions_allows_write() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["result"], "write succeeded");
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
-    assert!(denials.is_empty(), "expected no denials with bypassPermissions, got: {:?}", denials);
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
+    assert!(
+        denials.is_empty(),
+        "expected no denials with bypassPermissions, got: {:?}",
+        denials
+    );
 }
 
 /// `--permission-mode acceptEdits` allows edit-like tools (Write, Edit) but not Bash.
@@ -109,8 +134,14 @@ async fn accept_edits_allows_write_but_not_bash() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("accept_write", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "acceptEdits"
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "acceptEdits",
             ])
             .mock("mock-model", &server)
             .arg("write a file")
@@ -122,8 +153,14 @@ async fn accept_edits_allows_write_but_not_bash() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["result"], "write ok");
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
-    assert!(denials.is_empty(), "Write should be allowed in acceptEdits, got denials: {:?}", denials);
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
+    assert!(
+        denials.is_empty(),
+        "Write should be allowed in acceptEdits, got denials: {:?}",
+        denials
+    );
 }
 
 /// `--permission-mode plan` denies all mutating tools.
@@ -147,8 +184,14 @@ async fn plan_mode_denies_write() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("plan", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--permission-mode", "plan"
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--permission-mode",
+                "plan",
             ])
             .mock("mock-model", &server)
             .arg("write a file")
@@ -165,11 +208,26 @@ async fn plan_mode_denies_write() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
     let tools = request_tool_names(&requests[0]);
-    assert!(tools.contains(&"Read".to_string()), "read-only tools stay: {:?}", tools);
-    assert!(!tools.contains(&"Write".to_string()), "Write must be hidden in plan mode: {:?}", tools);
+    assert!(
+        tools.contains(&"Read".to_string()),
+        "read-only tools stay: {:?}",
+        tools
+    );
+    assert!(
+        !tools.contains(&"Write".to_string()),
+        "Write must be hidden in plan mode: {:?}",
+        tools
+    );
     let second = request_messages_text(&requests[1]);
-    assert!(second.contains("not available in plan mode"), "tool error missing: {}", second);
-    assert!(!cwd.path().join("test.txt").exists(), "plan mode must not write files");
+    assert!(
+        second.contains("not available in plan mode"),
+        "tool error missing: {}",
+        second
+    );
+    assert!(
+        !cwd.path().join("test.txt").exists(),
+        "plan mode must not write files"
+    );
 }
 
 /// `--allowedTools Write` adds Write to the allow list, permitting it in default mode.
@@ -194,8 +252,14 @@ async fn allowed_tools_write_permits_write_in_default_mode() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("allowed", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--allowedTools", "Write"
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--allowedTools",
+                "Write",
             ])
             .mock("mock-model", &server)
             .arg("write a file")
@@ -207,8 +271,14 @@ async fn allowed_tools_write_permits_write_in_default_mode() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["result"], "write ok");
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
-    assert!(denials.is_empty(), "Write should be allowed via --allowedTools, got denials: {:?}", denials);
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
+    assert!(
+        denials.is_empty(),
+        "Write should be allowed via --allowedTools, got denials: {:?}",
+        denials
+    );
 }
 
 /// `--disallowedTools Read` removes Read from the tools list sent to the model.
@@ -223,8 +293,14 @@ async fn disallowed_tools_removes_tool_from_request() {
     let (stdout, _, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("disallowed", &home, &cwd)
             .args([
-                "-p", "--output-format", "stream-json", "--bare", "--setting-sources", "",
-                "--disallowedTools", "Read"
+                "-p",
+                "--output-format",
+                "stream-json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--disallowedTools",
+                "Read",
             ])
             .mock("mock-model", &server)
             .arg("read a file")
@@ -236,10 +312,17 @@ async fn disallowed_tools_removes_tool_from_request() {
     assert_eq!(code, 0);
     let lines = ndjson(&stdout);
     let init = &lines[0];
-    let tools: Vec<String> = init["tools"].as_array().unwrap()
-        .iter().filter_map(|t| t["function"]["name"].as_str().map(|s| s.to_string()))
+    let tools: Vec<String> = init["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|t| t["function"]["name"].as_str().map(|s| s.to_string()))
         .collect();
-    assert!(!tools.contains(&"Read".to_string()), "Read should be removed from tools list: {:?}", tools);
+    assert!(
+        !tools.contains(&"Read".to_string()),
+        "Read should be removed from tools list: {:?}",
+        tools
+    );
 }
 
 /// A deny rule in project `.zen/settings.json` beats `--allowedTools`.
@@ -251,7 +334,11 @@ async fn settings_deny_beats_cli_allow() {
 
     // Project settings with deny rule for Write
     // Scoped deny: a bare `Write` deny would hide the tool entirely (SPEC C2.2).
-    write_settings(cwd.path(), "settings.json", r#"{"permissions":{"deny":["Write(test.txt)"]}}"#);
+    write_settings(
+        cwd.path(),
+        "settings.json",
+        r#"{"permissions":{"deny":["Write(test.txt)"]}}"#,
+    );
 
     let server = MockServer::start(vec![
         Reply::with_tool_calls(
@@ -268,8 +355,14 @@ async fn settings_deny_beats_cli_allow() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("settings_deny", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "project",
-                "--allowedTools", "Write"
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "project",
+                "--allowedTools",
+                "Write",
             ])
             .mock("mock-model", &server)
             .arg("write a file")
@@ -280,7 +373,9 @@ async fn settings_deny_beats_cli_allow() {
 
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
     assert!(!denials.is_empty(), "settings deny should beat CLI allow");
     let denied_tool = denials[0]["tool_name"].as_str().expect("tool_name string");
     assert_eq!(denied_tool, "Write");
@@ -303,11 +398,19 @@ async fn read_only_tools_allowed_by_default() {
             }])),
         ),
         Reply::text("read ok"),
-    ]).await;
+    ])
+    .await;
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("readonly", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
             .mock("mock-model", &server)
             .arg("read a file")
             .run_output()
@@ -318,8 +421,14 @@ async fn read_only_tools_allowed_by_default() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
     assert_eq!(v["result"], "read ok");
-    let denials = v["permission_denials"].as_array().expect("permission_denials array");
-    assert!(denials.is_empty(), "Read should be allowed by default, got denials: {:?}", denials);
+    let denials = v["permission_denials"]
+        .as_array()
+        .expect("permission_denials array");
+    assert!(
+        denials.is_empty(),
+        "Read should be allowed by default, got denials: {:?}",
+        denials
+    );
 }
 fn write_call(id: &str) -> Reply {
     Reply::with_tool_calls(
@@ -346,7 +455,14 @@ async fn c2_2_settings_bare_deny_removes_tool_scoped_deny_keeps_it() {
     let server = MockServer::single_text("ok").await;
     let (_, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("c22", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", "project"])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "project",
+            ])
             .mock("mock-model", &server)
             .arg("hi")
             .run_output()
@@ -356,8 +472,16 @@ async fn c2_2_settings_bare_deny_removes_tool_scoped_deny_keeps_it() {
     assert_eq!(code, 0, "stderr: {}", stderr);
     let requests = server.requests().await;
     let tools = request_tool_names(&requests[0]);
-    assert!(!tools.contains(&"Bash".to_string()), "Bash should be hidden: {:?}", tools);
-    assert!(tools.contains(&"WebFetch".to_string()), "WebFetch should stay: {:?}", tools);
+    assert!(
+        !tools.contains(&"Bash".to_string()),
+        "Bash should be hidden: {:?}",
+        tools
+    );
+    assert!(
+        tools.contains(&"WebFetch".to_string()),
+        "WebFetch should stay: {:?}",
+        tools
+    );
     assert!(tools.contains(&"Read".to_string()), "{:?}", tools);
 }
 
@@ -370,12 +494,26 @@ async fn c2_13_hook_allow_does_not_override_ask_rule() {
         let tag = if ask_rule { "c213_ask" } else { "c213_noask" };
         let home = TempDir::new(&format!("{}_home", tag));
         let cwd = TempDir::new(&format!("{}_cwd", tag));
-        let perms = if ask_rule { r#""permissions":{"ask":["Write"]},"# } else { "" };
-        write_settings(cwd.path(), "settings.json", &format!("{{{}{}}}", perms, hook));
+        let perms = if ask_rule {
+            r#""permissions":{"ask":["Write"]},"#
+        } else {
+            ""
+        };
+        write_settings(
+            cwd.path(),
+            "settings.json",
+            &format!("{{{}{}}}", perms, hook),
+        );
         let server = MockServer::start(vec![write_call("call_1"), Reply::text("done")]).await;
         let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
             ZenRun::new(tag, &home, &cwd)
-                .args(["-p", "--output-format", "json", "--setting-sources", "project"])
+                .args([
+                    "-p",
+                    "--output-format",
+                    "json",
+                    "--setting-sources",
+                    "project",
+                ])
                 .mock("mock-model", &server)
                 .arg("write")
                 .run_output()
@@ -384,9 +522,23 @@ async fn c2_13_hook_allow_does_not_override_ask_rule() {
         .expect("timed out");
         assert_eq!(code, 0, "stderr: {}", stderr);
         let v = last_result(&stdout);
-        let denials = v["permission_denials"].as_array().expect("permission_denials");
-        assert_eq!(cwd.path().join("out.txt").exists(), expect_written, "ask_rule={} {}", ask_rule, v);
-        assert_eq!(denials.is_empty(), expect_written, "ask_rule={} {}", ask_rule, v);
+        let denials = v["permission_denials"]
+            .as_array()
+            .expect("permission_denials");
+        assert_eq!(
+            cwd.path().join("out.txt").exists(),
+            expect_written,
+            "ask_rule={} {}",
+            ask_rule,
+            v
+        );
+        assert_eq!(
+            denials.is_empty(),
+            expect_written,
+            "ask_rule={} {}",
+            ask_rule,
+            v
+        );
     }
 }
 
@@ -410,8 +562,14 @@ async fn c2_4_compound_bash_needs_every_part_allowed() {
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("c24", &home, &cwd)
             .args([
-                "-p", "--output-format", "json", "--bare", "--setting-sources", "",
-                "--allowedTools", "Bash(echo *)",
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+                "--allowedTools",
+                "Bash(echo *)",
             ])
             .mock("mock-model", &server)
             .arg("go")
@@ -421,6 +579,11 @@ async fn c2_4_compound_bash_needs_every_part_allowed() {
     .expect("timed out");
     assert_eq!(code, 0, "stderr: {}", stderr);
     let v = last_result(&stdout);
-    assert_eq!(v["permission_denials"].as_array().map(|a| a.len()), Some(1), "{}", v);
+    assert_eq!(
+        v["permission_denials"].as_array().map(|a| a.len()),
+        Some(1),
+        "{}",
+        v
+    );
     assert!(!cwd.path().join("pwned").exists());
 }

@@ -8,9 +8,22 @@ use common::*;
 use std::io::{Read, Write};
 use std::time::{Duration, Instant};
 
-fn run_p(tag: &str, home: &TempDir, cwd: &TempDir, server: &MockServer, prompt: &str) -> (serde_json::Value, i32) {
+fn run_p(
+    tag: &str,
+    home: &TempDir,
+    cwd: &TempDir,
+    server: &MockServer,
+    prompt: &str,
+) -> (serde_json::Value, i32) {
     let (stdout, stderr, code) = ZenRun::new(tag, home, cwd)
-        .args(["-p", "--output-format", "json", "--setting-sources", "", "--no-session-persistence"])
+        .args([
+            "-p",
+            "--output-format",
+            "json",
+            "--setting-sources",
+            "",
+            "--no-session-persistence",
+        ])
         .mock("mock-model", server)
         .arg(prompt)
         .run_output();
@@ -51,9 +64,19 @@ async fn c5_4_headless_builtins_answer_locally() {
     let (v, code) = run_p("pb6", &home, &cwd, &server, "/help");
     assert_eq!(code, 1);
     assert_eq!(v["is_error"], true);
-    assert!(v["result"].as_str().unwrap().contains("/help isn't available in -p mode"), "{}", v);
+    assert!(
+        v["result"]
+            .as_str()
+            .unwrap()
+            .contains("/help isn't available in -p mode"),
+        "{}",
+        v
+    );
 
-    assert!(server.requests().await.is_empty(), "built-ins must not call the model");
+    assert!(
+        server.requests().await.is_empty(),
+        "built-ins must not call the model"
+    );
 }
 
 /// C5.4: `/mcp` reports each configured server's status.
@@ -61,10 +84,20 @@ async fn c5_4_headless_builtins_answer_locally() {
 async fn c5_4_headless_mcp_lists_server_status() {
     let home = TempDir::new("pmcp_home");
     let cwd = TempDir::new("pmcp_cwd");
-    cwd.write(".mcp.json", r#"{"mcpServers":{"broken":{"command":"/nonexistent/zen-mcp-server"}}}"#);
+    cwd.write(
+        ".mcp.json",
+        r#"{"mcpServers":{"broken":{"command":"/nonexistent/zen-mcp-server"}}}"#,
+    );
     let server = MockServer::single_text("unused").await;
     let (stdout, _, code) = ZenRun::new("pmcp", &home, &cwd)
-        .args(["-p", "--output-format", "json", "--setting-sources", "", "--no-session-persistence"])
+        .args([
+            "-p",
+            "--output-format",
+            "json",
+            "--setting-sources",
+            "",
+            "--no-session-persistence",
+        ])
         .env("MCP_TIMEOUT", Some("3000"))
         .mock("mock-model", &server)
         .arg("/mcp")
@@ -84,7 +117,11 @@ async fn c5_1_review_sends_review_prompt() {
     assert_eq!(v["result"], "looks fine");
     let reqs = server.requests().await;
     let text = request_messages_text(&reqs[0]);
-    assert!(text.contains("git diff") && text.contains("Focus: error handling"), "{}", text);
+    assert!(
+        text.contains("git diff") && text.contains("Focus: error handling"),
+        "{}",
+        text
+    );
 }
 
 fn bash_call(id: &str, cmd: &str) -> Reply {
@@ -107,21 +144,38 @@ async fn c5_2_command_model_and_allowed_tools_apply() {
         ".zen/commands/hello.md",
         "---\ndescription: say hello\nmodel: special-model\nallowed-tools: Bash(echo zen-hello)\n---\nRun echo zen-hello\n",
     );
-    cwd.write(".zen/commands/plain.md", "---\ndescription: no tools\n---\nRun echo zen-hello\n");
+    cwd.write(
+        ".zen/commands/plain.md",
+        "---\ndescription: no tools\n---\nRun echo zen-hello\n",
+    );
 
-    let server = MockServer::start(vec![bash_call("call_1", "echo zen-hello"), Reply::text("done")]).await;
+    let server = MockServer::start(vec![
+        bash_call("call_1", "echo zen-hello"),
+        Reply::text("done"),
+    ])
+    .await;
     let (v, code) = run_p("cmdfm", &home, &cwd, &server, "/hello");
     assert_eq!(code, 0, "{}", v);
     assert_eq!(v["permission_denials"], serde_json::json!([]), "{}", v);
     let reqs = server.requests().await;
     assert_eq!(request_json(&reqs[0])["model"], "special-model");
-    assert!(request_messages_text(&reqs[1]).contains("zen-hello"), "tool output reaches the model");
+    assert!(
+        request_messages_text(&reqs[1]).contains("zen-hello"),
+        "tool output reaches the model"
+    );
 
     // Control: the same call from a command without allowed-tools is denied in -p.
-    let server2 = MockServer::start(vec![bash_call("call_2", "echo zen-hello"), Reply::text("done")]).await;
+    let server2 = MockServer::start(vec![
+        bash_call("call_2", "echo zen-hello"),
+        Reply::text("done"),
+    ])
+    .await;
     let (v2, _) = run_p("cmdfm2", &home, &cwd, &server2, "/plain");
     assert_eq!(v2["permission_denials"][0]["tool_name"], "Bash", "{}", v2);
-    assert_eq!(request_json(&server2.requests().await[0])["model"], "mock-model");
+    assert_eq!(
+        request_json(&server2.requests().await[0])["model"],
+        "mock-model"
+    );
 }
 
 /// C6.4: in stream-json, the sub-agent's own messages carry parent_tool_use_id = Task call id.
@@ -141,21 +195,49 @@ async fn c6_4_stream_json_subagent_lines_carry_parent_tool_use_id() {
     ])
     .await;
     let (stdout, stderr, code) = ZenRun::new("c64", &home, &cwd)
-        .args(["-p", "--output-format", "stream-json", "--bare", "--setting-sources", "",
-            "--permission-mode", "bypassPermissions", "--no-session-persistence", "--agents", agents])
+        .args([
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--bare",
+            "--setting-sources",
+            "",
+            "--permission-mode",
+            "bypassPermissions",
+            "--no-session-persistence",
+            "--agents",
+            agents,
+        ])
         .mock("mock-model", &server)
         .arg("delegate")
         .run_output();
     assert_eq!(code, 0, "stderr: {}", stderr);
     let lines = ndjson(&stdout);
-    let child: Vec<&serde_json::Value> =
-        lines.iter().filter(|l| l["parent_tool_use_id"] == "call_task_9").collect();
+    let child: Vec<&serde_json::Value> = lines
+        .iter()
+        .filter(|l| l["parent_tool_use_id"] == "call_task_9")
+        .collect();
     let kinds: Vec<&str> = child.iter().map(|l| l["type"].as_str().unwrap()).collect();
-    assert!(kinds.contains(&"assistant") && kinds.contains(&"user"), "{}", stdout);
-    assert!(child.iter().any(|l| l.to_string().contains("call_sub_bash")), "sub-agent tool_use");
-    assert!(child.iter().any(|l| l.to_string().contains("sub done")), "sub-agent final text");
+    assert!(
+        kinds.contains(&"assistant") && kinds.contains(&"user"),
+        "{}",
+        stdout
+    );
+    assert!(
+        child
+            .iter()
+            .any(|l| l.to_string().contains("call_sub_bash")),
+        "sub-agent tool_use"
+    );
+    assert!(
+        child.iter().any(|l| l.to_string().contains("sub done")),
+        "sub-agent final text"
+    );
     // The parent's own Task call and final answer stay top-level.
-    let parent_final = lines.iter().find(|l| l["type"] == "assistant" && l.to_string().contains("parent done")).unwrap();
+    let parent_final = lines
+        .iter()
+        .find(|l| l["type"] == "assistant" && l.to_string().contains("parent done"))
+        .unwrap();
     assert!(parent_final["parent_tool_use_id"].is_null());
     assert!(lines.iter().all(|l| l["session_id"].is_string()));
 }
@@ -166,7 +248,8 @@ async fn c5_1_repl_builtins_rename_export_resume() {
     let home = TempDir::new("replb_home");
     let cwd = TempDir::new("replb_cwd");
     cwd.subdir("extra");
-    let server = MockServer::start(vec![Reply::text("hi there"), Reply::text("second answer")]).await;
+    let server =
+        MockServer::start(vec![Reply::text("hi there"), Reply::text("second answer")]).await;
     let (stdout, stderr, code) = ZenRun::new("replb", &home, &cwd)
         .args(["--setting-sources", ""])
         .mock("mock-model", &server)
@@ -174,13 +257,25 @@ async fn c5_1_repl_builtins_rename_export_resume() {
         .run_output();
     assert_eq!(code, 0, "stderr: {}", stderr);
     assert!(stdout.contains("hi there"), "{}", stdout);
-    assert!(stdout.contains("session renamed to my-feature"), "{}", stdout);
+    assert!(
+        stdout.contains("session renamed to my-feature"),
+        "{}",
+        stdout
+    );
     assert!(stdout.contains("added working directory"), "{}", stdout);
     assert!(stderr.contains("not a directory"), "{}", stderr);
-    assert!(stdout.contains("Context usage (estimated)") && stdout.contains("- messages (2)"), "{}", stdout);
+    assert!(
+        stdout.contains("Context usage (estimated)") && stdout.contains("- messages (2)"),
+        "{}",
+        stdout
+    );
     assert!(stdout.contains("No MCP servers configured."), "{}", stdout);
     let md = std::fs::read_to_string(cwd.path().join("out.md")).expect("export file");
-    assert!(md.contains("## User\n\nhello zen") && md.contains("## Assistant\n\nhi there"), "{}", md);
+    assert!(
+        md.contains("## User\n\nhello zen") && md.contains("## Assistant\n\nhi there"),
+        "{}",
+        md
+    );
 
     // A new REPL resumes the renamed session and sends its history with the next prompt.
     let (stdout2, stderr2, code2) = ZenRun::new("replb2", &home, &cwd)
@@ -189,18 +284,29 @@ async fn c5_1_repl_builtins_rename_export_resume() {
         .stdin("/resume\n/resume my-feature\nand again\n/exit\n")
         .run_output();
     assert_eq!(code2, 0, "stderr: {}", stderr2);
-    assert!(stdout2.contains("my-feature"), "listing shows the title: {}", stdout2);
+    assert!(
+        stdout2.contains("my-feature"),
+        "listing shows the title: {}",
+        stdout2
+    );
     assert!(stdout2.contains("(2 messages)"), "{}", stdout2);
     assert!(stdout2.contains("second answer"), "{}", stdout2);
     let reqs = server.requests().await;
     let last = request_messages_text(reqs.last().unwrap());
-    assert!(last.contains("hello zen") && last.contains("hi there") && last.contains("and again"), "{}", last);
+    assert!(
+        last.contains("hello zen") && last.contains("hi there") && last.contains("and again"),
+        "{}",
+        last
+    );
 }
 
 /// `ps` state of a pid (Linux and macOS; macOS has no /proc). None = no such process.
 #[cfg(unix)]
 fn ps_stat(pid: &str) -> Option<String> {
-    let o = std::process::Command::new("ps").args(["-o", "stat=", "-p", pid]).output().ok()?;
+    let o = std::process::Command::new("ps")
+        .args(["-o", "stat=", "-p", pid])
+        .output()
+        .ok()?;
     let s = String::from_utf8_lossy(&o.stdout).trim().to_string();
     (o.status.success() && !s.is_empty()).then_some(s)
 }
@@ -220,9 +326,15 @@ async fn c8_9_repl_sigint_cancels_turn_and_continues() {
     let cwd = TempDir::new("replint_cwd");
     let pid_file = cwd.path().join("sleep.pid");
     let cmd = format!("sleep 30 & echo $! > '{}'; wait", pid_file.display());
-    let server = MockServer::start(vec![bash_call("call_sleep", &cmd), Reply::text("after ok")]).await;
+    let server =
+        MockServer::start(vec![bash_call("call_sleep", &cmd), Reply::text("after ok")]).await;
     let mut child = ZenRun::new("replint", &home, &cwd)
-        .args(["--setting-sources", "", "--permission-mode", "bypassPermissions"])
+        .args([
+            "--setting-sources",
+            "",
+            "--permission-mode",
+            "bypassPermissions",
+        ])
         .mock("mock-model", &server)
         .spawn_piped();
     let mut stdin = child.stdin.take().unwrap();
@@ -235,17 +347,27 @@ async fn c8_9_repl_sigint_cancels_turn_and_continues() {
                 break s.trim().to_string();
             }
         }
-        assert!(start.elapsed() < Duration::from_secs(20), "sleep never started");
+        assert!(
+            start.elapsed() < Duration::from_secs(20),
+            "sleep never started"
+        );
         std::thread::sleep(Duration::from_millis(50));
     };
     assert!(alive(&sleep_pid));
-    assert!(std::process::Command::new("kill").args(["-INT", &child.id().to_string()]).status().unwrap().success());
+    assert!(std::process::Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap()
+        .success());
     let start = Instant::now();
     while alive(&sleep_pid) && start.elapsed() < Duration::from_secs(5) {
         std::thread::sleep(Duration::from_millis(50));
     }
     assert!(!alive(&sleep_pid), "sleep survived Ctrl-C");
-    assert!(child.try_wait().unwrap().is_none(), "REPL must keep running after Ctrl-C");
+    assert!(
+        child.try_wait().unwrap().is_none(),
+        "REPL must keep running after Ctrl-C"
+    );
 
     writeln!(stdin, "next prompt").unwrap();
     writeln!(stdin, "/exit").unwrap();
@@ -262,14 +384,29 @@ async fn c8_9_repl_sigint_cancels_turn_and_continues() {
         std::thread::sleep(Duration::from_millis(20));
     };
     let (mut out, mut err) = (String::new(), String::new());
-    child.stdout.take().unwrap().read_to_string(&mut out).unwrap();
-    child.stderr.take().unwrap().read_to_string(&mut err).unwrap();
+    child
+        .stdout
+        .take()
+        .unwrap()
+        .read_to_string(&mut out)
+        .unwrap();
+    child
+        .stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut err)
+        .unwrap();
     assert_eq!(status.code(), Some(0), "stdout {} stderr {}", out, err);
     assert!(err.contains("Interrupted."), "{}", err);
     assert!(out.contains("after ok") && out.contains("bye"), "{}", out);
     let reqs = server.requests().await;
     let msgs = request_messages(reqs.last().unwrap());
-    assert!(msgs.iter().all(|m| m["role"] != "tool" && m.get("tool_calls").is_none()), "orphan left: {:?}", msgs);
+    assert!(
+        msgs.iter()
+            .all(|m| m["role"] != "tool" && m.get("tool_calls").is_none()),
+        "orphan left: {:?}",
+        msgs
+    );
     assert!(request_messages_text(reqs.last().unwrap()).contains("next prompt"));
 }
 
@@ -287,14 +424,27 @@ async fn c5_1_repl_config_saves_and_clear_starts_new_session() {
         .stdin("/config autoCompact=5000\n/config theme=dark\nfirst\n/clear\nsecond\n/exit\n")
         .run_output();
     assert_eq!(code, 0, "stderr: {}", stderr);
-    let saved: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(cwd.path().join(".zen/settings.local.json")).unwrap()).unwrap();
-    assert_eq!(saved, serde_json::json!({"model": "keep-me", "autoCompact": 5000, "theme": "dark"}));
-    assert!(stdout.contains("context cleared, new session:"), "{}", stdout);
+    let saved: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(cwd.path().join(".zen/settings.local.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        saved,
+        serde_json::json!({"model": "keep-me", "autoCompact": 5000, "theme": "dark"})
+    );
+    assert!(
+        stdout.contains("context cleared, new session:"),
+        "{}",
+        stdout
+    );
     // The turn after /clear does not see the first exchange.
     let reqs = server.requests().await;
     let last = request_messages_text(reqs.last().unwrap());
-    assert!(last.contains("second") && !last.contains("first"), "{}", last);
+    assert!(
+        last.contains("second") && !last.contains("first"),
+        "{}",
+        last
+    );
     // Two transcripts: one per session.
     let proj = home.path().join(".zen").join("projects");
     let files: Vec<_> = walkdir_jsonl(&proj);
@@ -327,8 +477,16 @@ async fn c10_1_autocompact_flag_sets_threshold() {
     ])
     .await;
     let run = |tag: &str, cont: bool, prompt: String| {
-        let mut r = ZenRun::new(tag, &home, &cwd).args(["-p", "--output-format", "json", "--bare",
-            "--setting-sources", "", "--autocompact", "10"]);
+        let mut r = ZenRun::new(tag, &home, &cwd).args([
+            "-p",
+            "--output-format",
+            "json",
+            "--bare",
+            "--setting-sources",
+            "",
+            "--autocompact",
+            "10",
+        ]);
         if cont {
             r = r.arg("--continue");
         }

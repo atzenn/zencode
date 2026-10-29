@@ -20,8 +20,16 @@ async fn json_output_result_shape_and_session_id() {
 
     let out = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("json", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
-            .arg("--session-id").arg("00000000-0000-4000-8000-000000000003")
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
+            .arg("--session-id")
+            .arg("00000000-0000-4000-8000-000000000003")
             .mock("mock-model", &server)
             .arg("say hi")
             .run_output()
@@ -33,7 +41,12 @@ async fn json_output_result_shape_and_session_id() {
     assert_eq!(code, 0, "stderr: {}\nstdout: {}", stderr, stdout);
 
     let lines = ndjson(&stdout);
-    assert_eq!(lines.len(), 1, "json output must be a single result line:\n{}", stdout);
+    assert_eq!(
+        lines.len(),
+        1,
+        "json output must be a single result line:\n{}",
+        stdout
+    );
     let v = &lines[0];
     assert_eq!(v["type"], "result");
     assert_eq!(v["subtype"], "success");
@@ -90,7 +103,12 @@ async fn text_output_is_just_the_answer() {
     .expect("timed out");
 
     assert_eq!(code, 0, "stderr: {}", stderr);
-    assert_eq!(stdout.trim(), "plain text answer", "unexpected stdout: {:?}", stdout);
+    assert_eq!(
+        stdout.trim(),
+        "plain text answer",
+        "unexpected stdout: {:?}",
+        stdout
+    );
 }
 
 /// `stream-json` starts with a `system`/`init` line, includes an `assistant` line, and always
@@ -111,7 +129,8 @@ async fn stream_json_line_shapes_and_order() {
                 "--setting-sources",
                 "",
             ])
-            .arg("--session-id").arg("00000000-0000-4000-8000-000000000001")
+            .arg("--session-id")
+            .arg("00000000-0000-4000-8000-000000000001")
             .mock("mock-model", &server)
             .arg("say hi")
             .run_output()
@@ -121,7 +140,11 @@ async fn stream_json_line_shapes_and_order() {
 
     assert_eq!(code, 0, "stderr: {}", stderr);
     let lines = ndjson(&stdout);
-    assert!(lines.len() >= 3, "expected init + assistant + result:\n{}", stdout);
+    assert!(
+        lines.len() >= 3,
+        "expected init + assistant + result:\n{}",
+        stdout
+    );
 
     // Init line is first and carries the documented fields.
     let init = &lines[0];
@@ -171,7 +194,11 @@ async fn stream_json_line_shapes_and_order() {
         "assistant",
     );
     // SPEC C8.3: assistant lines carry a uuid.
-    assert!(!asst["uuid"].as_str().unwrap_or("").is_empty(), "assistant uuid: {}", asst);
+    assert!(
+        !asst["uuid"].as_str().unwrap_or("").is_empty(),
+        "assistant uuid: {}",
+        asst
+    );
 
     // Last line is the result and matches the assistant text.
     let last = lines.last().unwrap();
@@ -181,7 +208,11 @@ async fn stream_json_line_shapes_and_order() {
 
     // Every line carries the same session id.
     for l in &lines {
-        assert_eq!(l["session_id"], "00000000-0000-4000-8000-000000000001", "line lost session id: {}", l);
+        assert_eq!(
+            l["session_id"], "00000000-0000-4000-8000-000000000001",
+            "line lost session id: {}",
+            l
+        );
     }
 }
 
@@ -195,7 +226,14 @@ async fn model_error_yields_error_result_and_nonzero_exit() {
 
     let (stdout, stderr, code) = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("err", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
             .mock("mock-model", &server)
             .arg("hi")
             .run_output()
@@ -203,7 +241,11 @@ async fn model_error_yields_error_result_and_nonzero_exit() {
     .await
     .expect("timed out");
 
-    assert_ne!(code, 0, "model error must be a non-zero exit\nstdout: {}", stdout);
+    assert_ne!(
+        code, 0,
+        "model error must be a non-zero exit\nstdout: {}",
+        stdout
+    );
     let v = last_result(&stdout);
     assert_eq!(v["is_error"], true);
     assert_eq!(v["subtype"], "error_during_execution");
@@ -235,7 +277,11 @@ async fn invalid_flag_is_rejected_with_stderr() {
         "clap should explain the error on stderr; stdout: {}",
         stdout
     );
-    assert!(stdout.trim().is_empty(), "nothing should go to stdout: {}", stdout);
+    assert!(
+        stdout.trim().is_empty(),
+        "nothing should go to stdout: {}",
+        stdout
+    );
 }
 
 /// `--output-format` with an unknown value is also rejected by clap.
@@ -253,7 +299,11 @@ async fn invalid_output_format_is_rejected() {
     .expect("timed out");
 
     assert_ne!(code, 0);
-    assert!(stderr.contains("yaml") || stderr.contains("invalid"), "stderr: {}", stderr);
+    assert!(
+        stderr.contains("yaml") || stderr.contains("invalid"),
+        "stderr: {}",
+        stderr
+    );
 }
 
 /// Missing prompt (no positional arg and stdin closed) is a clean error, not a panic.
@@ -301,8 +351,16 @@ async fn stdin_is_prepended_to_prompt() {
     let requests = server.requests().await;
     assert_eq!(requests.len(), 1, "expected exactly one model request");
     let text = request_messages_text(&requests[0]);
-    assert!(text.contains("stdin-payload-line"), "stdin missing: {}", text);
-    assert!(text.contains("arg-payload-line"), "prompt missing: {}", text);
+    assert!(
+        text.contains("stdin-payload-line"),
+        "stdin missing: {}",
+        text
+    );
+    assert!(
+        text.contains("arg-payload-line"),
+        "prompt missing: {}",
+        text
+    );
     // stdin comes first
     let si = text.find("stdin-payload-line").unwrap();
     let ai = text.find("arg-payload-line").unwrap();
@@ -340,8 +398,16 @@ async fn json_result_total_cost_matches_cost_ledger_for_paid_model() {
 
     let out = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("cost_paid", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
-            .arg("--session-id").arg(session_id)
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
+            .arg("--session-id")
+            .arg(session_id)
             .mock("gpt-4o", &server)
             .arg("say hi")
             .run_output()
@@ -357,8 +423,14 @@ async fn json_result_total_cost_matches_cost_ledger_for_paid_model() {
     assert_eq!(v["usage"]["input_tokens"], 7);
     assert_eq!(v["usage"]["output_tokens"], 3);
     let expected = 7.0 / 1_000_000.0 * 2.50 + 3.0 / 1_000_000.0 * 10.00;
-    let reported = v["total_cost_usd"].as_f64().expect("total_cost_usd is a number");
-    assert!(reported > 0.0, "paid model must not report a hard-coded 0.0: {}", v);
+    let reported = v["total_cost_usd"]
+        .as_f64()
+        .expect("total_cost_usd is a number");
+    assert!(
+        reported > 0.0,
+        "paid model must not report a hard-coded 0.0: {}",
+        v
+    );
     assert!(
         (reported - expected).abs() < 1e-12,
         "result total_cost_usd {} != priced cost {}",
@@ -367,7 +439,11 @@ async fn json_result_total_cost_matches_cost_ledger_for_paid_model() {
     );
 
     // The per-session ledger `zen cost` renders must total to the same number.
-    let ledger_path = home.path().join(".zen").join("cost").join(format!("{}.json", session_id));
+    let ledger_path = home
+        .path()
+        .join(".zen")
+        .join("cost")
+        .join(format!("{}.json", session_id));
     let ledger: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&ledger_path).expect("ledger written"))
             .expect("ledger is json");
@@ -395,8 +471,16 @@ async fn json_result_total_cost_is_genuine_zero_for_free_model() {
 
     let out = tokio::time::timeout(TEST_TIMEOUT, async {
         ZenRun::new("cost_free", &home, &cwd)
-            .args(["-p", "--output-format", "json", "--bare", "--setting-sources", ""])
-            .arg("--session-id").arg("00000000-0000-4000-8000-000000000011")
+            .args([
+                "-p",
+                "--output-format",
+                "json",
+                "--bare",
+                "--setting-sources",
+                "",
+            ])
+            .arg("--session-id")
+            .arg("00000000-0000-4000-8000-000000000011")
             .mock("mock-model:free", &server)
             .arg("say hi")
             .run_output()

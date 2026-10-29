@@ -132,10 +132,22 @@ mod tests {
         let b = measure_default_budget().expect("prompt budget measurement");
         let names: Vec<&str> = b.per_tool.iter().map(|(n, _)| n.as_str()).collect();
         for expected in [
-            "Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "WebFetch", "TodoWrite",
-            "JobOutput", "JobKill",
+            "Read",
+            "Write",
+            "Edit",
+            "MultiEdit",
+            "Bash",
+            "Glob",
+            "Grep",
+            "WebFetch",
+            "TodoWrite",
+            "JobOutput",
+            "JobKill",
         ] {
-            assert!(names.contains(&expected), "missing tool {expected} in {names:?}");
+            assert!(
+                names.contains(&expected),
+                "missing tool {expected} in {names:?}"
+            );
         }
         assert_eq!(
             b.total(),

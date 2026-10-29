@@ -115,10 +115,18 @@ pub fn est_tokens(s: &str) -> u64 {
 pub fn extract_identifier(tool_name: &str, arguments: &str) -> Option<String> {
     let _ = tool_name;
     let args: Value = serde_json::from_str(arguments).unwrap_or(Value::Null);
-    ["path", "file", "file_path", "pattern", "command", "query", "url"]
-        .iter()
-        .find_map(|k| args.get(k).and_then(|v| v.as_str()))
-        .map(|s| s.to_string())
+    [
+        "path",
+        "file",
+        "file_path",
+        "pattern",
+        "command",
+        "query",
+        "url",
+    ]
+    .iter()
+    .find_map(|k| args.get(k).and_then(|v| v.as_str()))
+    .map(|s| s.to_string())
 }
 
 /// Human-readable label for a tool result, e.g. `read src/main.rs`.
@@ -205,7 +213,9 @@ fn tool_call_args(messages: &[ChatMessage]) -> HashMap<String, (String, String)>
 /// `turn_starts[0]` is always 0; entry k is `messages.len()` just before model
 /// call k. Returns 0 for empty input (defensive; callers always seed `[0]`).
 pub(crate) fn turn_of(turn_starts: &[usize], index: usize) -> usize {
-    turn_starts.partition_point(|&s| s <= index).saturating_sub(1)
+    turn_starts
+        .partition_point(|&s| s <= index)
+        .saturating_sub(1)
 }
 
 /// Decide whether a tool result is a pruning candidate.
@@ -282,15 +292,9 @@ pub fn prune_messages(
         let content = m.content.as_deref().unwrap_or("");
         let tokens = est_tokens(content);
         let age = current_turn.saturating_sub(turn_of(turn_starts, i));
-        let (label, identifier) = match m
-            .tool_call_id
-            .as_deref()
-            .and_then(|id| args_by_id.get(id))
+        let (label, identifier) = match m.tool_call_id.as_deref().and_then(|id| args_by_id.get(id))
         {
-            Some((name, args)) => (
-                tool_call_label(name, args),
-                extract_identifier(name, args),
-            ),
+            Some((name, args)) => (tool_call_label(name, args), extract_identifier(name, args)),
             None => ("tool_result".to_string(), None),
         };
         candidates.push((i, label, identifier, tokens, age));
@@ -447,7 +451,10 @@ mod tests {
         assert!(capped.starts_with(TRUNCATE_MARKER));
         assert!(capped.contains("re-read with a narrower query"));
         assert!(saved > 0, "saved tokens must be positive");
-        assert!(est_tokens(&capped) <= 8_000 + 50, "capped content near the cap");
+        assert!(
+            est_tokens(&capped) <= 8_000 + 50,
+            "capped content near the cap"
+        );
     }
 
     #[test]

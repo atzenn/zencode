@@ -189,7 +189,10 @@ impl CommandHooks {
         obj.insert("transcript_path".into(), json!(self.transcript_path));
         obj.insert("cwd".into(), json!(self.cwd.display().to_string()));
         obj.insert("hook_event_name".into(), json!(event.as_str()));
-        obj.insert("permission_mode".into(), json!(self.permission_mode.as_str()));
+        obj.insert(
+            "permission_mode".into(),
+            json!(self.permission_mode.as_str()),
+        );
         Value::Object(obj).to_string()
     }
 }
@@ -212,7 +215,9 @@ pub fn matches_target(matcher: Option<&str>, target: &str) -> bool {
             .filter(|s| !s.is_empty())
             .any(|name| name == target);
     }
-    regex::Regex::new(m).map(|re| re.is_match(target)).unwrap_or(false)
+    regex::Regex::new(m)
+        .map(|re| re.is_match(target))
+        .unwrap_or(false)
 }
 
 /// Truncate to [`HOOK_OUTPUT_LIMIT`] chars (char-safe) with a note (C3.13).
@@ -222,7 +227,10 @@ fn cap_output(s: &str) -> String {
         return s.to_string();
     }
     let head: String = s.chars().take(HOOK_OUTPUT_LIMIT).collect();
-    format!("{}\n[hook output truncated: {} of {} chars shown]", head, HOOK_OUTPUT_LIMIT, count)
+    format!(
+        "{}\n[hook output truncated: {} of {} chars shown]",
+        head, HOOK_OUTPUT_LIMIT, count
+    )
 }
 
 /// Events where exit code 2 blocks (C3.5; PreCompact/PermissionRequest also block in zen).
@@ -279,11 +287,16 @@ impl HookRunner for CommandHooks {
             return HookOutcome::default();
         }
         let stdin_json = self.build_stdin(event, &payload);
-        let results = futures::future::join_all(
-            specs
-                .iter()
-                .map(|spec| run_one(spec, &stdin_json, &self.cwd, &self.env, self.api_key_env.as_deref(), event)),
-        )
+        let results = futures::future::join_all(specs.iter().map(|spec| {
+            run_one(
+                spec,
+                &stdin_json,
+                &self.cwd,
+                &self.env,
+                self.api_key_env.as_deref(),
+                event,
+            )
+        }))
         .await;
 
         let mut outcome = HookOutcome::default();
@@ -412,7 +425,13 @@ async fn run_one(
 fn interpret_output(output: &std::process::Output, event: HookEvent) -> SingleOutcome {
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    let reason = || if stderr.trim().is_empty() { stdout.clone() } else { stderr.clone() };
+    let reason = || {
+        if stderr.trim().is_empty() {
+            stdout.clone()
+        } else {
+            stderr.clone()
+        }
+    };
 
     match output.status.code() {
         Some(0) => interpret_success(&stdout, event),
@@ -421,7 +440,12 @@ fn interpret_output(output: &std::process::Output, event: HookEvent) -> SingleOu
             feedback: Some(reason()),
             ..Default::default()
         },
-        Some(2) if matches!(event, HookEvent::PostToolUse | HookEvent::PostToolUseFailure) => {
+        Some(2)
+            if matches!(
+                event,
+                HookEvent::PostToolUse | HookEvent::PostToolUseFailure
+            ) =>
+        {
             SingleOutcome {
                 feedback: Some(reason()),
                 ..Default::default()
@@ -430,7 +454,9 @@ fn interpret_output(output: &std::process::Output, event: HookEvent) -> SingleOu
         other => {
             let mut msg = format!(
                 "exit code {}",
-                other.map(|c| c.to_string()).unwrap_or_else(|| "signal".into())
+                other
+                    .map(|c| c.to_string())
+                    .unwrap_or_else(|| "signal".into())
             );
             let detail = reason();
             if !detail.trim().is_empty() {
@@ -552,8 +578,8 @@ fn interpret_json_stdout(obj: &serde_json::Map<String, Value>, event: HookEvent)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use crate::testutil::TempDir;
+    use std::fs;
 
     fn hooks_with(event: &str, matcher: Option<&str>, command: &str, timeout: u64) -> Value {
         let matcher_val = match matcher {
@@ -564,7 +590,13 @@ mod tests {
     }
 
     fn runner(hooks: Value, cwd: &Path) -> CommandHooks {
-        CommandHooks::new(hooks, "sess-1", "/tmp/transcript.jsonl", cwd.to_path_buf(), PermissionMode::Default)
+        CommandHooks::new(
+            hooks,
+            "sess-1",
+            "/tmp/transcript.jsonl",
+            cwd.to_path_buf(),
+            PermissionMode::Default,
+        )
     }
 
     #[tokio::test]
@@ -575,9 +607,14 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::UserPromptSubmit, "", json!({"prompt": "hi"})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(!out.blocked);
-        assert_eq!(out.feedback.as_deref().map(|s| s.trim()), Some("extra context"));
+        assert_eq!(
+            out.feedback.as_deref().map(|s| s.trim()),
+            Some("extra context")
+        );
     }
 
     #[tokio::test]
@@ -588,7 +625,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::PreToolUse, "Bash", json!({"tool_name": "Bash"})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out.blocked);
         assert_eq!(out.feedback.as_deref().map(|s| s.trim()), Some("nope"));
     }
@@ -601,7 +640,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::PreToolUse, "Bash", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(!out.blocked);
         assert!(out.feedback.is_none());
     }
@@ -615,13 +656,17 @@ mod tests {
         let out_edit = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionStart, "Edit", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out_edit.feedback.is_some());
 
         let out_bash = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionStart, "Bash", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out_bash.feedback.is_none());
     }
 
@@ -633,7 +678,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionStart, "Anything", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out.feedback.is_some());
     }
 
@@ -646,7 +693,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::PreToolUse, "Bash", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out.feedback.is_none());
     }
 
@@ -659,21 +708,34 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::PreToolUse, "Bash", json!({})),
-        ).await.unwrap();
-        assert_eq!(out.permission_override, Some(PermissionDecision::Deny("not allowed".into())));
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            out.permission_override,
+            Some(PermissionDecision::Deny("not allowed".into()))
+        );
     }
 
     #[tokio::test]
     async fn test_json_permission_decision_allow_and_ask() {
         let tmp = TempDir::new();
-        for (word, expected) in [("allow", PermissionDecision::Allow), ("ask", PermissionDecision::Ask)] {
-            let cmd = format!(r#"printf '{{"hookSpecificOutput":{{"permissionDecision":"{}"}}}}'"#, word);
+        for (word, expected) in [
+            ("allow", PermissionDecision::Allow),
+            ("ask", PermissionDecision::Ask),
+        ] {
+            let cmd = format!(
+                r#"printf '{{"hookSpecificOutput":{{"permissionDecision":"{}"}}}}'"#,
+                word
+            );
             let hooks = hooks_with("PreToolUse", None, &cmd, 10);
             let r = runner(hooks, tmp.path());
             let out = tokio::time::timeout(
                 Duration::from_secs(10),
                 r.run(HookEvent::PreToolUse, "Bash", json!({})),
-            ).await.unwrap();
+            )
+            .await
+            .unwrap();
             assert_eq!(out.permission_override, Some(expected));
         }
     }
@@ -687,7 +749,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::Stop, "", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out.stop_run);
         assert_eq!(out.stop_reason.as_deref(), Some("halt now"));
     }
@@ -701,7 +765,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::PostToolUse, "Bash", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("blocked by hook"));
     }
@@ -715,7 +781,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionStart, "startup", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert_eq!(out.feedback.as_deref(), Some("project uses cargo"));
     }
 
@@ -728,7 +796,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(8),
             r.run(HookEvent::PreToolUse, "Bash", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert!(start.elapsed() < Duration::from_secs(5));
         assert!(!out.blocked);
         assert!(out.feedback.is_none());
@@ -744,14 +814,22 @@ mod tests {
         let _ = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::UserPromptSubmit, "", json!({"prompt": "hello"})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
 
         let written = fs::read_to_string(&outfile).unwrap();
         let v: Value = serde_json::from_str(&written).unwrap();
         assert_eq!(v.get("prompt").and_then(|p| p.as_str()), Some("hello"));
         assert_eq!(v.get("session_id").and_then(|p| p.as_str()), Some("sess-1"));
-        assert_eq!(v.get("hook_event_name").and_then(|p| p.as_str()), Some("UserPromptSubmit"));
-        assert_eq!(v.get("permission_mode").and_then(|p| p.as_str()), Some("default"));
+        assert_eq!(
+            v.get("hook_event_name").and_then(|p| p.as_str()),
+            Some("UserPromptSubmit")
+        );
+        assert_eq!(
+            v.get("permission_mode").and_then(|p| p.as_str()),
+            Some("default")
+        );
         assert!(v.get("cwd").is_some());
     }
 
@@ -765,9 +843,13 @@ mod tests {
         let _ = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionStart, "startup", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         let written = fs::read_to_string(&outfile).unwrap();
-        assert!(written.trim().contains(tmp.path().to_string_lossy().as_ref()));
+        assert!(written
+            .trim()
+            .contains(tmp.path().to_string_lossy().as_ref()));
     }
 
     #[tokio::test]
@@ -778,7 +860,9 @@ mod tests {
         let out = tokio::time::timeout(
             Duration::from_secs(10),
             r.run(HookEvent::SessionEnd, "", json!({})),
-        ).await.unwrap();
+        )
+        .await
+        .unwrap();
         assert_eq!(out, HookOutcome::default());
     }
 
@@ -803,7 +887,13 @@ mod tests {
         let hooks = json!({"SessionStart": [{"hooks": [
             {"type": "command", "command": "printf", "args": ["%s|", "a  b", "$HOME"]}
         ]}]});
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::SessionStart, "startup", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::SessionStart,
+            "startup",
+            json!({}),
+        )
+        .await;
         // No shell: the argument keeps its spaces and `$HOME` is not expanded.
         assert_eq!(out.feedback.as_deref(), Some("a  b|$HOME|"));
     }
@@ -812,7 +902,12 @@ mod tests {
     async fn c3_1_disabled_runs_nothing() {
         let tmp = TempDir::new();
         let marker = tmp.path().join("ran");
-        let hooks = hooks_with("PreToolUse", None, &format!("touch {}; exit 2", marker.display()), 10);
+        let hooks = hooks_with(
+            "PreToolUse",
+            None,
+            &format!("touch {}; exit 2", marker.display()),
+            10,
+        );
         let r = runner(hooks, tmp.path()).with_disabled(true);
         let out = run_ev(&r, HookEvent::PreToolUse, "Bash", json!({})).await;
         assert_eq!(out, HookOutcome::default());
@@ -839,7 +934,12 @@ mod tests {
     async fn c3_14_settings_env_exported() {
         let tmp = TempDir::new();
         let outfile = tmp.path().join("env.txt");
-        let hooks = hooks_with("SessionStart", None, &format!("echo \"$FOO:$ZEN_PROJECT_DIR\" > {}", outfile.display()), 10);
+        let hooks = hooks_with(
+            "SessionStart",
+            None,
+            &format!("echo \"$FOO:$ZEN_PROJECT_DIR\" > {}", outfile.display()),
+            10,
+        );
         let env = HashMap::from([("FOO".to_string(), "bar".to_string())]);
         let r = runner(hooks, tmp.path()).with_env(env);
         run_ev(&r, HookEvent::SessionStart, "startup", json!({})).await;
@@ -867,7 +967,13 @@ mod tests {
     async fn c3_5_exit2_posttooluse_feeds_model_without_block() {
         let tmp = TempDir::new();
         let hooks = hooks_with("PostToolUse", None, "echo 'lint failed' >&2; exit 2", 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PostToolUse, "Edit", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PostToolUse,
+            "Edit",
+            json!({}),
+        )
+        .await;
         assert!(!out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("lint failed"));
     }
@@ -876,7 +982,13 @@ mod tests {
     async fn c3_5_exit2_non_blockable_event_is_plain_error() {
         let tmp = TempDir::new();
         let hooks = hooks_with("SessionEnd", None, "echo 'meh' >&2; exit 2", 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::SessionEnd, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::SessionEnd,
+            "",
+            json!({}),
+        )
+        .await;
         assert_eq!(out, HookOutcome::default());
     }
 
@@ -901,7 +1013,13 @@ mod tests {
     async fn c3_5_non_object_json_stdout_is_plain_text() {
         let tmp = TempDir::new();
         let hooks = hooks_with("UserPromptSubmit", None, "echo '[1,2]'", 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::UserPromptSubmit, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::UserPromptSubmit,
+            "",
+            json!({}),
+        )
+        .await;
         assert_eq!(out.feedback.as_deref(), Some("[1,2]"));
     }
 
@@ -910,7 +1028,13 @@ mod tests {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"systemMessage":"careful","suppressOutput":true}'"#;
         let hooks = hooks_with("PostToolUse", None, cmd, 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PostToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PostToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert_eq!(out.system_message.as_deref(), Some("careful"));
         assert!(!out.blocked);
         assert!(out.feedback.is_none());
@@ -921,13 +1045,25 @@ mod tests {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"hookSpecificOutput":{"permissionDecision":"allow","updatedInput":{"command":"ls -la"}}}'"#;
         let hooks = hooks_with("PreToolUse", Some("Bash"), cmd, 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PreToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PreToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert_eq!(out.permission_override, Some(PermissionDecision::Allow));
         assert_eq!(out.updated_input, Some(json!({"command": "ls -la"})));
 
         let cmd = r#"printf '{"hookSpecificOutput":{"permissionDecision":"deny"}}'"#;
         let hooks = hooks_with("PreToolUse", None, cmd, 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PreToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PreToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert_eq!(
             out.permission_override,
             Some(PermissionDecision::Deny("Denied by PreToolUse hook".into()))
@@ -939,7 +1075,13 @@ mod tests {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"hookSpecificOutput":{"updatedInput":{"x":1},"permissionDecision":"deny"}}'"#;
         let hooks = hooks_with("PostToolUse", None, cmd, 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PostToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PostToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert!(out.updated_input.is_none());
         assert!(out.permission_override.is_none());
     }
@@ -949,7 +1091,13 @@ mod tests {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"decision":"block","reason":"tests fail","hookSpecificOutput":{"updatedToolOutput":"[redacted]","additionalContext":"see CI"}}'"#;
         let hooks = hooks_with("PostToolUse", None, cmd, 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PostToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PostToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert_eq!(out.updated_output.as_deref(), Some("[redacted]"));
         assert_eq!(out.feedback.as_deref(), Some("tests fail\nsee CI"));
     }
@@ -958,12 +1106,24 @@ mod tests {
     async fn c3_9_stop_block_and_additional_context_continue() {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"decision":"block","reason":"run the tests first"}'"#;
-        let out = run_ev(&runner(hooks_with("Stop", None, cmd, 10), tmp.path()), HookEvent::Stop, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks_with("Stop", None, cmd, 10), tmp.path()),
+            HookEvent::Stop,
+            "",
+            json!({}),
+        )
+        .await;
         assert!(out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("run the tests first"));
 
         let cmd = r#"printf '{"hookSpecificOutput":{"additionalContext":"also update docs"}}'"#;
-        let out = run_ev(&runner(hooks_with("SubagentStop", None, cmd, 10), tmp.path()), HookEvent::SubagentStop, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks_with("SubagentStop", None, cmd, 10), tmp.path()),
+            HookEvent::SubagentStop,
+            "",
+            json!({}),
+        )
+        .await;
         assert!(out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("also update docs"));
     }
@@ -972,12 +1132,24 @@ mod tests {
     async fn c3_10_user_prompt_submit_block_and_context() {
         let tmp = TempDir::new();
         let cmd = r#"printf '{"decision":"block","reason":"no secrets"}'"#;
-        let out = run_ev(&runner(hooks_with("UserPromptSubmit", None, cmd, 10), tmp.path()), HookEvent::UserPromptSubmit, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks_with("UserPromptSubmit", None, cmd, 10), tmp.path()),
+            HookEvent::UserPromptSubmit,
+            "",
+            json!({}),
+        )
+        .await;
         assert!(out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("no secrets"));
 
         let cmd = r#"printf '{"hookSpecificOutput":{"additionalContext":"today is Thursday"}}'"#;
-        let out = run_ev(&runner(hooks_with("UserPromptSubmit", None, cmd, 10), tmp.path()), HookEvent::UserPromptSubmit, "", json!({})).await;
+        let out = run_ev(
+            &runner(hooks_with("UserPromptSubmit", None, cmd, 10), tmp.path()),
+            HookEvent::UserPromptSubmit,
+            "",
+            json!({}),
+        )
+        .await;
         assert!(!out.blocked);
         assert_eq!(out.feedback.as_deref(), Some("today is Thursday"));
     }
@@ -985,15 +1157,32 @@ mod tests {
     #[tokio::test]
     async fn c3_12_timeout_discards_output_and_on_failure_block() {
         let tmp = TempDir::new();
-        let hooks = hooks_with("PreToolUse", None, "echo early; echo bad >&2; sleep 5; exit 2", 1);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PreToolUse, "Bash", json!({})).await;
+        let hooks = hooks_with(
+            "PreToolUse",
+            None,
+            "echo early; echo bad >&2; sleep 5; exit 2",
+            1,
+        );
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PreToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert_eq!(out, HookOutcome::default());
 
         let hooks = json!({"PreToolUse": [{"hooks": [
             {"type": "command", "command": "sleep 5", "timeout": 1, "onFailure": "block"}
         ]}]});
         let start = std::time::Instant::now();
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PreToolUse, "Bash", json!({})).await;
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PreToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
         assert!(start.elapsed() < Duration::from_secs(4));
         assert!(out.blocked);
         assert!(out.feedback.unwrap().contains("timed out"));
@@ -1002,8 +1191,19 @@ mod tests {
     #[tokio::test]
     async fn c3_13_output_capped() {
         let tmp = TempDir::new();
-        let hooks = hooks_with("UserPromptSubmit", None, "head -c 25000 /dev/zero | tr '\\0' 'x'", 10);
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::UserPromptSubmit, "", json!({})).await;
+        let hooks = hooks_with(
+            "UserPromptSubmit",
+            None,
+            "head -c 25000 /dev/zero | tr '\\0' 'x'",
+            10,
+        );
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::UserPromptSubmit,
+            "",
+            json!({}),
+        )
+        .await;
         let fb = out.feedback.unwrap();
         assert!(fb.starts_with(&"x".repeat(HOOK_OUTPUT_LIMIT)));
         assert!(!fb.contains(&"x".repeat(HOOK_OUTPUT_LIMIT + 1)));
@@ -1031,7 +1231,10 @@ mod tests {
         assert_eq!(r.matching_specs(HookEvent::PreToolUse, "Bash").len(), 2);
         let start = std::time::Instant::now();
         run_ev(&r, HookEvent::PreToolUse, "Bash", json!({})).await;
-        assert!(start.elapsed() < Duration::from_millis(1900), "hooks should run concurrently");
+        assert!(
+            start.elapsed() < Duration::from_millis(1900),
+            "hooks should run concurrently"
+        );
         assert_eq!(fs::read_to_string(&log).unwrap().lines().count(), 1);
     }
 
@@ -1043,8 +1246,17 @@ mod tests {
             {"type": "command", "command": r#"printf '{"hookSpecificOutput":{"permissionDecision":"deny","permissionDecisionReason":"policy"},"systemMessage":"two"}'"#},
             {"type": "command", "command": r#"printf '{"hookSpecificOutput":{"permissionDecision":"ask","updatedInput":{"a":2}}}'"#}
         ]}]});
-        let out = run_ev(&runner(hooks, tmp.path()), HookEvent::PreToolUse, "Bash", json!({})).await;
-        assert_eq!(out.permission_override, Some(PermissionDecision::Deny("policy".into())));
+        let out = run_ev(
+            &runner(hooks, tmp.path()),
+            HookEvent::PreToolUse,
+            "Bash",
+            json!({}),
+        )
+        .await;
+        assert_eq!(
+            out.permission_override,
+            Some(PermissionDecision::Deny("policy".into()))
+        );
         assert_eq!(out.updated_input, Some(json!({"a": 1})));
         assert_eq!(out.system_message.as_deref(), Some("one\ntwo"));
     }
@@ -1053,7 +1265,12 @@ mod tests {
     async fn c3_4_tool_event_payload_passthrough() {
         let tmp = TempDir::new();
         let outfile = tmp.path().join("in.json");
-        let hooks = hooks_with("PostToolUse", Some("Bash"), &format!("cat > {}", outfile.display()), 10);
+        let hooks = hooks_with(
+            "PostToolUse",
+            Some("Bash"),
+            &format!("cat > {}", outfile.display()),
+            10,
+        );
         run_ev(
             &runner(hooks, tmp.path()),
             HookEvent::PostToolUse,
@@ -1110,8 +1327,12 @@ mod tests {
         ];
         for (event, target, payload, specific) in cases {
             let outfile = tmp.path().join(format!("{}.json", event.as_str()));
-            let hooks =
-                hooks_with(event.as_str(), None, &format!("cat > {}", outfile.display()), 10);
+            let hooks = hooks_with(
+                event.as_str(),
+                None,
+                &format!("cat > {}", outfile.display()),
+                10,
+            );
             run_ev(&runner(hooks, tmp.path()), event, target, payload).await;
             let v: Value = serde_json::from_str(&fs::read_to_string(&outfile).unwrap()).unwrap();
             // Standard fields (docs/hooks.md "Payload schema").
@@ -1123,7 +1344,10 @@ mod tests {
                 v.get("transcript_path").and_then(|s| s.as_str()).is_some(),
                 "{event:?} transcript_path"
             );
-            assert!(v.get("cwd").and_then(|s| s.as_str()).is_some(), "{event:?} cwd");
+            assert!(
+                v.get("cwd").and_then(|s| s.as_str()).is_some(),
+                "{event:?} cwd"
+            );
             assert_eq!(
                 v.get("hook_event_name").and_then(|s| s.as_str()),
                 Some(event.as_str()),
